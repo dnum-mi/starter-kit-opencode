@@ -1,4 +1,4 @@
-# Agents Guide - CoFabNum
+tu # Agents Guide - CoFabNum
 
 > Conventions and operational config shared across all Fabrique Numérique projects.
 
