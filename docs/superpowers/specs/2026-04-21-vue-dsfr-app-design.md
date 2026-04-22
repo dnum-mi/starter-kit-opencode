@@ -21,11 +21,11 @@ apps/vue-dsfr-app/
 │   │   └── CounterDisplay.vue
 │   ├── App.vue
 │   ├── main.ts
+│   └── vite.env.d.ts
 ├── index.html
 ├── package.json
 ├── tsconfig.json
 ├── vite.config.ts
-├── env.d.ts
 └── vite.env.d.ts
 ```
 
