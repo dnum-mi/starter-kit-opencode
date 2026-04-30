@@ -1,7 +1,10 @@
 # Design : skill `deploiement`
 
 **Date** : 2026-04-30  
-**Source** : [dnum-mi/transversal-doc — conventions/deploiement.md](https://github.com/dnum-mi/transversal-doc/blob/main/docs/conventions/deploiement.md)
+**Sources** :
+- [dnum-mi/transversal-doc — conventions/deploiement.md](https://github.com/dnum-mi/transversal-doc/blob/main/docs/conventions/deploiement.md)
+- [cloud-pi-native.fr — Guide d'utilisation / Bonnes pratiques](https://cloud-pi-native.fr/guide/best-practices)
+- [cloud-pi-native.fr — Déploiement de votre application (ArgoCD)](https://cloud-pi-native.fr/guide/deployment-with-argo)
 
 ## Objectif
 
@@ -47,9 +50,23 @@ allowed-tools: Bash Read Write
    - Pourquoi Helm : paramétrage par `values.yaml`, reproductibilité, rollback, compatibilité Cloud Pi Native/ArgoCD/FluxCD
    - Template de référence : `this-is-tobi/helm-charts/template`
    - Structure minimale : `helm/Chart.yaml`, `values.yaml`, `templates/`, `values/` (optionnel)
-   - Bonnes pratiques : labels standards `app.kubernetes.io/*`, ressources optionnelles avec conditions, pas de secrets en clair (Sealed Secrets), versionnage chart ≠ appVersion, `helm lint` + `helm template` en CI
+   - Bonnes pratiques : labels standards `app.kubernetes.io/*`, ressources optionnelles avec conditions, versionnage chart ≠ appVersion, `helm lint` + `helm template` en CI
+   - Naming conventions K8s : noms courts, pattern `env-ms-dep`, `env-ms-svc`, `env-ms-cm`, etc.
+   - Secrets via **Vault** (CPiN fournit Vault par projet — ne pas utiliser Sealed Secrets)
 
-5. **Gotchas** (section finale) : points d'attention courants tirés des deux sources
+5. **Cloud Pi Native — exigences spécifiques** :
+   - **Deux dépôts** : dépôt applicatif (code + Dockerfile + `.gitlab-ci-dso.yaml`) et dépôt d'infrastructure (Helm/Kustomize/manifests déployé via ArgoCD)
+   - **Image tagging** : tags basés sur le SHA Git (`CI_COMMIT_SHORT_SHA`, `CI_COMMIT_SHA`) — jamais `latest`
+   - **`registry-pull-secret`** : créé automatiquement par la console CPiN, à référencer dans les manifests
+   - **Labels obligatoires MIOM** sur toutes les ressources K8s : `env` (dev/qualif/preprod/prod), `tier` (frontend/backend/db/cache/auth), `criticality` (high/medium/low), `component` (nginx/node/postgres/redis/…)
+   - **Liveness/Readiness probes** obligatoires sur tous les Deployments
+   - **Resources limits/requests** obligatoires — préférer `Guaranteed` QoS (limits = requests)
+   - **Network policies** : Deny ALL par défaut — définir explicitement les flux ingress/egress nécessaires
+   - **Stateless** : aucun état en mémoire locale — utiliser Redis/session store externe si nécessaire
+   - **Logs** : stdout uniquement, format JSON/GELF — jamais de fichier de log dans le conteneur
+   - **ArgoCD GitOps** : les modifications de `target revision`, `path` et `values files` se font depuis la console CPiN, pas depuis l'UI ArgoCD
+
+6. **Gotchas** (section finale) : points d'attention courants tirés des deux sources
 
 ### Format
 
@@ -68,5 +85,6 @@ Identique aux skills existantes : titres H2/H3, tableaux, blocs de code comment�
 ## Critères de succès
 
 - La skill `deploiement` est invoquée quand on écrit un Dockerfile ou configure un Helm chart pour Cloud Pi Native / K8s
-- Aucune règle Docker ou Helm n'est perdue après le cleanup
+- Aucune règle Docker, Helm ou CPiN n'est perdue après le cleanup
+- Les exigences CPiN spécifiques (labels, probes, Vault, naming, `.gitlab-ci-dso.yaml`) sont clairement documentées
 - Le contenu respecte la longueur et le style des autres skills (concis, tableaux, code examples)
