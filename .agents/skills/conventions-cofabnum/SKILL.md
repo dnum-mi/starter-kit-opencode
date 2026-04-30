@@ -334,38 +334,7 @@ Before adding any dependency:
 
 **Security rule**: Never pin GitHub Actions to `@master` or `@main`. Always use version tags.
 
-## Deployment
-
-### Docker rules
-
-- Lightweight base: `*-alpine`, `*-slim`, `distroless`
-- Non-root user (UID ≥ 1000)
-- Multi-stage builds
-- No secrets, no dev files
-- Non-privileged port (≥ 1024)
-- **Never** use `latest` tag in production
-- Scan with Trivy in CI
-
-### Kubernetes
-
-Helm charts mandatory (no raw YAML manifests).
-
-Minimal structure:
-
-```
-helm/
-├── Chart.yaml
-├── values.yaml
-├── templates/
-│   ├── _helpers.tpl
-│   ├── deployment.yaml
-│   ├── service.yaml
-│   └── ingress.yaml
-```
-
-Validate in CI: `helm lint` + `helm template`.
-
-## POC → Production
+ ## POC → Production
 
 Progress:
 - [ ] Modular architecture, API decoupled from AI logic
