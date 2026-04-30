@@ -47,8 +47,13 @@ USER 1001
 ### securityContext Kubernetes
 
 ```yaml
+# Niveau pod (spec.securityContext)
 securityContext:
   runAsNonRoot: true
+  runAsUser: 1001
+
+# Niveau conteneur (spec.containers[].securityContext)
+securityContext:
   readOnlyRootFilesystem: true
   allowPrivilegeEscalation: false
   capabilities:
@@ -218,7 +223,11 @@ spec:
     matchLabels:
       tier: frontend
   ingress:
-    - ports:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
         - port: 8080
 ```
 
