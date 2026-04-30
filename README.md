@@ -35,6 +35,42 @@ Le dossier `~/.agents/skills/` est automatiquement scanné par tous les clients 
 
 Ajouter ce dossier comme dépôt Git pour que les skills soient découverts automatiquement via `.agents/skills/`.
 
+## Application Vue DSFR
+
+L'application Vue 3 + DSFR est dans `apps/vue-dsfr-app/`.
+
+### Développement
+
+```bash
+pnpm --filter vue-dsfr-app run dev
+```
+
+Accessible sur `http://localhost:5000` ou via le proxy Onyxia sur le port 5000.
+
+### Build
+
+```bash
+pnpm --filter vue-dsfr-app run build
+```
+
+### Tests unitaires
+
+```bash
+pnpm --filter vue-dsfr-app run test:unit
+```
+
+### Lint
+
+```bash
+pnpm --filter vue-dsfr-app run lint
+```
+
+### Preview
+
+```bash
+pnpm --filter vue-dsfr-app run preview
+```
+
 ## Scripts disponibles
 
 Chaque skill peut contenir des scripts dans `scripts/` :
