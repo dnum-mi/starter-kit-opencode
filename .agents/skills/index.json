@@ -1,0 +1,13 @@
+{
+  "skills": [
+    { "name": "ci-cd", "files": ["SKILL.md"] },
+    { "name": "conventions-cofabnum", "files": ["SKILL.md", "scripts/validate-branch.sh", "scripts/check-folders.sh"] },
+    { "name": "deploiement", "files": ["SKILL.md"] },
+    { "name": "environnement-installation", "files": ["SKILL.md"] },
+    { "name": "monorepo", "files": ["SKILL.md"] },
+    { "name": "outils-dev", "files": ["SKILL.md", "scripts/check-environment.sh"] },
+    { "name": "recettes-client", "files": ["SKILL.md"] },
+    { "name": "recettes-serveur", "files": ["SKILL.md", "scripts/scaffold-nestjs.sh", "scripts/scaffold-fastify.sh", "scripts/scaffold-fastapi.sh"] },
+    { "name": "stack-technique", "files": ["SKILL.md"] }
+  ]
+}
