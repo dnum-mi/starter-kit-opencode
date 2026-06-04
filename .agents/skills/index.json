@@ -1,0 +1,13 @@
+{
+  "skills": [
+    { "name": "ci-cd", "files": ["SKILL.md"] },
+    { "name": "conventions-cofabnum", "files": ["SKILL.md"] },
+    { "name": "deploiement", "files": ["SKILL.md"] },
+    { "name": "environnement-installation", "files": ["SKILL.md"] },
+    { "name": "monorepo", "files": ["SKILL.md"] },
+    { "name": "outils-dev", "files": ["SKILL.md"] },
+    { "name": "recettes-client", "files": ["SKILL.md"] },
+    { "name": "recettes-serveur", "files": ["SKILL.md"] },
+    { "name": "stack-technique", "files": ["SKILL.md"] }
+  ]
+}
