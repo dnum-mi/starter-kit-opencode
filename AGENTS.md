@@ -81,6 +81,38 @@ Conventional Commits format. French is acceptable.
 
 Each subproject has its own `AGENTS.md` with project-specific config. This file takes precedence for cross-project conventions.
 
+## Implementing a Plan
+
+Before and while implementing a plan (migration, feature, refactor) that touches external libraries:
+
+### 1. Verify dependencies actually exist
+
+- [ ] Check the plan's packages match what's installed (`package.json`, lockfile) — a plan can reference a package that doesn't exist on npm or isn't the one used by the project
+- [ ] Check installed versions match what the plan assumes (`pnpm list <pkg>`)
+- [ ] If a package isn't installed yet, confirm it exists on npm before adding it (`npm view <pkg>`)
+
+> Example: a plan referenced `@gouvfr/dsfr-vue` (`FrInput`, `FrButton`) — that package doesn't exist on npm. The project actually uses `@gouvminint/vue-dsfr` (`DsfrInput`, `DsfrButton`).
+
+### 2. Read the real type definitions before coding
+
+- [ ] Locate the `.d.ts` files for the library (`node_modules/<pkg>/**/*.d.ts`)
+- [ ] Read the actual component/function signature before writing code that uses it
+- [ ] Adapt the plan's code if the real API differs — don't copy-paste it as-is
+
+> Example: a plan used `<FrInput :native-validators="{ required: { errorMessage: '...', enable: true } }" />`, but `DsfrInputProps` (`node_modules/@gouvminint/vue-dsfr/types/components/DsfrInput/DsfrInput.types.d.ts`) has `isInvalid?: boolean` and no `native-validators`. See [recettes-client] for the real DsfrInput API.
+
+### 3. Build before committing
+
+- [ ] Run the project build / typecheck (`pnpm build`, `vue-tsc --noEmit`, `tsc --noEmit`) at the end of each task
+- [ ] Fix all type errors before committing
+- [ ] Never commit a state that breaks the build, even "temporarily"
+
+### 4. Test existing behavior before changing it
+
+- [ ] Run the app (`pnpm dev`) and check the current behavior of the feature being modified
+- [ ] Identify pre-existing bugs (e.g. a non-reactive toast, a frozen counter) — don't confuse them with regressions introduced by the plan
+- [ ] Either fix pre-existing bugs as part of the task, or note them explicitly as out of scope in the plan/PR
+
 ## Gotchas
 
 - Vue components need 2+ words (`BadgeTypeOrganisme.vue`, not `Badge.vue`)

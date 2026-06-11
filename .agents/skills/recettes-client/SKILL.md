@@ -158,9 +158,36 @@ toaster.addMessage({ description: 'Saved', type: 'success', closeable: true, tit
 </template>
 ```
 
+## Form Inputs — DsfrInput
+
+Real `DsfrInputProps` (from `@gouvminint/vue-dsfr`, confirmed against `node_modules/@gouvminint/vue-dsfr/**/DsfrInput.types.d.ts`):
+
+| Prop | Type | Purpose |
+|------|------|---------|
+| `modelValue` | `string \| number` | v-model |
+| `label` | `string` | Field label |
+| `labelVisible` | `boolean` | Show/hide label |
+| `hint` | `string` | Help text |
+| `isInvalid` | `boolean` | Error state (red border + error styling) |
+| `isValid` | `boolean` | Success state |
+| `isTextarea` | `boolean` | Render as `<textarea>` |
+| `isWithWrapper` | `boolean` | Wrap in `.fr-input-group` |
+
+```vue
+<DsfrInput
+  v-model="email"
+  label="Email"
+  :is-invalid="!!errors.email"
+  :hint="errors.email ?? 'Format attendu : nom@domaine.fr'"
+/>
+```
+
+There is **no `native-validators` prop** — validation/error state is driven by `isInvalid` + `hint`/`errorMessage`, handled in your own validation logic (e.g. VeeValidate, Zod).
+
 ## Gotchas
 
 - **DSFR is mandatory** — Ministry of Interior projects must use VueDsfr, not a generic component library
+- **Package name is `@gouvminint/vue-dsfr`, not `@gouvfr/dsfr-vue`** — and components are prefixed `Dsfr*` (`DsfrInput`, `DsfrButton`), not `Fr*`. A plan referencing `@gouvfr/dsfr-vue`/`FrInput` is hallucinated — verify against `package.json` and `node_modules/@gouvminint/vue-dsfr` before coding (see the verification checklist in `AGENTS.md`)
 - **Vue component files need 2+ words** — `LoginForm.vue` not `Form.vue` (exception: `App.vue`)
 - **Jest DOM with Vitest** — do NOT install Jest, Jest DOM is compatible with Vitest directly
 - **Toaster timeouts must clean up** — always `clearTimeout` on remove to prevent memory leaks
