@@ -1,5 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "lsp": true,
   "plugin": ["superpowers@git+https://github.com/obra/superpowers.git"],
   "instructions": [
     "https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/AGENTS.md"
