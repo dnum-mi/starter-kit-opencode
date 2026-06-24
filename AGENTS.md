@@ -81,6 +81,21 @@ Conventional Commits format. French is acceptable.
 
 Each subproject has its own `AGENTS.md` with project-specific config. This file takes precedence for cross-project conventions.
 
+## Skills disponibles
+
+Les skills suivants sont chargés automatiquement depuis `.agents/skills/` :
+
+| Skill | Quand l'utiliser |
+|-------|-----------------|
+| `conventions-cofabnum` | Créer ou relire un projet — nommage, archi, TS, REST, linting |
+| `recettes-client` | Frontend Vue 3 / Nuxt 3 — DSFR, VueDsfr, composables, tests |
+| `recettes-serveur` | Backend NestJS / Fastify / FastAPI — scaffolding, logging, OpenAPI |
+| `stack-technique` | Configurer les outils recommandés — ESLint antfu, Prisma, date-fns… |
+| `monorepo` | Monorepo pnpm workspaces + Turborepo |
+| `ci-cd` | GitHub Actions, workflows fabnum-cicd, Docker, Helm, release |
+| `deploiement` | Cloud Pi Native, Kubernetes/OpenShift, Dockerfiles, Helm charts |
+| `environnement-installation` | Setup poste dev — Windows/WSL, macOS, Ubuntu |
+| `outils-dev` | Git, Docker Compose, VS Code, GitHub CLI, pnpm, proto, zsh, uv |
 ## Gotchas
 
 - Vue components need 2+ words (`BadgeTypeOrganisme.vue`, not `Badge.vue`)
