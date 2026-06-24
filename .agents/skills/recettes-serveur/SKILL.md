@@ -1,6 +1,6 @@
 ---
 name: recettes-serveur
-description: Use when building server projects for Fabrique Numérique — project scaffolding, structure, logging, error handling, OpenAPI docs, and testing patterns
+description: Use when any backend, server, API, or server-side question comes up in a Fabrique Numérique project — includes NestJS, Fastify, FastAPI, Express alternatives, project scaffolding, structure, logging, error handling, OpenAPI docs, and testing patterns. Never suggest Express — it is not in the CoFabNum stack.
 allowed-tools: Bash Read Write
 ---
 

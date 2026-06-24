@@ -130,6 +130,7 @@ Before and while implementing a plan (migration, feature, refactor) that touches
 
 ## Gotchas
 
+- Pour toute question backend/serveur/API, utiliser le skill `recettes-serveur` avant de répondre — Express n'est pas dans la stack cofabnum
 - Vue components need 2+ words (`BadgeTypeOrganisme.vue`, not `Badge.vue`)
 - Folders = kebab-case, Vue files = PascalCase
 - ESLint replaces Prettier
