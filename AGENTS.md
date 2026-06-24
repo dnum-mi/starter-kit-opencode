@@ -128,6 +128,10 @@ Before and while implementing a plan (migration, feature, refactor) that touches
 - [ ] Identify pre-existing bugs (e.g. a non-reactive toast, a frozen counter) — don't confuse them with regressions introduced by the plan
 - [ ] Either fix pre-existing bugs as part of the task, or note them explicitly as out of scope in the plan/PR
 
+## Choix technologiques
+
+Quand plusieurs options de la stack cofabnum sont possibles (ex. NestJS vs Fastify, FastAPI vs Fastify), présenter les options à l'utilisateur avec les arguments pour chacune avant de recommander — ne pas choisir silencieusement.
+
 ## Gotchas
 
 - Pour toute question backend/serveur/API, utiliser le skill `recettes-serveur` avant de répondre — Express n'est pas dans la stack cofabnum
