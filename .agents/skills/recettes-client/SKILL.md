@@ -193,3 +193,4 @@ There is **no `native-validators` prop** — validation/error state is driven by
 - **Toaster timeouts must clean up** — always `clearTimeout` on remove to prevent memory leaks
 - **`getRandomId` from VueDsfr** — use the library's utility, don't generate your own IDs
 - **Transition group needs CSS** — `pointer-events: none` on container but `pointer-events: all` on alerts so they're clickable
+- **Playwright on Onyxia requires `--no-sandbox`** — the container runs as root without a sandbox; add `args: ['--no-sandbox']` to the browser launch options in `playwright.config.ts` or tests will fail to launch Chromium
