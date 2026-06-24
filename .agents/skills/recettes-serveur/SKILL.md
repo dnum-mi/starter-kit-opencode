@@ -1,6 +1,6 @@
 ---
 name: recettes-serveur
-description: Use when building NestJS, Fastify, or FastAPI server projects for Fabrique Numérique — project scaffolding, structure, logging, error handling, OpenAPI docs, and testing patterns
+description: Use when building server projects for Fabrique Numérique — project scaffolding, structure, logging, error handling, OpenAPI docs, and testing patterns
 allowed-tools: Bash Read Write
 ---
 
