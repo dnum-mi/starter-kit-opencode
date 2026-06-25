@@ -1,6 +1,6 @@
 ---
 name: recettes-serveur
-description: Use when any backend, server, API, or server-side question comes up in a Fabrique Numérique project — includes NestJS, Fastify, FastAPI, Express alternatives, project scaffolding, structure, logging, error handling, OpenAPI docs, and testing patterns. Never suggest Express — it is not in the CoFabNum stack.
+description: ALWAYS use for any backend, serveur, API, or server-side question — NestJS, Fastify, FastAPI, scaffolding, routes, logging, error handling, OpenAPI, tests. Do NOT suggest Express; use this skill instead. Required for all CoFabNum Node.js and Python backend work.
 allowed-tools: Bash Read Write
 ---
 

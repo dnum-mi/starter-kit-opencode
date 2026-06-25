@@ -162,6 +162,10 @@ Before and while implementing a plan (migration, feature, refactor) that touches
 - [ ] Identify pre-existing bugs (e.g. a non-reactive toast, a frozen counter) — don't confuse them with regressions introduced by the plan
 - [ ] Either fix pre-existing bugs as part of the task, or note them explicitly as out of scope in the plan/PR
 
+## Phase de spec
+
+Lors de la rédaction d'une spec, toujours inclure une section **Structure des fichiers** montrant l'arborescence complète des fichiers à créer ou modifier. Utiliser le skill `conventions-cofabnum` pour valider les conventions de nommage et d'arborescence.
+
 ## Choix technologiques
 
 Quand plusieurs options de la stack cofabnum sont possibles (ex. NestJS vs Fastify, FastAPI vs Fastify), présenter les options à l'utilisateur avec les arguments pour chacune avant de recommander — ne pas choisir silencieusement.
