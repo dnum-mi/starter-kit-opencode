@@ -25,6 +25,33 @@ pnpm create vue-dsfr
 - Minimal router (2 routes) + minimal store
 - `unplugin-auto-import` + `unplugin-vue-components`
 
+### Dépendances & setup DSFR (obligatoire)
+
+Le rendu conforme DSFR dépend de la **feuille de style officielle `@gouvfr/dsfr`**, pas du bundle interne de VueDsfr. Pincer les deux dépendances et importer le CSS officiel dans le point d'entrée de l'app :
+
+```jsonc
+// package.json
+{
+  "dependencies": {
+    "@gouvfr/dsfr": "^1.11.0", // feuille de style DSFR officielle
+    "@gouvminint/vue-dsfr": "^8.0.0"
+  }
+}
+```
+
+```ts
+// src/main.ts
+import '@gouvfr/dsfr/dist/dsfr.min.css' // CSS DSFR officiel et à jour
+import { createApp } from 'vue'
+import VueDsfr from '@gouvminint/vue-dsfr'
+import App from './App.vue'
+
+createApp(App).use(VueDsfr).mount('#app')
+```
+
+- N'importe **pas** `@gouvminint/vue-dsfr/styles` seul : c'est une copie vieillie du CSS, et sans dépendance directe à `@gouvfr/dsfr` la version DSFR n'est ni verrouillée ni à jour.
+- Vérifie la version installée (`pnpm list @gouvminint/vue-dsfr`) — évite les vieilles versions (ex. 3.x) qui embarquaient un vieux CSS DSFR.
+
 ### Recommended additions
 
 - [date-fns](https://date-fns.org/) for date manipulation
@@ -109,6 +136,8 @@ export const useToaster = () => {
 }
 ```
 
+Les IDs sont générés via `getRandomId('toaster')` importé de VueDsfr — **ne réimplémente pas** ton propre générateur d'ID.
+
 ### component: `AppToaster.vue`
 
 ```vue
@@ -183,6 +212,26 @@ Real `DsfrInputProps` (from `@gouvminint/vue-dsfr`, confirmed against `node_modu
 ```
 
 There is **no `native-validators` prop** — validation/error state is driven by `isInvalid` + `hint`/`errorMessage`, handled in your own validation logic (e.g. VeeValidate, Zod).
+
+## Layout, typo & tokens DSFR
+
+Utilise les utilitaires et tokens DSFR **au lieu de réinventer le layout en CSS maison** :
+
+- **Conteneur / grille** : `fr-container`, `fr-grid-row` (+ `fr-grid-row--center`, `fr-grid-row--gutters`) et colonnes `fr-col-12 fr-col-md-6`… (responsive par défaut).
+- **Espacement** : utilitaires `fr-py-*w`, `fr-px-*w`, `fr-mt-*w`, `fr-mb-*w` (ex. `fr-py-6w`, `fr-mb-2w`).
+- **Typographie** : `fr-h1`…`fr-h6`, `fr-display--md`, `fr-text--lg`, `fr-text--sm`, `fr-text--bold` — pas de `font-size`/`font-weight` codés en dur.
+- **Couleurs / tokens** : toujours via les variables DSFR (`--bf-500`, `--red-marianne-425-625`, `--border-default-grey`, `--background-default-grey`, …) — jamais de valeurs hex en dur (`#000091`, `#ce0500`).
+
+```vue
+<section class="fr-container fr-py-6w">
+  <div class="fr-grid-row fr-grid-row--center">
+    <div class="fr-col-12 fr-col-md-6">
+      <h1 class="fr-h3">Titre</h1>
+      <p class="fr-text--lg">Sous-texte</p>
+    </div>
+  </div>
+</section>
+```
 
 ## Gotchas
 
