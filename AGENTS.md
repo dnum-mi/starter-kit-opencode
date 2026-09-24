@@ -101,7 +101,8 @@ Les skills suivants sont chargés automatiquement depuis `.agents/skills/` :
 ### Ensembles optionnels
 
 Les skills qui n'ont pas vocation à être installés avec le socle vivent dans `skill-sets/<ensemble>/`, chacun avec son propre `index.json`.
-Un ensemble n'est chargé que si son URL est déclarée dans `opencode.json` :
+Ce dossier est une organisation propre à ce repo : aucun outil ne le connaît, et il est hors de `.agents/skills/` pour que les clients
+ne le chargent pas d'office. Un ensemble n'est chargé que si son URL est déclarée dans `opencode.json` :
 
 ```json
 "skills": { "urls": [
