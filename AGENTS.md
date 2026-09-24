@@ -96,6 +96,11 @@ Les skills suivants sont chargés automatiquement depuis `.agents/skills/` :
 | `deploiement` | Cloud Pi Native, Kubernetes/OpenShift, Dockerfiles, Helm charts |
 | `environnement-installation` | Setup poste dev — Windows/WSL, macOS, Ubuntu |
 | `outils-dev` | Git, Docker Compose, VS Code, GitHub CLI, pnpm, proto, zsh, uv |
+## Documentation interne (OKF)
+
+`docs/okf/` regroupe la connaissance CI/CD (fabnum-cicd), Helm et Cloud Pi Native au format OKF.
+Point d'entrée : `docs/okf/quickstart.md` (routage par intention). Les sources amont font autorité ; la doc n'est pas un skill.
+
 ## Implementing a Plan
 
 Before and while implementing a plan (migration, feature, refactor) that touches external libraries:
