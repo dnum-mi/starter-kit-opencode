@@ -1,14 +1,13 @@
 #!/usr/bin/env node
 // Génère ou vérifie le index.json de chaque catalogue de skills servi via `skills.urls`.
-// Catalogues : .agents/skills (socle) et skill-sets/<ensemble>/ (ensembles optionnels).
+// Catalogues : un groupe par sous-dossier de .agents/skills/ (ex. dev, dso), chacun avec son index.json.
 // Usage : node scripts/skills-index.mjs [--check] [<catalogue>...]
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
 
 const INDEX_FILE = 'index.json'
 const SKILL_FILE = 'SKILL.md'
-const CORE_CATALOG = '.agents/skills'
-const SETS_DIR = 'skill-sets'
+const GROUPS_DIR = '.agents/skills'
 
 function listFiles(dir, root = dir) {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -30,13 +29,16 @@ function buildIndex(catalog) {
   return { skills }
 }
 
+function hasSkills(dir) {
+  return readdirSync(dir, { withFileTypes: true })
+    .some(entry => entry.isDirectory() && existsSync(join(dir, entry.name, SKILL_FILE)))
+}
+
 function defaultCatalogs() {
-  const sets = existsSync(SETS_DIR)
-    ? readdirSync(SETS_DIR, { withFileTypes: true })
-        .filter(entry => entry.isDirectory())
-        .map(entry => join(SETS_DIR, entry.name))
-    : []
-  return [CORE_CATALOG, ...sets]
+  return readdirSync(GROUPS_DIR, { withFileTypes: true })
+    .filter(entry => entry.isDirectory())
+    .map(entry => join(GROUPS_DIR, entry.name))
+    .filter(hasSkills)
 }
 
 function normalize(index) {

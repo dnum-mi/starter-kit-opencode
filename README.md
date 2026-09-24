@@ -5,7 +5,7 @@ Skills pour agents (OpenCode, Claude, Codex) basés sur la documentation de la [
 ## Structure
 
 ```
-.agents/skills/
+.agents/skills/dev/
 ├── conventions-cofabnum/          → nommage, architecture, TypeScript, API, lint, code qualité, déploiement, POC→prod
 ├── recettes-serveur/              → NestJS, Fastify, FastAPI
 ├── recettes-client/               → Vue 3, Nuxt 3, Toaster
@@ -18,13 +18,13 @@ Skills pour agents (OpenCode, Claude, Codex) basés sur la documentation de la [
 
 ## Installation
 
-Les skills sont dans `.agents/skills/` — standard cross-client reconnu par OpenCode, Claude Code, Codex, etc.
+Les skills sont rangés par groupe dans `.agents/skills/<groupe>/` (groupe actuel : `dev`). Le dossier `.agents/skills/` est un emplacement reconnu par OpenCode, Claude Code, Codex, etc. ; le regroupement en sous-dossiers est propre à ce repo.
 
 ### Depuis ce repo
 
 ```bash
 # Copier tous les skills dans le dossier global
-cp -r .agents/skills/* ~/.agents/skills/
+cp -r .agents/skills/dev/* ~/.agents/skills/
 ```
 
 ### Depuis un autre projet
@@ -33,11 +33,11 @@ Le dossier `~/.agents/skills/` est automatiquement scanné par tous les clients 
 
 ## Installation via opencode.json
 
-Ajouter ce dossier comme dépôt Git pour que les skills soient découverts automatiquement via `.agents/skills/`.
+Déclarer l'URL du groupe voulu dans `skills.urls` (voir `AGENTS.md`).
 
-## Ensembles de skills optionnels
+## Groupes de skills
 
-Les skills qui ne vont pas toujours ensemble sont dans `skill-sets/<ensemble>/` (un `index.json` par ensemble) et se chargent par URL dans `opencode.json` (`skills.urls`) — voir `AGENTS.md`. Régénérer les index : `node scripts/skills-index.mjs` ; vérifier : `node scripts/skills-index.mjs --check`.
+Chaque groupe (`.agents/skills/<groupe>/`) a son `index.json` et se charge par URL dans `opencode.json` (`skills.urls`) — voir `AGENTS.md`. Régénérer les index : `node scripts/skills-index.mjs` ; vérifier : `node scripts/skills-index.mjs --check`.
 
 ## Scripts disponibles
 
