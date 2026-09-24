@@ -10,7 +10,7 @@ tags: [constats, lacunes, skills]
 ## Écarts avec les skills actuels (non corrigés à ce stade)
 - `ci-cd` dit d'épingler fabnum-cicd sur `@main`, alors que `AGENTS.md` l'interdit et que l'usage réel est `@v0` (voir [decisions/pinning-versions.md](decisions/pinning-versions.md)).
 - `ci-cd` ne couvre que GitHub Actions : il ignore `sync-cpin`, release-please, la GitHub App, le flux `dev`/`main`, `sync-prerelease-branch`, `attest-*`, `scan-gitleaks`.
-- `deploiement` cite `.gitlab-ci-dso.yaml` alors qu'ocr-api utilise `.gitlab-ci-dso.yml` ; la doc CPiN écrit `gitlab-ci-dso.yml`.
+- Nom du fichier de pipeline : `deploiement` cite `.gitlab-ci-dso.yaml`, comme la page « Démarrer » de la doc CPiN ; la page « Gestionnaire de sources » écrit `gitlab-ci-dso.yml` et ocr-api utilise `.gitlab-ci-dso.yml`. Incohérence de la doc officielle, pas une erreur du skill : à vérifier sur l'instance.
 - `deploiement` présente `this-is-tobi/helm-charts/template` comme référence : c'est un squelette à copier, pas une dépendance (les charts publiés sont des utilitaires).
 - `README.md` : le bloc de structure omet `deploiement`.
 

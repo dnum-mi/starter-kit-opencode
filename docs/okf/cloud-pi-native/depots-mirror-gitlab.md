@@ -13,7 +13,7 @@ tags: [cpin, gitlab, mirror, dépôts, gitlab-ci-dso]
 - La console crée un groupe `<ORG>/<PROJET>`, les dépôts déclarés et `mirror`.
 
 ## Types de dépôts
-- **Applicatif** : code + `gitlab-ci-dso.yml` à la racine (le nom `.gitlab-ci-dso.yml` est utilisé dans ocr-api ; la doc CPiN écrit `gitlab-ci-dso.yml`). Analysé, construit, image scannée puis poussée dans Harbor.
+- **Applicatif** : code + `gitlab-ci-dso.yml` à la racine (nom de fichier : les docs CPiN ne sont pas cohérentes — `.gitlab-ci-dso.yaml` dans « Démarrer », `gitlab-ci-dso.yml` dans « Gestionnaire de sources » ; ocr-api utilise `.gitlab-ci-dso.yml`). Analysé, construit, image scannée puis poussée dans Harbor.
 - **Infra** (case à cocher) : manifests, Helm ou Kustomize ; crée automatiquement l'application ArgoCD.
 
 ## Déclencher la synchronisation
