@@ -94,8 +94,8 @@ Les skills suivants (groupe `dev`) sont dans `.agents/skills/dev/` :
 | `recettes-serveur` | Backend NestJS / Fastify / FastAPI — scaffolding, logging, OpenAPI |
 | `stack-technique` | Configurer les outils recommandés — ESLint antfu, Prisma, date-fns… |
 | `monorepo` | Monorepo pnpm workspaces + Turborepo |
-| `ci-cd` | GitHub Actions, workflows fabnum-cicd, Docker, Helm, release |
-| `deploiement` | Cloud Pi Native, Kubernetes/OpenShift, Dockerfiles, Helm charts |
+| `ci-cd` | Principes CI/CD et gabarit CI de base — pour fabnum-cicd, releases et Cloud Pi Native voir `cicd-fabnum` (groupe `dso`) |
+| `deploiement` | Dockerfiles de production, durcissement des conteneurs (rootless, lecture seule, tags), dev local K8s — pour Helm et Cloud Pi Native voir le groupe `dso` |
 | `environnement-installation` | Setup poste dev — Windows/WSL, macOS, Ubuntu |
 | `outils-dev` | Git, Docker Compose, VS Code, GitHub CLI, pnpm, proto, zsh, uv |
 ### Groupes de skills

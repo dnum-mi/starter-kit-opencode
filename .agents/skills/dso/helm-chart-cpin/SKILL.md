@@ -70,7 +70,7 @@ Sortie 1 s'il reste des erreurs. Ce n'est pas Kyverno : les règles sont en **au
 4. `service.nodePort` existe dans le template : ne pas l'utiliser, Kyverno interdit NodePort.
 5. `enabled: false` ne désactive pas les sous-charts : ils ont leur propre `enabled`.
 6. Tag inchangé = aucun redéploiement (ArgoCD ne voit pas de diff) ; le tag doit bouger à chaque livraison.
-7. Noms de ressources trop longs : peuvent bloquer le déploiement sur OpenShift ; rester court.
+7. Noms de ressources trop longs : peuvent bloquer le déploiement sur OpenShift ; rester court, avec un suffixe par type (`-svc`, `-dep`, `-sts`, `-cm`, `-cj`, `-pvc`) et l'environnement en préfixe.
 
 ## Pour aller plus loin
 
