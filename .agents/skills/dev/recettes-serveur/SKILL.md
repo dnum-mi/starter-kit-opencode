@@ -1,6 +1,6 @@
 ---
 name: recettes-serveur
-description: Use when building server projects for Fabrique Numérique — project scaffolding, structure, logging, error handling, OpenAPI docs, and testing patterns
+description: ALWAYS use for any backend, serveur, API, or server-side question — NestJS, Fastify, FastAPI, scaffolding, routes, logging, error handling, OpenAPI, tests. Do NOT suggest Express; use this skill instead. Required for all CoFabNum Node.js and Python backend work.
 allowed-tools: Bash Read Write
 ---
 
