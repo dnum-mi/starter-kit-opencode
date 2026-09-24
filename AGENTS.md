@@ -83,7 +83,9 @@ Each subproject has its own `AGENTS.md` with project-specific config. This file 
 
 ## Skills disponibles
 
-Les skills suivants sont chargés automatiquement depuis `.agents/skills/` :
+### Socle
+
+Les skills suivants (groupe `dev`) sont dans `.agents/skills/dev/` :
 
 | Skill | Quand l'utiliser |
 |-------|-----------------|
@@ -96,6 +98,23 @@ Les skills suivants sont chargés automatiquement depuis `.agents/skills/` :
 | `deploiement` | Cloud Pi Native, Kubernetes/OpenShift, Dockerfiles, Helm charts |
 | `environnement-installation` | Setup poste dev — Windows/WSL, macOS, Ubuntu |
 | `outils-dev` | Git, Docker Compose, VS Code, GitHub CLI, pnpm, proto, zsh, uv |
+### Groupes de skills
+
+Les skills sont rangés par groupe dans `.agents/skills/<groupe>/` (aujourd'hui `dev`), chaque groupe ayant son propre `index.json`.
+Les groupes ne sont pas faits pour être installés ensemble : un groupe n'est chargé que si son URL est déclarée dans `opencode.json` :
+
+```json
+"skills": { "urls": [
+  "https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/.agents/skills/dev/",
+  "https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/.agents/skills/<groupe>/"
+] }
+```
+
+- Ce regroupement est propre à ce repo : le standard Agent Skills ne le définit pas. OpenCode charge chaque URL comme un catalogue indépendant.
+- Noms de skills **uniques entre groupes** : OpenCode les télécharge tous dans `~/.cache/opencode/skills/`.
+- Après avoir ajouté ou retiré un fichier de skill : `node scripts/skills-index.mjs` (génère), `node scripts/skills-index.mjs --check` (vérifie).
+- Ajouter une sous-section par groupe dans ce fichier (tableau « Skill / Quand l'utiliser »).
+
 ## Documentation interne (OKF)
 
 `docs/okf/` regroupe la connaissance CI/CD (fabnum-cicd), Helm et Cloud Pi Native au format OKF.

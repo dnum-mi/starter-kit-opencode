@@ -6,7 +6,7 @@
     "https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/AGENTS.md"
   ],
   "skills": {
-    "urls": ["https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/.agents/skills/"]
+    "urls": ["https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/.agents/skills/dev/"]
   },
   "permission": {
     "skill": {
