@@ -8,6 +8,23 @@
         "references/ci.yml",
         "references/workflows.md"
       ]
+    },
+    {
+      "name": "deploiement-cpin",
+      "files": [
+        "SKILL.md",
+        "references/depannage.md",
+        "references/gitlab-ci-dso.yml"
+      ]
+    },
+    {
+      "name": "helm-chart-cpin",
+      "files": [
+        "SKILL.md",
+        "references/values-cpin.yaml",
+        "references/vault-secret.yaml",
+        "scripts/check-cpin-rules.py"
+      ]
     }
   ]
 }
