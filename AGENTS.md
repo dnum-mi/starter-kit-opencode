@@ -115,6 +115,14 @@ Les groupes ne sont pas faits pour être installés ensemble : un groupe n'est c
 - Après avoir ajouté ou retiré un fichier de skill : `node scripts/skills-index.mjs` (génère), `node scripts/skills-index.mjs --check` (vérifie).
 - Ajouter une sous-section par groupe dans ce fichier (tableau « Skill / Quand l'utiliser »).
 
+### Groupe `dso` (CI/CD, Helm, Cloud Pi Native)
+
+URL : `https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/.agents/skills/dso/`. Doc de fond : `docs/okf/quickstart.md`.
+
+| Skill | Quand l'utiliser |
+|-------|-----------------|
+| `cicd-fabnum` | Écrire ou relire un `ci.yml`/`cd.yml` avec les workflows fabnum-cicd, releases, sync vers Cloud Pi Native |
+
 ## Documentation interne (OKF)
 
 `docs/okf/` regroupe la connaissance CI/CD (fabnum-cicd), Helm et Cloud Pi Native au format OKF.

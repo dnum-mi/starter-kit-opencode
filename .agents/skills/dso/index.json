@@ -1,0 +1,13 @@
+{
+  "skills": [
+    {
+      "name": "cicd-fabnum",
+      "files": [
+        "SKILL.md",
+        "references/cd.yml",
+        "references/ci.yml",
+        "references/workflows.md"
+      ]
+    }
+  ]
+}

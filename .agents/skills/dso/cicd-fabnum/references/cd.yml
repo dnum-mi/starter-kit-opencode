@@ -1,0 +1,120 @@
+# Gabarit de CD — une image, un chart Helm dans le dépôt, flux dev (rc) / main (stable), synchro CPiN.
+# Adapter : <APP>, CHART_NAME, HELM_REPOS, variables GITLAB_*.
+# Base : IA-Generative/ocr-api/.github/workflows/cd.yml (version mono-service).
+name: CD
+
+on:
+  push:
+    branches: [dev, main]
+  workflow_dispatch:
+
+# En CD on met en file, on n'annule JAMAIS : interrompre une release est pire que l'attendre.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  expose-vars:
+    runs-on: ubuntu-latest
+    permissions: {}
+    outputs:
+      IMAGE_BASE: ${{ steps.vars.outputs.IMAGE_BASE }}
+    steps:
+    - id: vars
+      shell: bash
+      run: echo "IMAGE_BASE=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
+  # Idempotent : tourne à chaque push, ne publie que s'il y a une release à faire.
+  release:
+    uses: dnum-mi/fabnum-cicd/.github/workflows/release-app.yml@v0
+    permissions:
+      issues: write
+      pull-requests: write
+      contents: write
+    with:
+      PRERELEASE_BRANCH: dev
+      RELEASE_BRANCH: main
+      ENABLE_PRERELEASE: true
+    # GitHub App : sans elle, la PR de release ouverte avec GITHUB_TOKEN ne déclenche jamais la CI.
+    secrets:
+      APP_CLIENT_ID: ${{ secrets.APP_CLIENT_ID }}
+      APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
+
+  build-docker:
+    uses: dnum-mi/fabnum-cicd/.github/workflows/build-docker.yml@v0
+    needs: [expose-vars, release]
+    if: ${{ needs.release.outputs.release-created == 'true' }}
+    permissions:
+      packages: write
+      contents: read
+    with:
+      IMAGE_NAME: ${{ needs.expose-vars.outputs.IMAGE_BASE }}/<APP>
+      IMAGE_TAG: ${{ needs.release.outputs.version }}
+      IMAGE_CONTEXT: .
+      IMAGE_DOCKERFILE: Dockerfile
+      # `latest` uniquement sur la branche stable (Kyverno interdit `latest` en prod côté cluster).
+      LATEST_TAG: ${{ github.ref_name == 'main' }}
+      BUILD_AMD64: true
+      BUILD_ARM64: false
+      BUILD_ARGS: |
+        APP_VERSION=${{ needs.release.outputs.version }}
+
+  # Le chart est dans le dépôt : le bump est committé directement (RUN_MODE: local).
+  bump-chart:
+    uses: dnum-mi/fabnum-cicd/.github/workflows/update-helm-chart.yml@v0
+    needs: [release, build-docker]
+    if: ${{ needs.release.outputs.release-created == 'true' }}
+    permissions:
+      contents: write
+      pull-requests: write
+    with:
+      RUN_MODE: local
+      CHART_DIR: ./
+      CHART_NAME: helm
+      APP_VERSION: ${{ needs.release.outputs.version }}
+    # Un ruleset qui exige une PR pour tout push n'accepte qu'une App dans sa liste de bypass.
+    secrets:
+      APP_CLIENT_ID: ${{ secrets.APP_CLIENT_ID }}
+      APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
+
+  # Après le bump : GitLab doit voir le commit du chart, pas l'ancien état.
+  sync-cpin:
+    uses: dnum-mi/fabnum-cicd/.github/workflows/sync-cpin.yml@v0
+    needs: [release, bump-chart]
+    if: ${{ needs.release.outputs.release-created == 'true' }}
+    permissions: {}
+    with:
+      # `vars.` et non `secrets.` : un secret ne peut pas être passé dans `with:`.
+      GITLAB_URL: ${{ vars.GITLAB_URL }}
+      GIT_MIRROR_PROJECT_ID: ${{ vars.GITLAB_MIRROR_ID }}
+      REPOSITORY_NAME: ${{ vars.GITLAB_PROJECT_NAME }}
+      BRANCH_TO_SYNC: ${{ github.ref_name }}
+      SYNC_ALL: false
+    secrets:
+      GIT_MIRROR_TOKEN: ${{ secrets.GITLAB_TRIGGER_TOKEN }}
+
+  release-chart:
+    uses: dnum-mi/fabnum-cicd/.github/workflows/release-helm-local.yml@v0
+    needs: [release, build-docker, bump-chart]
+    if: ${{ needs.release.outputs.release-created == 'true' }}
+    permissions:
+      contents: read
+      packages: write
+    with:
+      CHARTS_DIR: ./
+      CHART_NAME: helm
+      # Package exactement le commit de bump, pas la tête de branche.
+      CHECKOUT_REF: ${{ needs.bump-chart.outputs.commit-sha }}
+      # HELM_REPOS: nom=url,...   # uniquement pour les dépendances en HTTP (pas les dépendances OCI)
+
+  # Dernier job, sur la branche stable seulement. `needs` = exactement les jobs qui COMMITTENT
+  # sur main (release, bump-chart). Sinon release-app échoue sur dev : « is missing N commit(s) ».
+  sync-prerelease-branch:
+    uses: dnum-mi/fabnum-cicd/.github/workflows/sync-prerelease-branch.yml@v0
+    needs: [release, bump-chart]
+    if: ${{ github.ref_name == 'main' && needs.release.outputs.release-created == 'true' }}
+    permissions:
+      contents: write
+    with:
+      RELEASE_BRANCH: main
+      PRERELEASE_BRANCH: dev

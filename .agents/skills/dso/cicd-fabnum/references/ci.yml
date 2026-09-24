@@ -1,0 +1,135 @@
+# Gabarit de CI (pull request) — une image, un chart Helm dans le dépôt.
+# Adapter : <APP>, chemins du Dockerfile, IMAGE_TARGET, CT_CONF_PATH, CHARTS_DIR.
+# Base : IA-Generative/ocr-api/.github/workflows/ci.yml (version mono-service).
+name: CI
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    branches: ["**"]
+  workflow_dispatch:
+
+# On annule les runs obsolètes en CI (rien n'est publié). Ne jamais le faire en CD.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  expose-vars:
+    runs-on: ubuntu-latest
+    permissions: {}
+    outputs:
+      IMAGE_BASE: ${{ steps.vars.outputs.IMAGE_BASE }}
+      IMAGE_TAG: ${{ steps.vars.outputs.IMAGE_TAG }}
+    steps:
+    - id: vars
+      shell: bash
+      # ghcr.io refuse les majuscules : ${GITHUB_REPOSITORY,,} passe en minuscules.
+      run: |
+        echo "IMAGE_BASE=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+        echo "IMAGE_TAG=pr-${{ github.event.pull_request.number || 'manual' }}" >> "$GITHUB_OUTPUT"
+
+  lint-commits:
+    uses: dnum-mi/fabnum-cicd/.github/workflows/lint-commits.yml@v0
+    if: ${{ !github.event.pull_request.draft }}
+    permissions:
+      contents: read
+      pull-requests: read
+
+  scan-gitleaks:
+    uses: dnum-mi/fabnum-cicd/.github/workflows/scan-gitleaks.yml@v0
+    if: ${{ !github.event.pull_request.draft }}
+    # security-events et pull-requests en write sont exigés même si l'onglet Security
+    # et les commentaires sont désactivés : un appelant qui accorde moins échoue au démarrage.
+    permissions:
+      contents: read
+      security-events: write
+      pull-requests: write
+    with:
+      PR_NUMBER: ${{ github.event.pull_request.number || '' }}
+      GITHUB_SECURITY_TAB: true
+
+  scan-trivy-conf:
+    uses: dnum-mi/fabnum-cicd/.github/workflows/scan-trivy.yml@v0
+    permissions:
+      contents: read
+      security-events: write
+      pull-requests: write
+      packages: read
+    with:
+      PATH: ./
+      PR_NUMBER: ${{ github.event.pull_request.number || '' }}
+      FORMAT: sarif
+      GITHUB_SECURITY_TAB: true
+      CATEGORY: trivy-config
+
+  lint-helm:
+    uses: dnum-mi/fabnum-cicd/.github/workflows/lint-helm.yml@v0
+    permissions:
+      contents: read
+    with:
+      CT_CONF_PATH: ci/configs/ct.yaml
+      CHARTS_DIR: helm
+
+  build-docker:
+    uses: dnum-mi/fabnum-cicd/.github/workflows/build-docker.yml@v0
+    needs: [expose-vars]
+    if: ${{ !github.event.pull_request.draft }}
+    permissions:
+      packages: write
+      contents: read
+    with:
+      IMAGE_NAME: ${{ needs.expose-vars.outputs.IMAGE_BASE }}/<APP>
+      IMAGE_TAG: ${{ needs.expose-vars.outputs.IMAGE_TAG }}
+      IMAGE_CONTEXT: .
+      IMAGE_DOCKERFILE: Dockerfile
+      # Obligatoire si le dernier stage du Dockerfile est `test` (sinon l'image de test est publiée).
+      # IMAGE_TARGET: prod
+      BUILD_AMD64: true
+      BUILD_ARM64: false
+      CACHE: true
+    # Pas de bloc secrets : ghcr.io s'authentifie avec le GITHUB_TOKEN du job.
+
+  scan-trivy-image:
+    uses: dnum-mi/fabnum-cicd/.github/workflows/scan-trivy.yml@v0
+    needs: [expose-vars, build-docker]
+    permissions:
+      contents: read
+      security-events: write
+      pull-requests: write
+      packages: read
+    with:
+      IMAGE: ${{ needs.expose-vars.outputs.IMAGE_BASE }}/<APP>:${{ needs.expose-vars.outputs.IMAGE_TAG }}
+      PR_NUMBER: ${{ github.event.pull_request.number || '' }}
+      FORMAT: sarif
+      GITHUB_SECURITY_TAB: true
+      CATEGORY: trivy-image-<APP>   # distinct par leg, sinon les SARIF s'écrasent
+      TIMEOUT: 20m                  # sans timeout, une grosse image abandonne sans rapport
+
+  # Seul check requis de la protection de branche. Lister TOUS les jobs ci-dessus :
+  # un job oublié laisse la gate verte quand il échoue.
+  all-jobs-passed:
+    name: Check jobs status
+    runs-on: ubuntu-latest
+    if: ${{ always() }}
+    permissions: {}
+    needs:
+    - expose-vars
+    - lint-commits
+    - scan-gitleaks
+    - scan-trivy-conf
+    - lint-helm
+    - build-docker
+    - scan-trivy-image
+    steps:
+    - name: Check status of all required jobs
+      run: |-
+        NEEDS_CONTEXT='${{ toJson(needs) }}'
+        for JOB_ID in $(echo "$NEEDS_CONTEXT" | jq -r 'keys[]'); do
+          RESULT=$(echo "$NEEDS_CONTEXT" | jq -r ".[\"$JOB_ID\"].result")
+          echo "$JOB_ID job result: $RESULT"
+          if [[ $RESULT != "success" && $RESULT != "skipped" ]]; then
+            echo "Error: the $JOB_ID job did not pass."
+            exit 1
+          fi
+        done
