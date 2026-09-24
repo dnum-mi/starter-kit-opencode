@@ -125,6 +125,11 @@ URL : `https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/.agen
 | `helm-chart-cpin` | Créer ou adapter un chart Helm pour Cloud Pi Native (template tobi, UID OpenShift, labels MIOM, Vault, vérification Kyverno) |
 | `deploiement-cpin` | Embarquer et déployer une application sur Cloud Pi Native (console, mirror, pipeline DSO, ArgoCD, secrets) et diagnostiquer un déploiement qui ne bouge pas |
 
+## Documentation interne (OKF)
+
+`docs/okf/` regroupe la connaissance CI/CD (fabnum-cicd), Helm et Cloud Pi Native au format OKF.
+Point d'entrée : `docs/okf/quickstart.md` (routage par intention). Les sources amont font autorité ; la doc n'est pas un skill.
+
 ## Implementing a Plan
 
 Before and while implementing a plan (migration, feature, refactor) that touches external libraries:
