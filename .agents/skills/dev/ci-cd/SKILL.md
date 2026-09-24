@@ -1,44 +1,35 @@
 ---
 name: ci-cd
-description: Use when setting up CI/CD pipelines for Fabrique Numérique projects — GitHub Actions, reusable workflows from fabnum-cicd, Docker builds, security scanning, release automation, and Helm deployments
+description: Use when setting up a basic CI pipeline (lint, tests, build) for a Fabrique Numérique project or choosing between custom and reusable GitHub Actions workflows — for fabnum-cicd reusable workflows, releases and Cloud Pi Native sync use the cicd-fabnum skill (dso group)
 allowed-tools: Bash Read Write
 ---
 
 # CoFabNum CI/CD
 
-Principles, pipelines, and reusable workflows.
+Principes et gabarit de base. Pour assembler les workflows réutilisables de fabnum-cicd (build, scans, release-please, chart Helm, synchro Cloud Pi Native), utiliser le skill **`cicd-fabnum`** (groupe `dso`).
 
-## Principles
+## Principes
 
-CI/CD automates development steps to increase delivery frequency.
+CI/CD automatise les étapes de développement pour augmenter la fréquence de livraison.
 
-### Tools
+- **Pipeline runner** : GitHub Actions
+- [SonarQube](https://www.sonarsource.com/products/sonarqube/) — qualité du code ; [Trivy](https://trivy.dev/) — CVE des dépendances et images
+- **CI** : Lint → Tests (unitaires/intégration) → Build → Tests (E2E) → Qualité de code
+- **CD** : Scan CVE → Release (avec changelog) → Déploiement
 
-- **Pipeline runner**: GitHub Actions (primary)
-- [SonarQube](https://www.sonarsource.com/products/sonarqube/) — code quality analysis
-- [Trivy](https://trivy.dev/) — CVE detection in dependencies and images
-
-### CI Phase
-
-Steps: Lint → Tests (unit/integration) → Build → Tests (E2E) → Code quality
-
-### CD Phase
-
-Steps: CVE scan → Release (with changelog) → Deploy
-
-## Pipeline Checklist
+## Checklist
 
 Progress:
 - [ ] Lint (ESLint/Ruff)
-- [ ] Unit tests (Vitest/pytest)
+- [ ] Tests unitaires (Vitest/pytest)
 - [ ] Build
-- [ ] E2E tests (Playwright)
-- [ ] SonarQube scan
-- [ ] Docker build + push
-- [ ] Trivy scan
-- [ ] Helm lint + deploy
+- [ ] Tests E2E (Playwright)
+- [ ] Scan SonarQube
+- [ ] Build + push Docker
+- [ ] Scan Trivy
+- [ ] Lint Helm + déploiement
 
-## Minimal CI Template
+## Gabarit CI minimal (pnpm)
 
 ```yaml
 name: CI
@@ -79,95 +70,16 @@ jobs:
       - run: pnpm build
 ```
 
-## Reusable Workflows (Recommended)
+## Workflows réutilisables
 
-The Fabrique Numérique maintains reusable workflows in [`dnum-mi/fabnum-cicd`](https://github.com/dnum-mi/fabnum-cicd).
+La Fabrique Numérique maintient [`dnum-mi/fabnum-cicd`](https://github.com/dnum-mi/fabnum-cicd) : privilégier ces workflows plutôt qu'un pipeline sur mesure (cohérence, scans de sécurité).
+Référence : `uses: dnum-mi/fabnum-cicd/.github/workflows/<nom>.yml@v0` — **jamais `@main`** (règle du repo) ; `@v0` est flottant et le dépôt est en `0.x`, figer sur `@v0.20` ou un SHA si besoin de stabilité.
+Le détail (catalogue, permissions, gabarits `ci.yml`/`cd.yml`, secrets, pièges) est dans `cicd-fabnum`.
 
-**Default choice**: Use reusable workflows over custom pipelines.
+## Pièges
 
-### Available workflows
-
-| Workflow | Purpose |
-|----------|---------|
-| `build-docker.yml` | Multi-arch Docker build+push |
-| `clean-cache.yml` | Clean GH Actions cache |
-| `lint-commits.yml` | Conventional commits validation |
-| `lint-helm.yml` | Helm chart lint |
-| `release-app.yml` | Automated releases (release-please) |
-| `release-helm.yml` | Helm chart OCI publish |
-| `scan-sonarqube.yml` | Code quality analysis |
-| `scan-trivy.yml` | Vulnerability scan |
-| `test-helm.yml` | Helm install test in Kind |
-
-### Usage
-
-```yaml
-jobs:
-  my-job:
-    uses: dnum-mi/fabnum-cicd/.github/workflows/<name>.yml@main
-    with:
-      # inputs
-    secrets:
-      # required secrets
-```
-
-### Example: CI with reusable workflows
-
-```yaml
-name: CI
-on:
-  pull_request:
-    branches: ["**"]
-
-jobs:
-  lint-commits:
-    uses: dnum-mi/fabnum-cicd/.github/workflows/lint-commits.yml@main
-
-  scan-sonarqube:
-    uses: dnum-mi/fabnum-cicd/.github/workflows/scan-sonarqube.yml@main
-    with:
-      SONAR_URL: https://sonarqube.example.com
-      SOURCES_PATH: apps
-    secrets:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
-
-  build-docker:
-    uses: dnum-mi/fabnum-cicd/.github/workflows/build-docker.yml@main
-    with:
-      IMAGE_NAME: ghcr.io/${{ github.repository }}/my-app
-      IMAGE_TAG: pr-${{ github.event.pull_request.number }}
-    permissions:
-      packages: write
-      contents: read
-
-  scan-trivy:
-    needs: build-docker
-    uses: dnum-mi/fabnum-cicd/.github/workflows/scan-trivy.yml@main
-    with:
-      IMAGE: ghcr.io/${{ github.repository }}/my-app:pr-${{ github.event.pull_request.number }}
-    permissions:
-      security-events: write
-      pull-requests: write
-```
-
-## Required Secrets
-
-| Secret | Workflows | Description |
-|--------|-----------|-------------|
-| `GH_PAT` | release-app | GitHub Personal Access Token |
-| `SONAR_TOKEN` | scan-sonarqube | SonarQube token |
-| `SONAR_PROJECT_KEY` | scan-sonarqube | SonarQube project key |
-
-See [fabnum-cicd docs](https://github.com/dnum-mi/fabnum-cicd/tree/main/docs/workflows) for full inputs/outputs per workflow.
-
-## Gotchas
-
-- **Always use reusable workflows** — writing custom pipelines violates consistency and misses security scans
-- **Pin to `@main`** — the workflow reference should pin to the branch, not `@latest`
-- **Trivy scans images AFTER build** — it depends on the Docker image being available
-- **SonarQube needs permissions** — `issues: write` and `pull-requests: write` for PR comments
-- **`--frozen-lockfile` in CI** — always use this to prevent unexpected dependency changes
-- **Cache pnpm store** — add pnpm store caching to speed up CI runs
-- **Node version** — use `24` (LTS) consistently across all CI jobs
-- **GitHub Actions version tags** — pin to `@v6` not `@latest` for all actions
+- **`--frozen-lockfile` en CI** — évite les changements de dépendances inattendus
+- **Cache du store pnpm** — accélère les runs
+- **Version de Node** — `24` (LTS) sur tous les jobs
+- **Versions d'actions** — pinner (`@v6` ici, SHA de préférence), jamais `@latest`, `@main` ni `@master`
+- **Trivy scanne l'image APRÈS le build** — elle doit exister

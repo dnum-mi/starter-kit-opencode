@@ -1,16 +1,17 @@
 ---
 name: deploiement
-description: Use when targeting Cloud Pi Native, configuring Kubernetes/OpenShift deployment, writing Dockerfiles for production, or setting up Helm charts
+description: Use when writing production Dockerfiles for Cloud Pi Native, hardening containers (rootless, read-only filesystem, tags) or setting up local Kubernetes development — for Helm charts use helm-chart-cpin and for the CPiN console, ArgoCD and pipeline use deploiement-cpin (dso group)
 allowed-tools: Bash Read Write
 ---
 
-# Déploiement Cloud Pi Native
+# Déploiement Cloud Pi Native : images et conteneurs
 
-Conventions et exigences pour déployer sur Cloud Pi Native (K8s/OpenShift).
+Règles pour construire des images prêtes pour Cloud Pi Native (K8s/OpenShift) et développer en local.
+Pour le **chart Helm**, utiliser **`helm-chart-cpin`** ; pour la **console, le mirror, le pipeline DSO et ArgoCD**, utiliser **`deploiement-cpin`** (groupe `dso`).
 
 ## Plateforme cible
 
-[Cloud Pi Native](https://cloud-pi-native.fr) est le PaaS cible du Ministère de l'Intérieur, basé sur Kubernetes/OpenShift. Tout projet doit être conçu **dès sa création** pour :
+[Cloud Pi Native](https://cloud-pi-native.fr) est le PaaS cible du Ministère de l'Intérieur, basé sur Kubernetes/OpenShift. Tout projet est conçu **dès sa création** pour :
 
 - la **conteneurisation** de tous les services ;
 - la **sécurité renforcée** avec un minimum de privilèges (**rootless**) ;
@@ -21,11 +22,12 @@ Conventions et exigences pour déployer sur Cloud Pi Native (K8s/OpenShift).
 ### Règles
 
 - Image de base légère : `*-alpine`, `*-slim`, ou `distroless`
-- Utilisateur **non-root** (UID ≥ 1000)
+- Utilisateur **non-root** ; sur OpenShift l'UID est **attribué au démarrage** : les fichiers doivent appartenir au groupe root (`chown -R <uid>:0`, `chmod -R g=u`)
 - Build **multi-stage** — séparer dépendances de build et de production
 - Pas de secrets, fichiers `.env` ou outils de développement dans l'image
-- Port d'écoute **non privilégié** (≥ 1024, ex. `8080`)
-- Ne jamais utiliser le tag `latest` en production — toujours épingler un tag précis
+- Port d'écoute **non privilégié** (> 1024, ex. `8080`)
+- Ne jamais utiliser le tag `latest` (Kyverno le bloque en prod) — un tag versionné : version applicative, SHA court, ou digest
+- Dockerfile **dans le dépôt** ; images de base publiques ou reconstruites par la plateforme
 - Scanner les images avec [Trivy](https://trivy.dev/) en CI
 
 ### Exemple Dockerfile Node.js
@@ -47,18 +49,19 @@ USER 1001
 ### securityContext Kubernetes
 
 ```yaml
-# Niveau pod (spec.securityContext)
-securityContext:
-  runAsNonRoot: true
-  runAsUser: 1001
-
 # Niveau conteneur (spec.containers[].securityContext)
 securityContext:
-  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  readOnlyRootFilesystem: true      # chemins inscriptibles (/tmp…) en emptyDir
   allowPrivilegeEscalation: false
   capabilities:
     drop: [ALL]
+  seccompProfile:
+    type: RuntimeDefault
 ```
+
+**Ne pas figer `runAsUser`, `runAsGroup` ni `fsGroup` sur OpenShift/CPiN** : le SCC alloue l'UID par namespace et rejette un UID hors plage. Sur un Kubernetes simple (Kind, k3d), on peut les fixer.
+Détail et surcharge du chart : `helm-chart-cpin`.
 
 ## Développement local
 
@@ -76,174 +79,11 @@ Pour reproduire un environnement proche de la production :
 | [k3d](https://k3d.io/) | k3s dans Docker — léger et rapide |
 | [Minikube](https://minikube.sigs.k8s.io/) | Cluster K8s local, multi-drivers |
 
-## Helm charts
+Tester l'image en lecture seule avant de livrer : `docker run --read-only <image>`.
 
-### Pourquoi Helm
+## Pièges
 
-- **Paramétrage** par environnement via `values.yaml` sans dupliquer les manifests
-- **Reproductibilité** : chart versionné = déploiements identiques
-- **Rollback** en une commande
-- Compatible nativement avec Cloud Pi Native, ArgoCD, FluxCD
-
-### Template de référence
-
-[**this-is-tobi/helm-charts/template**](https://github.com/this-is-tobi/helm-charts/tree/main/template) — template Helm générique couvrant Deployment, Service, Ingress, HPA, ConfigMap, Secret, ServiceAccount.
-
-### Structure minimale
-
-```
-helm/
-├── Chart.yaml            # Métadonnées (nom, version, appVersion)
-├── values.yaml           # Valeurs par défaut
-├── templates/
-│   ├── _helpers.tpl      # Labels et fonctions réutilisables
-│   ├── deployment.yaml
-│   ├── service.yaml
-│   ├── ingress.yaml
-│   ├── configmap.yaml
-│   ├── hpa.yaml
-│   └── serviceaccount.yaml
-└── values/               # (optionnel) values par environnement
-    ├── dev.yaml
-    ├── staging.yaml
-    └── prod.yaml
-```
-
-### Bonnes pratiques Helm
-
-- Utiliser les labels standards `app.kubernetes.io/*` via `_helpers.tpl`
-- Rendre les ressources optionnelles avec des conditions (`{{- if .Values.ingress.enabled }}`)
-- Versionner le chart indépendamment de l'application (`version` ≠ `appVersion`)
-- Valider en CI : `helm lint` + `helm template`
-- Secrets via **Vault** (fourni par CPiN) — ne jamais mettre de secrets en clair dans `values.yaml`
-
-### Naming des ressources K8s
-
-Noms courts — les noms trop longs peuvent bloquer le déploiement sur OpenShift.
-
-| Ressource | Pattern |
-|-----------|---------|
-| Deployment | `env-ms-dep` |
-| Service | `env-ms-svc` |
-| StatefulSet | `env-ms-sts` |
-| ConfigMap | `env-ms-cm` |
-| Secret | `env-secret` |
-| CronJob | `env-name-cj` |
-| PVC | `env-name-pvc` |
-
-## Cloud Pi Native — Exigences spécifiques
-
-### Structure des dépôts
-
-Cloud Pi Native distingue deux types de dépôts :
-
-| Type | Contenu | Prérequis |
-|------|---------|-----------|
-| Applicatif | Code source + Dockerfile | Fichier `.gitlab-ci-dso.yaml` obligatoire |
-| Infrastructure | Helm charts / Kustomize / manifests | Déployé via ArgoCD |
-
-Un seul dépôt peut remplir les deux rôles.
-
-### Tags d'images
-
-Les images doivent être taguées avec un identifiant basé sur le SHA Git — jamais `latest` :
-
-```
-CI_COMMIT_SHORT_SHA   # ex. a1b2c3d4
-CI_COMMIT_SHA         # SHA complet
-CI_COMMIT_TAG         # tag Git si existant
-```
-
-### `registry-pull-secret`
-
-La console CPiN crée automatiquement un secret `registry-pull-secret` dans chaque namespace pour tirer les images depuis Harbor. Le référencer dans les Deployments :
-
-```yaml
-imagePullSecrets:
-  - name: registry-pull-secret
-```
-
-### Labels obligatoires MIOM
-
-Toutes les ressources K8s doivent porter ces labels :
-
-```yaml
-labels:
-  app: "<nom-application>"
-  env: "<dev|formation|qualif|test|preprod|prod>"
-  tier: "<frontend|backend|db|cache|auth>"
-  criticality: "<high|medium|low>"
-  component: "<nginx|node|postgres|redis|...>"
-```
-
-### Liveness & Readiness probes
-
-Obligatoires sur tous les Deployments :
-
-```yaml
-livenessProbe:
-  httpGet:
-    path: /health
-    port: 8080
-  initialDelaySeconds: 3
-  periodSeconds: 10
-readinessProbe:
-  httpGet:
-    path: /ready
-    port: 8080
-  initialDelaySeconds: 3
-  periodSeconds: 5
-```
-
-### Resources limits/requests
-
-Obligatoires. Préférer `Guaranteed` QoS (limits = requests) :
-
-```yaml
-resources:
-  limits:
-    memory: "256Mi"
-    cpu: "500m"
-  requests:
-    memory: "256Mi"
-    cpu: "500m"
-```
-
-### Network policies
-
-Les namespaces CPiN sont en **Deny ALL** par défaut. Définir explicitement les flux nécessaires :
-
-```yaml
-kind: NetworkPolicy
-apiVersion: networking.k8s.io/v1
-metadata:
-  name: allow-ingress-frontend
-spec:
-  podSelector:
-    matchLabels:
-      tier: frontend
-  ingress:
-    - from:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: ingress-nginx
-      ports:
-        - port: 8080
-```
-
-### Autres exigences
-
-- **Stateless** : pas d'état en mémoire locale — utiliser Redis ou un service externe
-- **Logs** : écrire uniquement sur `stdout`, format JSON ou GELF — jamais dans un fichier
-- **ArgoCD GitOps** : les modifications de `target revision`, `path` et `values files` se font **depuis la console CPiN**, pas depuis l'UI ArgoCD
-
-## Gotchas
-
-- **`.gitlab-ci-dso.yaml` manquant** — le dépôt applicatif ne sera pas traité par la CI CPiN sans ce fichier
-- **Tag `latest`** — bloqué par les politiques Kyverno de CPiN ; toujours utiliser un SHA
-- **Sealed Secrets** — CPiN fournit Vault, pas Sealed Secrets ; ne pas confondre
-- **Noms trop longs** — peuvent empêcher le déploiement sur OpenShift ; rester court et préfixer par l'env
-- **Network policies oubliées** — l'application sera injoignable en Deny ALL ; déclarer ingress/egress dès le départ
-- **Modifier ArgoCD depuis l'UI** — ignoré depuis la version 9.11.5 de la console CPiN ; tout passer par la console
-- **`readOnlyRootFilesystem: true`** — vérifier que l'application n'écrit pas dans le filesystem (logs, tmp) avant d'activer
-- **`resources.limits` absent** — les pods peuvent être évincés en cas de pression mémoire sur le nœud
+- **`readOnlyRootFilesystem: true`** — vérifier que l'application n'écrit pas dans le filesystem (logs, tmp) avant de l'activer
+- **UID figé** — fonctionne en local, rejeté sur OpenShift
+- **Tag `latest`** — bloqué par les politiques Kyverno de CPiN en prod
+- **Image poussée depuis un poste** — interdit : les images sont construites par la chaîne DSO (voir `deploiement-cpin`)
