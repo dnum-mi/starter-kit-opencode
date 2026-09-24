@@ -115,6 +115,11 @@ Les groupes ne sont pas faits pour être installés ensemble : un groupe n'est c
 - Après avoir ajouté ou retiré un fichier de skill : `node scripts/skills-index.mjs` (génère), `node scripts/skills-index.mjs --check` (vérifie).
 - Ajouter une sous-section par groupe dans ce fichier (tableau « Skill / Quand l'utiliser »).
 
+## Documentation interne (OKF)
+
+`docs/okf/` regroupe la connaissance CI/CD (fabnum-cicd), Helm et Cloud Pi Native au format OKF.
+Point d'entrée : `docs/okf/quickstart.md` (routage par intention). Les sources amont font autorité ; la doc n'est pas un skill.
+
 ## Implementing a Plan
 
 Before and while implementing a plan (migration, feature, refactor) that touches external libraries:
