@@ -123,6 +123,11 @@ URL : `https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/.agen
 |-------|-----------------|
 | `cicd-fabnum` | Écrire ou relire un `ci.yml`/`cd.yml` avec les workflows fabnum-cicd, releases, sync vers Cloud Pi Native |
 
+## Documentation interne (OKF)
+
+`docs/okf/` regroupe la connaissance CI/CD (fabnum-cicd), Helm et Cloud Pi Native au format OKF.
+Point d'entrée : `docs/okf/quickstart.md` (routage par intention). Les sources amont font autorité ; la doc n'est pas un skill.
+
 ## Implementing a Plan
 
 Before and while implementing a plan (migration, feature, refactor) that touches external libraries:
