@@ -83,6 +83,8 @@ Each subproject has its own `AGENTS.md` with project-specific config. This file 
 
 ## Skills disponibles
 
+### Socle
+
 Les skills suivants sont chargés automatiquement depuis `.agents/skills/` :
 
 | Skill | Quand l'utiliser |
@@ -96,6 +98,22 @@ Les skills suivants sont chargés automatiquement depuis `.agents/skills/` :
 | `deploiement` | Cloud Pi Native, Kubernetes/OpenShift, Dockerfiles, Helm charts |
 | `environnement-installation` | Setup poste dev — Windows/WSL, macOS, Ubuntu |
 | `outils-dev` | Git, Docker Compose, VS Code, GitHub CLI, pnpm, proto, zsh, uv |
+### Ensembles optionnels
+
+Les skills qui n'ont pas vocation à être installés avec le socle vivent dans `skill-sets/<ensemble>/`, chacun avec son propre `index.json`.
+Un ensemble n'est chargé que si son URL est déclarée dans `opencode.json` :
+
+```json
+"skills": { "urls": [
+  "https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/.agents/skills/",
+  "https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/skill-sets/<ensemble>/"
+] }
+```
+
+- Noms de skills **uniques entre ensembles** : OpenCode les télécharge tous dans `~/.cache/opencode/skills/`.
+- Après avoir ajouté ou retiré un fichier de skill : `node scripts/skills-index.mjs` (génère), `node scripts/skills-index.mjs --check` (vérifie).
+- Ajouter une sous-section par ensemble dans ce fichier (tableau « Skill / Quand l'utiliser »).
+
 ## Implementing a Plan
 
 Before and while implementing a plan (migration, feature, refactor) that touches external libraries:

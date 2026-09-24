@@ -35,6 +35,10 @@ Le dossier `~/.agents/skills/` est automatiquement scanné par tous les clients 
 
 Ajouter ce dossier comme dépôt Git pour que les skills soient découverts automatiquement via `.agents/skills/`.
 
+## Ensembles de skills optionnels
+
+Les skills qui ne vont pas toujours ensemble sont dans `skill-sets/<ensemble>/` (un `index.json` par ensemble) et se chargent par URL dans `opencode.json` (`skills.urls`) — voir `AGENTS.md`. Régénérer les index : `node scripts/skills-index.mjs` ; vérifier : `node scripts/skills-index.mjs --check`.
+
 ## Scripts disponibles
 
 Chaque skill peut contenir des scripts dans `scripts/` :
