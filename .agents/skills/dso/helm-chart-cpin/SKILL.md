@@ -78,7 +78,7 @@ Mettre la même commande en **job CI bloquant** (skill `cicd-fabnum`) : c'est ce
 - `version` (chart) ≠ `appVersion` (application). Dans le dépôt applicatif, ne pas les bumper à la main : `update-helm-chart` (`RUN_MODE: local`) le fait au release (skill `cicd-fabnum`).
 - Régénérer le README (helm-docs) : `lint-helm` échoue si le README diffère du rendu.
 - Publication OCI : `release-helm-local` (ghcr.io) ; le pipeline DSO refait `helm dependency update`, `helm package` puis `helm push` vers Harbor.
-- Dépendances (postgres, redis, CNPG) : `alias` + `condition: <alias>.enabled`, et `HELM_REPOS`/`chart-repos` pour celles en HTTP. Registres autorisés côté cluster : docker.io, harbor, registry.redhat.io, quay.io, bitnami, ghcr.io.
+- Dépendances (postgres, redis, CNPG) : `alias` + `condition: <alias>.enabled`, et `HELM_REPOS`/`chart-repos` pour celles en HTTP. Registres autorisés côté cluster (règle Kyverno `restrict-image-registry`) : `docker.io/`, `harbor.io/`, `registry.redhat.io/`, `quay.io/`, `bitnami/`, `ghcr.io/`. Le Harbor de l'instance a un autre domaine (voir `deploiement-cpin`, « Limites connues »).
 
 ## Pièges
 

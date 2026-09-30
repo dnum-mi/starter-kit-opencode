@@ -15,8 +15,8 @@ vérification manquante pour que le problème ne revienne pas.
 | 404 sur l'URL | `ingress.enabled: false` par défaut dans le template tobi, ou host d'exemple | 2, 3 | ingress activé avec le host réel dans `values.yaml` ; `--require-ingress` |
 | 503 sur l'URL | backend de l'Ingress sur le containerPort (3000) au lieu du **port du Service** (80) | 3 | `backend.service.port` = `Service.port` ; le script le signale |
 | `sync-cpin` : `GITLAB_URL must be a single https:// URL, got ''` | variables GitHub absentes | 1 | créer `GITLAB_URL`, `GITLAB_MIRROR_ID`, `GITLAB_PROJECT_NAME` (variables) et `GITLAB_TRIGGER_TOKEN` (secret) |
-| Synchro : `403 Write access to repository not granted` | token GitHub dans le mauvais champ, ou mauvais type de token | 1 | vérifier le champ (`GIT_INPUT_TOKEN` : lecture seule sur la source) avant d'élargir les droits |
-| Jobs `git-sync` : `No value found at …` | secrets de synchro absents de la console | 1 | l'humain saisit les tokens dans la console (secrets du projet) |
+| Synchro : `403 Write access to repository not granted` | token GitHub fine-grained en lecture seule | 1 | informations d'accès du dépôt privé : PAT avec le scope `repo` (doc officielle) |
+| Jobs `git-sync` : `No value found at …` | informations de synchro du dépôt absentes (dépôt privé déclaré sans accès) | 1 | l'humain complète les informations d'accès dans le formulaire du dépôt de la console ; ne pas chercher dans le Vault de la chaîne (pas d'accès utilisateur) |
 | Token introuvable dans GitLab (« Access Token → New ») | confusion PAT (`glpat-`) / pipeline trigger token (`glptt-`) | 1 | le token de déclenchement est un `glptt-` fourni par la console |
 
 ## Plateforme (documentation CPiN)

@@ -42,7 +42,7 @@ Les gabarits de `references/` sont validés contre les entrées et secrets réel
 | Nom | Type | Utilisé par |
 |-----|------|-------------|
 | `APP_CLIENT_ID`, `APP_PRIVATE_KEY` | secrets | `release-app`, `update-helm-chart`, `dispatch-helm-chart` (ensemble) |
-| `GITLAB_TRIGGER_TOKEN` (→ `GIT_MIRROR_TOKEN`) | secret | `sync-cpin` : **pipeline trigger token `glptt-`** du projet `mirror`, pas un PAT `glpat-` |
+| `GITLAB_TRIGGER_TOKEN` (→ `GIT_MIRROR_TOKEN`) | secret | `sync-cpin` : **pipeline trigger token `glptt-`** du projet `mirror`, lu dans la console (secrets du projet), pas un PAT `glpat-` |
 | `GITLAB_URL`, `GITLAB_MIRROR_ID`, `GITLAB_PROJECT_NAME` | **variables** (`vars.`) | `sync-cpin` : un secret ne peut pas être passé dans `with:` |
 | `SONAR_TOKEN`, `SONAR_PROJECT_KEY` | secrets | `scan-sonarqube` |
 
