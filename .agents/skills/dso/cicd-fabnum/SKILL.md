@@ -42,11 +42,13 @@ Les gabarits de `references/` sont validés contre les entrées et secrets réel
 | Nom | Type | Utilisé par |
 |-----|------|-------------|
 | `APP_CLIENT_ID`, `APP_PRIVATE_KEY` | secrets | `release-app`, `update-helm-chart`, `dispatch-helm-chart` (ensemble) |
-| `GITLAB_TRIGGER_TOKEN` (→ `GIT_MIRROR_TOKEN`) | secret | `sync-cpin` |
+| `GITLAB_TRIGGER_TOKEN` (→ `GIT_MIRROR_TOKEN`) | secret | `sync-cpin` : **pipeline trigger token `glptt-`** du projet `mirror`, pas un PAT `glpat-` |
 | `GITLAB_URL`, `GITLAB_MIRROR_ID`, `GITLAB_PROJECT_NAME` | **variables** (`vars.`) | `sync-cpin` : un secret ne peut pas être passé dans `with:` |
 | `SONAR_TOKEN`, `SONAR_PROJECT_KEY` | secrets | `scan-sonarqube` |
 
 L'URL GitLab, l'id du projet `mirror` et le token viennent de la console CPiN (secrets du projet).
+**Avant** d'activer `sync-cpin`, l'humain crée ces secrets et variables (l'agent ne manipule jamais leur valeur) ; porte : `gh secret list` et `gh variable list` affichent les 4 noms. Sinon le premier run échoue avec `GITLAB_URL must be a single https:// URL, got ''`.
+Ajouter aussi au `ci.yml` le job bloquant `check-cpin-rules` (rendu `helm template` + `check-cpin-rules.py`, skill `helm-chart-cpin`) dans les `needs` de `all-jobs-passed`.
 
 ## Pièges
 

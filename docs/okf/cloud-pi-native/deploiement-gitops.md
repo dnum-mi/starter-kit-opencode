@@ -14,6 +14,10 @@ Pour redéployer : nouveau tag d'image → dépôt d'infra mis à jour → synch
 
 ## Ce qui se règle dans la console (pas dans l'UI ArgoCD)
 Révision (branche/tag), chemin (défaut `.`), fichiers de values. Un placeholder `<env>` dans le chemin ou le nom est remplacé par le nom de l'environnement (`values-<env>.yaml`).
+Ordre de surcharge usuel : `values.yaml` → `values-cpin.yaml` → `values-<env>.yaml` (le dernier gagne). Un fichier **non déclaré** dans la console est ignoré sans erreur : c'est ce qui a fait croire, sur `dso-demo`, que seul `values.yaml` était lu.
+
+## Organisation des dépôts
+Préférer **un dépôt applicatif + un dépôt d'infra privé** (multi-dépôt ArgoCD) à des branches par environnement : la synchro de la console suit une seule branche, et un changement de chart ou de values ne demande alors ni release applicative ni nouvelle image.
 Les modifications faites dans l'interface ArgoCD sont **ignorées**. Autres sources que le GitLab CPiN : exceptionnel, par les administrateurs après validation.
 
 ## Fonctionnalité « Déploiements » (beta, console ≥ 9.25.0)

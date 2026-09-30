@@ -119,11 +119,18 @@ Les groupes ne sont pas faits pour être installés ensemble : un groupe n'est c
 
 URL : `https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/.agents/skills/dso/`. Doc de fond : `docs/okf/quickstart.md`.
 
+Invariants, toujours valables :
+
+- **Vérifier au PR, pas au déploiement** : chart rendu (`helm template`) et contrôlé par `check-cpin-rules.py` en CI avant toute merge.
+- **Suivre le runbook `deploiement-cpin` phase par phase**, sans sauter de porte.
+- **Ne jamais demander, lire ni écrire la valeur d'un token ou d'un secret** : l'humain la saisit (console CPiN, GitHub, Vault) ; l'agent vérifie seulement que le nom existe.
+- La **console CPiN** est la source de vérité ; l'UI ArgoCD et le GitLab interne ne se modifient pas à la main.
+
 | Skill | Quand l'utiliser |
 |-------|-----------------|
-| `cicd-fabnum` | Écrire ou relire un `ci.yml`/`cd.yml` avec les workflows fabnum-cicd, releases, sync vers Cloud Pi Native |
-| `helm-chart-cpin` | Créer ou adapter un chart Helm pour Cloud Pi Native (template tobi, UID OpenShift, labels MIOM, Vault, vérification Kyverno) |
-| `deploiement-cpin` | Embarquer et déployer une application sur Cloud Pi Native (console, mirror, pipeline DSO, ArgoCD, secrets) et diagnostiquer un déploiement qui ne bouge pas |
+| `deploiement-cpin` | **Point d'entrée** pour déployer sur Cloud Pi Native : runbook par phases (prérequis, values, vérification, livraison) et dépannage (quota, mauvaise image, 404, 503, synchro) |
+| `helm-chart-cpin` | Créer ou adapter un chart Helm pour CPiN : template tobi, checklist pré-PR, `check-cpin-rules.py` |
+| `cicd-fabnum` | Écrire ou relire un `ci.yml`/`cd.yml` avec fabnum-cicd, releases, `sync-cpin` et ses secrets |
 
 ## Documentation interne (OKF)
 

@@ -1,69 +1,106 @@
 ---
 name: deploiement-cpin
-description: Use when onboarding or deploying an application on Cloud Pi Native — DSO console (project, repositories, environments, quotas), mirror sync, .gitlab-ci-dso pipeline to Harbor, ArgoCD GitOps deployment, Vault secrets, Kyverno rejections, and diagnosing a deployment that does not roll out
+description: Use when onboarding or deploying an application on Cloud Pi Native — DSO console (project, repositories, environments, quotas), mirror sync and tokens, .gitlab-ci-dso pipeline to Harbor, values files loaded by ArgoCD, Vault secrets, Kyverno rejections, and diagnosing a deployment that does not roll out (quota, wrong image, 404, 503)
 allowed-tools: Bash Read Write
 ---
 
-# Déployer sur Cloud Pi Native
+# Déployer sur Cloud Pi Native : runbook
 
-Faire passer une application de son dépôt GitHub à un namespace CPiN, et diagnostiquer quand ça ne bouge pas.
+Suivre les phases **dans l'ordre**. Chaque phase finit par une **porte** : ne pas passer à la suivante
+tant qu'elle n'est pas franchie. Principe : **vérifier au PR, pas au déploiement**. Chaque aller-retour
+« je déploie, je regarde, je corrige » coûte une release (vécu : 7 releases pour un hello world).
 
-## Modèle mental
+## Règles pour l'agent
 
-Deux chaînes : la **primaire** (vos outils : GitHub, CI, releases) contrôle et publie ; la **secondaire** (GitLab DSO) reconstruit, analyse, signe et pousse dans Harbor ; **ArgoCD** déploie le dépôt d'infra.
-Le pont est la **synchronisation** : un déclencheur (`sync-cpin`, skill `cicd-fabnum`) lance le pipeline `mirror` du GitLab interne, qui tire votre dépôt. Le flux part toujours du GitLab interne.
-La **console** est la source de vérité (projets, dépôts, environnements, ArgoCD) : ce qui est modifié ailleurs est ignoré ou écrasé.
+- **Ne jamais demander, lire, écrire ni afficher la valeur d'un token ou d'un secret.** L'humain les
+  saisit dans la console CPiN, dans GitHub ou dans Vault ; l'agent vérifie seulement que le **nom** existe.
+- La **console** est la source de vérité (projets, dépôts, environnements, fichiers values). Ce qui est
+  modifié dans l'UI ArgoCD ou dans le GitLab interne est ignoré ou écrasé.
+- Pour **lire** la configuration de la console, utiliser son API (swagger :
+  `https://console.<instance>/swagger-ui`, ex. `console.sdid.cpin.numerique-interieur.com`), avec un token
+  fourni par l'humain dans une variable d'environnement. Ne pas utiliser la gateway Kraken.
+- Une valeur critique (image, port, ingress, ressources) se vérifie sur le **rendu** `helm template`, pas sur `helm lint`.
 
-## Avant de commencer : l'application est-elle éligible ?
+## Phase 0 : éligibilité et architecture
 
-Linux, **stateless**, configuration par variables d'environnement (même image partout), **rootless**, système de fichiers en **lecture seule**, ports > 1024, logs sur stdout (JSON ou GELF), Dockerfile dans le dépôt, images de base publiques ou reconstruites par la plateforme.
-Si un point manque, le corriger d'abord ; la Service Team aide mais ne fait pas à la place (*Build it, You run it*).
+1. L'application est-elle éligible ? Linux, **stateless**, configuration par variables d'environnement,
+   **rootless**, système de fichiers en **lecture seule**, port > 1024, logs JSON sur stdout, Dockerfile dans le dépôt.
+2. Noter le **port réellement écouté** par l'application (`EXPOSE` du Dockerfile, code de démarrage). Il sert aux phases 2 et 3.
+3. Organisation recommandée : **un dépôt applicatif** (code, Dockerfile, `.gitlab-ci-dso.yml`) et **un
+   dépôt d'infra privé** (chart ou values), déclarés tous deux dans la console (multi-dépôt ArgoCD).
+   Ne pas créer de branche par environnement : la synchro de la console ne suit qu'une branche ; on
+   distingue les environnements par les fichiers `values-<env>.yaml`.
 
-## Parcours dans la console
+**Porte** : l'humain valide l'organisation des dépôts ; le port applicatif est connu.
 
-1. **Projet** : un projet = une application, rattaché à une organisation ; **le nom ne peut plus changer**. Ajouter l'équipe et ses rôles.
-2. **Dépôts** : *applicatif* (Dockerfile + `.gitlab-ci-dso.yml`) et/ou *infra* (chart Helm, Kustomize, manifests ; crée l'application ArgoCD). Un seul dépôt peut jouer les deux rôles. Toujours par la console : un reprovisionnement supprime les dépôts `plugin-managed` qu'elle ne connaît pas (`mirror` et `infra-apps` sont protégés).
-3. **Environnement** : un environnement = un namespace. Choisir le type (dev/staging/integration/prod, qui donne le cluster et les quotas hors prod/prod) ; les quotas CPU/RAM/GPU valent la **somme des `resources.limits`** de tous les pods.
-   La console crée le namespace, le secret `registry-pull-secret`, les quotas et l'application ArgoCD.
-4. **Déploiement** : dans le dépôt d'infra, régler révision (branche/tag), chemin et fichiers values — `values-<env>.yaml`, `<env>` étant remplacé par le nom de l'environnement. À faire **dans la console**, pas dans l'UI ArgoCD.
+## Phase 1 : prérequis, à faire par l'humain AVANT le premier run
 
-## Boucle de livraison
+Présenter cette checklist à l'humain et attendre qu'il confirme chaque ligne :
 
-1. Nouveau commit/version dans le dépôt applicatif, **tag d'image qui change** (SHA court ou version).
-2. Synchronisation vers le GitLab CPiN (déclencheur ou bouton « Lancer la synchronisation »).
-3. Pipeline DSO : lecture des secrets de chaîne, analyse Sonar, build Kaniko, scan Trivy, push et signature dans Harbor. Modèle : [`references/gitlab-ci-dso.yml`](references/gitlab-ci-dso.yml).
-4. Mise à jour du tag dans le dépôt d'infra (values), puis synchronisation de ce dépôt.
-5. ArgoCD applique. Statut attendu : `Healthy`. Boutons *REFRESH* (relire GitLab) et *SYNC* (appliquer).
+- [ ] Projet créé dans la console (le nom ne change plus), équipe et rôles ajoutés.
+- [ ] Dépôts applicatif et infra déclarés **dans la console** (un dépôt `plugin-managed` inconnu d'elle est supprimé au reprovisionnement).
+- [ ] Environnement créé (dev/staging/integration/prod). **Quota relevé avec son unité** : CPU en `m`, mémoire en `Mi` ou `Gi` (ex. « 0.2 » de mémoire = `0.2Gi` ≈ `205Mi`).
+- [ ] Tokens de synchro saisis **dans la console** (secrets du projet) :
+      `GIT_INPUT_TOKEN` (lecture seule sur le dépôt GitHub source) et `GIT_MIRROR_TOKEN`
+      (**pipeline trigger token `glptt-`**, pas un PAT `glpat-`).
+- [ ] Côté GitHub (job `sync-cpin`, skill `cicd-fabnum`) : secret `GITLAB_TRIGGER_TOKEN` et variables `GITLAB_URL`, `GITLAB_MIRROR_ID`, `GITLAB_PROJECT_NAME`.
+- [ ] Secrets applicatifs saisis **par l'humain** dans le Vault du projet (mount `<organisation>-<projet>`).
 
-Tag inchangé ⇒ aucun diff ⇒ **aucun redéploiement**. Auto-sync désactivé ⇒ *SYNC* manuel obligatoire.
+**Porte** : `gh secret list` et `gh variable list` montrent les 4 noms attendus, et l'humain a confirmé les autres lignes.
 
-## Décisions fréquentes
+## Phase 2 : fichiers values chargés par ArgoCD
 
-| Question | Réponse |
-|----------|---------|
-| Où est l'image de référence ? | dans **Harbor** (construite et signée par la chaîne DSO), pas sur ghcr.io ; seuls docker.io, harbor, registry.redhat.io, quay.io, bitnami et ghcr.io sont acceptés par Kyverno |
-| Secrets applicatifs ? | Vault via VSO (`VaultStaticSecret`, `vaultAuthRef: vault-auth`, mount `<organisation>-<projet>`) ou SOPS/age ; jamais en ConfigMap ni dans Git |
-| Plusieurs branches/dépôts sur un environnement ? | fonctionnalité **Déploiements** (beta, console ≥ 9.25.0) ; dès qu'un déploiement existe il écrase la config des dépôts d'infra et les autres environnements ne sont plus régénérés : tout reporter avant d'en créer un |
-| Image tierce ? | seulement d'un registre public reconnu (ex. `bitnami/postgresql`) ; jamais poussée depuis un poste |
-| Logs, métriques, alertes ? | Loki/Grafana (logs 6 mois), Prometheus (métriques 1 an en prod), dashboards *as code* dans le dépôt `infra-observability` (branche `main`) |
+1. Ordre de surcharge : `values.yaml` → `values-cpin.yaml` → `values-<env>.yaml` (le dernier gagne).
+   `<env>` est remplacé par le nom de l'environnement.
+2. Faire vérifier par l'humain (console > dépôt d'infra > fichiers values, ou swagger) que **ces fichiers
+   sont bien déclarés**. Si un fichier n'est pas déclaré, il est ignoré sans erreur.
+3. Tant que ce n'est pas confirmé, mettre les valeurs vitales **dans `values.yaml`** : image Harbor,
+   `registry-pull-secret`, ressources sous le quota, labels, port, ingress activé avec son host réel.
+   Ne mettre dans `values-<env>.yaml` que ce qui est propre à l'environnement.
 
-## Vérifier avant de livrer
+**Porte** : la liste des fichiers déclarés dans la console est connue et recopiée dans la PR.
 
-- Rendre le chart et contrôler les règles Kyverno : `helm template … | uv run --with pyyaml scripts/check-cpin-rules.py` (skill `helm-chart-cpin`). Les règles sont en **audit en dev/preprod et bloquantes en prod**.
-- Somme des `limits` ≤ quota de l'environnement ; NetworkPolicy pour tout flux hors règles injectées.
+## Phase 3 : chart et CI, vérifiés avant la merge
 
-## Si ça ne marche pas
+1. Chart : skill `helm-chart-cpin` (squelette tobi, surcharge CPiN, checklist pré-PR).
+2. Pipeline DSO : partir de [`references/gitlab-ci-dso.yml`](references/gitlab-ci-dso.yml) (le job `read_secret` reste en premier).
+3. Rendre **avec les mêmes fichiers et le même ordre que la console**, puis vérifier :
+   ```bash
+   helm template <release> <chart> -f values.yaml -f values-cpin.yaml -f values-<env>.yaml \
+     | uv run --with pyyaml scripts/check-cpin-rules.py \
+         --quota-cpu <quota> --quota-memory <quota avec unité> --app-port <port> --require-ingress
+   ```
+4. Ajouter cette commande en job CI bloquant (dans les `needs` de `all-jobs-passed`).
 
-Voir [`references/depannage.md`](references/depannage.md) (symptôme → cause → action).
+**Porte** : `check-cpin-rules.py` sort en 0 localement et en CI.
 
-## Limites connues
+## Phase 4 : livrer
 
-- Les docs CPiN ne sont pas cohérentes sur le nom du fichier de pipeline (`.gitlab-ci-dso.yaml` dans « Démarrer », `gitlab-ci-dso.yml` ailleurs ; `ocr-api` utilise `.gitlab-ci-dso.yml`) et les catalogues de jobs Kaniko varient : vérifier sur votre instance.
-- L'étape qui met à jour le tag par environnement (dépôt de values séparé chez ocr-api) n'est documentée nulle part dans les sources lues.
-- Route vs Ingress, quotas chiffrés et adresses de proxy ne sont pas documentés : les demander à la Service Team.
+| Ce qui change | Ce qu'il faut faire |
+|---------------|---------------------|
+| Code (image) | nouveau **tag d'image** (version ou SHA court) → synchro → pipeline DSO (Kaniko, Trivy, Harbor) → tag reporté dans les values → ArgoCD. Tag inchangé ⇒ pas de redéploiement. |
+| Chart ou values seulement | commit dans le dépôt d'infra → synchro de ce dépôt → *REFRESH* puis *SYNC* ArgoCD. Aucune nouvelle image nécessaire *(à confirmer avec la Service Team : cas non documenté)*. |
+
+Auto-sync désactivé ⇒ *SYNC* manuel dans ArgoCD (instance **ArgoCD DSO**).
+
+## Phase 5 : vérifier après la synchro
+
+1. ArgoCD : application `Synced` et `Healthy`.
+2. Le pod tourne avec l'image attendue (Harbor, bon tag) et ses limits réelles.
+3. `curl -fsS https://<host>/<chemin de santé>` répond 200.
+
+**Porte** : les trois points sont OK. Sinon : [`references/depannage.md`](references/depannage.md) (symptôme → phase → correctif).
+
+## Limites connues (à confirmer, ne rien inventer)
+
+- **Route vs Ingress** : on ne sait pas encore quand une Route OpenShift est obligatoire. L'Ingress fonctionne sur l'instance SDID.
+- **Fichiers values** : sur `dso-demo`, seul `values.yaml` semblait pris en compte, alors que l'ordre documenté est `values` → `values-cpin` → `values-<env>`. Cause probable : fichiers non déclarés dans la console (d'où la porte de la phase 2).
+- **Token GitHub** : un token en lecture seule a donné `403 Write access to repository not granted`, alors que `GIT_INPUT_TOKEN` doit être en lecture seule. Cause probable : saisi dans le mauvais champ. Vérifier le champ avant d'élargir les droits.
+- Nom du fichier de pipeline incohérent dans les docs CPiN (`.gitlab-ci-dso.yml`/`.yaml`), catalogues Kaniko variables selon l'instance.
+- « Déploiements » (beta, console ≥ 9.25.0) : dès qu'il en existe un, il écrase la config des dépôts d'infra pour cet environnement.
 
 ## Pour aller plus loin
 
-- Doc interne : `docs/okf/cloud-pi-native/` (plateforme, dépôts et mirror, GitOps, environnements, secrets, contraintes et Kyverno), `docs/okf/cycle-de-vie/de-commit-a-environnement.md`.
-- Source : [documentation officielle](https://cloud-pi-native.fr) ; exemple `IA-Generative/ocr-api`.
-- Skills liés (groupe `dso`) : `cicd-fabnum` (CI/CD GitHub, `sync-cpin`), `helm-chart-cpin` (chart et vérification Kyverno).
+- Doc interne : `docs/okf/cloud-pi-native/` (plateforme, dépôts et mirror, GitOps, environnements, secrets, Kyverno).
+- Source : [documentation officielle](https://cloud-pi-native.fr) ; exemples `IA-Generative/ocr-api`, `IA-Generative/dso-demo`.
+- Skills liés (groupe `dso`) : `cicd-fabnum` (CI/CD GitHub, `sync-cpin`), `helm-chart-cpin` (chart et vérification).

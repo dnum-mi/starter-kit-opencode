@@ -6,8 +6,8 @@ allowed-tools: Bash Read Write
 
 # Chart Helm pour Cloud Pi Native
 
-Créer ou adapter un chart qui passe les contraintes OpenShift et les politiques Kyverno de CPiN. Le chart se prépare en 3 temps :
-**squelette** (template tobi) → **surcharge CPiN** (`values-cpin.yaml`) → **vérification** (`helm lint` + `check-cpin-rules.py`).
+Créer ou adapter un chart qui passe les contraintes OpenShift et les politiques Kyverno de CPiN. Le chart se prépare en 4 temps :
+**squelette** (template tobi) → **surcharge CPiN** (`values-cpin.yaml`) → **checklist pré-PR** → **vérification** (`helm lint` + `check-cpin-rules.py`, aussi en CI).
 
 ## Ce qu'il faut savoir d'abord
 
@@ -42,18 +42,36 @@ Copier [`references/values-cpin.yaml`](references/values-cpin.yaml) (testée sur
 | Réseau | namespace en deny-all ; Kyverno injecte same-namespace, ingress, logging, monitoring ; déclarer le reste via `networkPolicy.create: true` + `ingress`/`egress` (egress via proxy : `HTTP_PROXY`, `HTTPS_PROXY`, `NO_PROXY`) |
 | Secrets | jamais dans `values.yaml` ni en ConfigMap ; `VaultStaticSecret` via `extraObjects` ([`references/vault-secret.yaml`](references/vault-secret.yaml)), `vaultAuthRef: vault-auth` |
 
-Un fichier par environnement : `values-<env>.yaml` (la console remplace `<env>` par le nom de l'environnement).
+Ordre de chargement par ArgoCD : `values.yaml` → `values-cpin.yaml` → `values-<env>.yaml` (le dernier gagne ; la console remplace `<env>` par le nom de l'environnement).
+**Un fichier non déclaré dans la console est ignoré sans erreur** : tant que la déclaration n'est pas confirmée (skill `deploiement-cpin`, phase 2), les valeurs vitales vont dans `values.yaml`.
+
+## Checklist pré-PR
+
+À cocher sur le **rendu** (`helm template`), pas sur les values :
+
+- [ ] **Image** : Harbor du projet, tag versionné, dans `values.yaml` ; aucun `debian`/`nginx`/`chartname`/`servicename` restant du template.
+- [ ] **Ports** : trois ports distincts à aligner.
+      `containerPort` = port écouté par l'application (`EXPOSE`) = port des probes ;
+      `Service.port` (80) → `targetPort` (nom `http` ou containerPort) ;
+      **backend de l'Ingress = `Service.port`** (80), jamais le containerPort.
+- [ ] **Exposition** : `ingress.enabled: true` (le template tobi le désactive par défaut) et host réel de l'environnement, pas `chart-example.local`.
+- [ ] **Ressources** : somme des `limits` × replicas ≤ quota, unité explicite (`Mi`/`Gi`). Avec 1 replica et `maxUnavailable: 0`, le rolling update demande le double.
+- [ ] **Labels** `app`, `env`, `tier` sur les pods ; `registry-pull-secret` référencé.
+- [ ] `check-cpin-rules.py` sort en 0 avec toutes les options (ci-dessous).
 
 ## Vérifier
 
 ```bash
-helm lint . -f values-cpin.yaml
-helm template <release> . -f values-cpin.yaml -f values-<env>.yaml \
-  | uv run --with pyyaml scripts/check-cpin-rules.py
+helm lint . -f values.yaml -f values-cpin.yaml
+helm template <release> . -f values.yaml -f values-cpin.yaml -f values-<env>.yaml \
+  | uv run --with pyyaml scripts/check-cpin-rules.py \
+      --quota-cpu 200m --quota-memory 0.2Gi --app-port 3000 --require-ingress
 ```
 
-`check-cpin-rules.py` contrôle labels, resources, probes, image (tag, registre), NodePort, hostPath, credentials en ConfigMap, et signale les UID figés.
+`check-cpin-rules.py` contrôle labels, resources, probes, image (tag, registre, placeholder), NodePort, hostPath, credentials en ConfigMap, UID figés,
+ports probe/conteneur, backend Ingress ↔ port du Service, host d'exemple ; avec options : somme des limits vs quota (`--quota-*`), port applicatif (`--app-port`), exposition obligatoire (`--require-ingress`).
 Sortie 1 s'il reste des erreurs. Ce n'est pas Kyverno : les règles sont en **audit** en dev/preprod et **bloquantes en prod**, donc un rendu propre ici évite la surprise à la mise en prod, sans la garantir.
+Mettre la même commande en **job CI bloquant** (skill `cicd-fabnum`) : c'est ce qui arrête les erreurs avant ArgoCD.
 
 ## Versions et publication
 
@@ -70,7 +88,9 @@ Sortie 1 s'il reste des erreurs. Ce n'est pas Kyverno : les règles sont en **au
 4. `service.nodePort` existe dans le template : ne pas l'utiliser, Kyverno interdit NodePort.
 5. `enabled: false` ne désactive pas les sous-charts : ils ont leur propre `enabled`.
 6. Tag inchangé = aucun redéploiement (ArgoCD ne voit pas de diff) ; le tag doit bouger à chaque livraison.
-7. Noms de ressources trop longs : peuvent bloquer le déploiement sur OpenShift ; rester court, avec un suffixe par type (`-svc`, `-dep`, `-sts`, `-cm`, `-cj`, `-pvc`) et l'environnement en préfixe.
+7. Backend d'Ingress : le template accepte `backend.portNumber` ; le mettre au containerPort donne un **503**. Laisser `null` (port du Service).
+8. Host `domain.local` et `ingress.enabled: false` hérités du template : **404**.
+9. Noms de ressources trop longs : peuvent bloquer le déploiement sur OpenShift ; rester court, avec un suffixe par type (`-svc`, `-dep`, `-sts`, `-cm`, `-cj`, `-pvc`) et l'environnement en préfixe.
 
 ## Pour aller plus loin
 
