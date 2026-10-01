@@ -54,5 +54,6 @@ Before and while implementing a plan (migration, feature, refactor) that touches
 
 ## Gotchas
 
+- `tsconfig.json` with only `references` (Vite template): `tsc --noEmit` / `vue-tsc --noEmit` without `-b` checks nothing and exits 0 — typecheck with `vue-tsc -b` (or the project's `build`/`typecheck` script)
 - Vue components need 2+ words (`BadgeTypeOrganisme.vue`, not `Badge.vue`)
 - Folders = kebab-case, Vue files = PascalCase

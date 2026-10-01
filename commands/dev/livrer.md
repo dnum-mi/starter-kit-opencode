@@ -13,7 +13,9 @@ Suis cette boucle, sans sauter d'étape :
      bloquent pas l'implémentation.
 2. **Implémenter** le plan vérifié, toi-même, en suivant les skills du groupe `dev`.
 3. **Porte.** Lance le sous-agent `dev-review`, chaque fois dans une **nouvelle** session (pas de `task_id`),
-   en ne lui passant que le plan vérifié. Ne lui dis pas ce que tu penses avoir corrigé.
+   en ne lui passant que le plan vérifié, sans consigne qui change son rôle. Ne lui dis pas ce que tu penses
+   avoir corrigé.
+   - Réponse hors format (pas de ligne `PORTE:`, étapes épuisées) : relance-le une fois ; ce n'est ni OK ni KO.
    - `PORTE: KO` : corrige les ERREURS **à la source** (pas de `@ts-ignore`, `eslint-disable`, test
      désactivé ou assouplissement de config), puis relance l'étape 3.
    - Au 3e `PORTE: KO`, arrête-toi et remets à l'humain le dernier rapport tel quel.
