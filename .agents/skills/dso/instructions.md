@@ -1,6 +1,6 @@
 # Groupe `dso` : CI/CD, Helm, Cloud Pi Native
 
-> Chargé en plus du socle `AGENTS.md`. Installer avec l'URL de skills `.agents/skills/dso/`.
+> Chargé en plus du socle `AGENTS.md`, par le plugin (`"groups": ["dso"]`) ou par URL : voir le README.
 
 ## Invariants
 

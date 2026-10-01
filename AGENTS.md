@@ -93,28 +93,9 @@ installé n'est jamais chargé.
 | `dev` | développer une application (front, back, monorepo, poste dev) | `dev-verif-plan`, `dev-review` (sous-agents) ; `/livrer` |
 | `dso` | CI/CD fabnum-cicd, Helm, déploiement Cloud Pi Native | `cpin-orchestrateur` (primaire), `cpin-plan`, `cpin-build`, `cpin-review` ; `/deployer-cpin` |
 
-**Installation recommandée : le plugin**, qui déclare tout d'un coup (socle, instructions, skills, agents,
-commandes) pour les groupes choisis :
-
-```json
-"plugin": [
-  ["starter-kit-opencode@git+https://github.com/dnum-mi/starter-kit-opencode.git", { "groups": ["dso"] }]
-]
-```
-
-Sans plugin, déclarer les URL (les agents et commandes ne sont alors pas installés) :
-
-```json
-"instructions": [
-  "https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/AGENTS.md",
-  "https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/.agents/skills/<groupe>/instructions.md"
-],
-"skills": { "urls": [
-  "https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/.agents/skills/<groupe>/"
-] }
-```
-
-Ne pas combiner les deux : le contenu serait chargé deux fois.
+Installation (plugin, URL ou copie des skills), prérequis et ce que font les agents : voir le
+[README](https://github.com/dnum-mi/starter-kit-opencode#readme). Ne pas combiner plugin et URL : le contenu
+serait chargé deux fois.
 
 Règles pour les mainteneurs :
 
