@@ -1,6 +1,6 @@
 # Groupe `dev` : développer une application
 
-> Chargé en plus du socle `AGENTS.md`. Installer avec l'URL de skills `.agents/skills/dev/`.
+> Chargé en plus du socle `AGENTS.md`, par le plugin (`"groups": ["dev"]`) ou par URL : voir le README.
 
 ## Skills
 

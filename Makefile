@@ -26,5 +26,5 @@ skills-index-check: ## Vérifie que les index.json sont à jour (code 1 sinon)
 test-cpin-rules: ## Teste check-cpin-rules.py (skill helm-chart-cpin) sur les frictions réelles
 	uv run --with pyyaml --with pytest pytest -q tests/check-cpin-rules
 
-test-plugin:
+test-plugin: ## Vérifie que le plugin installe chaque groupe, et rien des autres
 	tests/plugin/check-config.sh
