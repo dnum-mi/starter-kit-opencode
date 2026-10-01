@@ -81,91 +81,51 @@ Conventional Commits format. French is acceptable.
 
 Each subproject has its own `AGENTS.md` with project-specific config. This file takes precedence for cross-project conventions.
 
-## Skills disponibles
+## Groupes (instructions + skills, à installer séparément)
 
-### Socle
+Ce fichier est le **socle commun**. Chaque groupe de `.agents/skills/<groupe>/` apporte ses instructions
+(`instructions.md` : invariants et routage vers ses skills), son catalogue de skills (`index.json`) et,
+le cas échéant, ses agents (`agents/<groupe>/`) et ses commandes (`commands/<groupe>/`). Un groupe non
+installé n'est jamais chargé.
 
-Les skills suivants (groupe `dev`) sont dans `.agents/skills/dev/` :
+| Groupe | Pour qui | Agents et commandes |
+|--------|----------|---------------------|
+| `dev` | développer une application (front, back, monorepo, poste dev) | `dev-verif-plan`, `dev-review` (sous-agents) ; `/livrer` |
+| `dso` | CI/CD fabnum-cicd, Helm, déploiement Cloud Pi Native | `cpin-orchestrateur` (primaire), `cpin-plan`, `cpin-build`, `cpin-review` ; `/deployer-cpin` |
 
-| Skill | Quand l'utiliser |
-|-------|-----------------|
-| `conventions-cofabnum` | Créer ou relire un projet — nommage, archi, TS, REST, linting |
-| `recettes-client` | Frontend Vue 3 / Nuxt 3 — DSFR, VueDsfr, composables, tests |
-| `recettes-serveur` | Backend NestJS / Fastify / FastAPI — scaffolding, logging, OpenAPI |
-| `stack-technique` | Configurer les outils recommandés — ESLint antfu, Prisma, date-fns… |
-| `monorepo` | Monorepo pnpm workspaces + Turborepo |
-| `ci-cd` | Principes CI/CD et gabarit CI de base — pour fabnum-cicd, releases et Cloud Pi Native voir `cicd-fabnum` (groupe `dso`) |
-| `deploiement` | Dockerfiles de production, durcissement des conteneurs (rootless, lecture seule, tags), dev local K8s — pour Helm et Cloud Pi Native voir le groupe `dso` |
-| `environnement-installation` | Setup poste dev — Windows/WSL, macOS, Ubuntu |
-| `outils-dev` | Git, Docker Compose, VS Code, GitHub CLI, pnpm, proto, zsh, uv |
-### Groupes de skills
-
-Les skills sont rangés par groupe dans `.agents/skills/<groupe>/` (aujourd'hui `dev`), chaque groupe ayant son propre `index.json`.
-Les groupes ne sont pas faits pour être installés ensemble : un groupe n'est chargé que si son URL est déclarée dans `opencode.json` :
+**Installation recommandée : le plugin**, qui déclare tout d'un coup (socle, instructions, skills, agents,
+commandes) pour les groupes choisis :
 
 ```json
+"plugin": [
+  ["starter-kit-opencode@git+https://github.com/dnum-mi/starter-kit-opencode.git", { "groups": ["dso"] }]
+]
+```
+
+Sans plugin, déclarer les URL (les agents et commandes ne sont alors pas installés) :
+
+```json
+"instructions": [
+  "https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/AGENTS.md",
+  "https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/.agents/skills/<groupe>/instructions.md"
+],
 "skills": { "urls": [
-  "https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/.agents/skills/dev/",
   "https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/.agents/skills/<groupe>/"
 ] }
 ```
 
-- Ce regroupement est propre à ce repo : le standard Agent Skills ne le définit pas. OpenCode charge chaque URL comme un catalogue indépendant.
+Ne pas combiner les deux : le contenu serait chargé deux fois.
+
+Règles pour les mainteneurs :
+
+- Le regroupement est propre à ce repo : le standard Agent Skills ne le définit pas. OpenCode charge chaque URL comme un catalogue indépendant.
 - Noms de skills **uniques entre groupes** : OpenCode les télécharge tous dans `~/.cache/opencode/skills/`.
+- Une instruction propre à un groupe va dans son `instructions.md`, **jamais ici** ; un groupe ne renvoie vers un autre qu'en le nommant (« voir le groupe `dso` »), sans supposer qu'il est installé.
+- Un agent ou une commande d'un groupe : `agents/<groupe>/<nom>.md` ou `commands/<groupe>/<nom>.md`, au format markdown natif d'OpenCode (frontmatter + prompt), préfixé par le groupe ou son domaine (`cpin-`) pour ne pas écraser `build`/`plan`. Vérifier : `make test-plugin`.
 - Après avoir ajouté ou retiré un fichier de skill : `node scripts/skills-index.mjs` (génère), `node scripts/skills-index.mjs --check` (vérifie).
-- Ajouter une sous-section par groupe dans ce fichier (tableau « Skill / Quand l'utiliser »).
-
-### Groupe `dso` (CI/CD, Helm, Cloud Pi Native)
-
-URL : `https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/.agents/skills/dso/`. Doc de fond : `docs/okf/quickstart.md`.
-
-| Skill | Quand l'utiliser |
-|-------|-----------------|
-| `cicd-fabnum` | Écrire ou relire un `ci.yml`/`cd.yml` avec les workflows fabnum-cicd, releases, sync vers Cloud Pi Native |
-| `helm-chart-cpin` | Créer ou adapter un chart Helm pour Cloud Pi Native (template tobi, UID OpenShift, labels MIOM, Vault, vérification Kyverno) |
-| `deploiement-cpin` | Embarquer et déployer une application sur Cloud Pi Native (console, mirror, pipeline DSO, ArgoCD, secrets) et diagnostiquer un déploiement qui ne bouge pas |
-
-## Documentation interne (OKF)
-
-`docs/okf/` regroupe la connaissance CI/CD (fabnum-cicd), Helm et Cloud Pi Native au format OKF.
-Point d'entrée : `docs/okf/quickstart.md` (routage par intention). Les sources amont font autorité ; la doc n'est pas un skill.
-
-## Implementing a Plan
-
-Before and while implementing a plan (migration, feature, refactor) that touches external libraries:
-
-### 1. Verify dependencies actually exist
-
-- [ ] Check the plan's packages match what's installed (`package.json`, lockfile) — a plan can reference a package that doesn't exist on npm or isn't the one used by the project
-- [ ] Check installed versions match what the plan assumes (`pnpm list <pkg>`)
-- [ ] If a package isn't installed yet, confirm it exists on npm before adding it (`npm view <pkg>`)
-
-> Example: a plan referenced `@gouvfr/dsfr-vue` (`FrInput`, `FrButton`) — that package doesn't exist on npm. The project actually uses `@gouvminint/vue-dsfr` (`DsfrInput`, `DsfrButton`).
-
-### 2. Read the real type definitions before coding
-
-- [ ] Locate the `.d.ts` files for the library (`node_modules/<pkg>/**/*.d.ts`)
-- [ ] Read the actual component/function signature before writing code that uses it
-- [ ] Adapt the plan's code if the real API differs — don't copy-paste it as-is
-
-> Example: a plan used `<FrInput :native-validators="{ required: { errorMessage: '...', enable: true } }" />`, but `DsfrInputProps` (`node_modules/@gouvminint/vue-dsfr/types/components/DsfrInput/DsfrInput.types.d.ts`) has `isInvalid?: boolean` and no `native-validators`. See [recettes-client] for the real DsfrInput API.
-
-### 3. Build before committing
-
-- [ ] Run the project build / typecheck (`pnpm build`, `vue-tsc --noEmit`, `tsc --noEmit`) at the end of each task
-- [ ] Fix all type errors before committing
-- [ ] Never commit a state that breaks the build, even "temporarily"
-
-### 4. Test existing behavior before changing it
-
-- [ ] Run the app (`pnpm dev`) and check the current behavior of the feature being modified
-- [ ] Identify pre-existing bugs (e.g. a non-reactive toast, a frozen counter) — don't confuse them with regressions introduced by the plan
-- [ ] Either fix pre-existing bugs as part of the task, or note them explicitly as out of scope in the plan/PR
 
 ## Gotchas
 
-- Vue components need 2+ words (`BadgeTypeOrganisme.vue`, not `Badge.vue`)
-- Folders = kebab-case, Vue files = PascalCase
 - ESLint replaces Prettier
 - Ruff replaces black, flake8, isort, pyupgrade
 - Never modify migration files manually

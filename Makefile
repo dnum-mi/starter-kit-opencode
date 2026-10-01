@@ -6,7 +6,7 @@ OKF_PORT ?= 4321
 OPENWIKI_VERSION ?= 0.6.0
 OPENWIKI = npx --yes openwiki@$(OPENWIKI_VERSION)
 
-.PHONY: help okf-viz okf-viz-export skills-index skills-index-check
+.PHONY: help okf-viz okf-viz-export skills-index skills-index-check test-cpin-rules test-plugin
 
 help: ## Liste les commandes
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-15s %s\n", $$1, $$2}'
@@ -22,3 +22,9 @@ skills-index: ## Régénère le index.json de chaque groupe de skills
 
 skills-index-check: ## Vérifie que les index.json sont à jour (code 1 sinon)
 	node scripts/skills-index.mjs --check
+
+test-cpin-rules: ## Teste check-cpin-rules.py (skill helm-chart-cpin) sur les frictions réelles
+	uv run --with pyyaml --with pytest pytest -q tests/check-cpin-rules
+
+test-plugin:
+	tests/plugin/check-config.sh

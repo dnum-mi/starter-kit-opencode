@@ -1,4 +1,4 @@
-# Surcharge Cloud Pi Native (OpenShift + Kyverno) — à passer en dernier : helm ... -f values-cpin.yaml
+# Surcharge Cloud Pi Native (OpenShift + Kyverno). Ordre ArgoCD : values.yaml -> values-cpin.yaml -> values-<env>.yaml
 commonLabels:
   app: monapp
   env: dev          # dev|formation|qualif|test|preprod|prod
@@ -22,3 +22,16 @@ api:
   securityContext:
     runAsUser: null
     runAsGroup: null
+  # Port écouté par l'application (EXPOSE du Dockerfile) : containerPort et probes doivent le suivre.
+  containerPort: 3000
+  # Le template tobi désactive l'ingress et met un host d'exemple (domain.local) : 404 si on les garde.
+  ingress:
+    enabled: true
+    hosts:
+    - name: monapp-dev.<domaine-apps-de-l-instance>   # host réel de l'environnement
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          serviceName: ""
+          portNumber: null   # null = port du Service (80) ; jamais le containerPort (503)

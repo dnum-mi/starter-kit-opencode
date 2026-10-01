@@ -33,11 +33,42 @@ Le dossier `~/.agents/skills/` est automatiquement scanné par tous les clients 
 
 ## Installation via opencode.json
 
-Déclarer l'URL du groupe voulu dans `skills.urls` (voir `AGENTS.md`).
+Le plus simple : le plugin du starter-kit, avec les groupes voulus. Il charge le socle `AGENTS.md` et, pour
+chaque groupe, ses instructions, ses skills, ses agents et ses commandes :
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": [
+    ["starter-kit-opencode@git+https://github.com/dnum-mi/starter-kit-opencode.git", { "groups": ["dso"] }]
+  ]
+}
+```
+
+`"groups": ["dev", "dso"]` pour les deux. Une valeur déclarée dans votre `opencode.json` (ex.
+`"agent": { "cpin-review": { "model": "…" } }`) l'emporte sur celle du plugin.
+
+Sans plugin, déclarer à la main les URL du socle, des `instructions.md` et des skills de chaque groupe (voir
+`AGENTS.md`) ; les agents et commandes ne sont alors pas installés.
+
+### Groupe `dev` : implémenter un plan
+
+Lancer `/livrer <plan ou chemin du fichier de plan>` (agent `build`). Le sous-agent `dev-verif-plan` vérifie
+d'abord que les paquets et les API du plan existent vraiment dans le projet (`package.json`, `npm view`,
+`.d.ts`) et corrige le plan. `build` implémente, puis `dev-review`, dans une session neuve, lance typecheck,
+lint, tests et build du projet : il rend `PORTE: OK|KO`. En cas de KO, `build` corrige à la source et relance
+la review (3 essais au plus). Rien n'est commité.
+
+### Groupe `dso` : déployer sur Cloud Pi Native
+
+Lancer `/deployer-cpin` (ou passer sur l'agent `cpin-orchestrateur` avec Tab). L'orchestrateur suit le runbook
+`deploiement-cpin` : il pose les questions des portes humaines (phases 0 à 2), puis fait tourner
+`cpin-plan` → `cpin-build` → `cpin-review` jusqu'à ce que `check-cpin-rules.py` passe (3 essais au plus),
+et vous laisse commiter.
 
 ## Groupes de skills
 
-Chaque groupe (`.agents/skills/<groupe>/`) a son `index.json` et se charge par URL dans `opencode.json` (`skills.urls`) — voir `AGENTS.md`. Régénérer les index : `node scripts/skills-index.mjs` ; vérifier : `node scripts/skills-index.mjs --check`.
+Chaque groupe (`.agents/skills/<groupe>/`) a son `index.json` et et son `instructions.md` (invariants, routage), chargés par URL dans `opencode.json` — voir `AGENTS.md`. Régénérer les index : `node scripts/skills-index.mjs` ; vérifier : `node scripts/skills-index.mjs --check`.
 
 ## Scripts disponibles
 

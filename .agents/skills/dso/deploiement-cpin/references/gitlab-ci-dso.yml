@@ -37,5 +37,6 @@ docker-build-app:
     - |
       # Un tag qui change à chaque livraison, sinon ArgoCD ne voit aucun diff et ne redéploie pas.
       APP_VERSION=$(grep '^appVersion:' helm/Chart.yaml | awk '{print $2}' | tr -d '"')
-      export IMAGE_NAMES="monapp:${CI_COMMIT_SHORT_SHA} monapp:${CI_COMMIT_REF_SLUG} monapp:${APP_VERSION}"
+      # Tags uniques uniquement (bonnes pratiques CPiN) : pas de tag de branche, qui serait réécrit.
+      export IMAGE_NAMES="monapp:${CI_COMMIT_SHORT_SHA} monapp:${APP_VERSION}"
       echo "Building with tags: $IMAGE_NAMES"
