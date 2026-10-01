@@ -83,15 +83,26 @@ Each subproject has its own `AGENTS.md` with project-specific config. This file 
 
 ## Groupes (instructions + skills, à installer séparément)
 
-Ce fichier est le **socle commun**. Chaque groupe de `.agents/skills/<groupe>/` apporte ses propres
-instructions (`instructions.md` : invariants et routage vers ses skills) et son catalogue de skills
-(`index.json`). On installe un groupe en déclarant **ses deux URL** dans `opencode.json` ; un groupe non
-déclaré n'est jamais chargé.
+Ce fichier est le **socle commun**. Chaque groupe de `.agents/skills/<groupe>/` apporte ses instructions
+(`instructions.md` : invariants et routage vers ses skills), son catalogue de skills (`index.json`) et,
+le cas échéant, ses agents (`agents/<groupe>/`) et ses commandes (`commands/<groupe>/`). Un groupe non
+installé n'est jamais chargé.
 
-| Groupe | Pour qui | Instructions |
-|--------|----------|--------------|
-| `dev` | développer une application (front, back, monorepo, poste dev) | `.agents/skills/dev/instructions.md` |
-| `dso` | CI/CD fabnum-cicd, Helm, déploiement Cloud Pi Native | `.agents/skills/dso/instructions.md` |
+| Groupe | Pour qui | Agents et commandes |
+|--------|----------|---------------------|
+| `dev` | développer une application (front, back, monorepo, poste dev) | — |
+| `dso` | CI/CD fabnum-cicd, Helm, déploiement Cloud Pi Native | `cpin-orchestrateur` (primaire), `cpin-plan`, `cpin-build`, `cpin-review` ; `/deployer-cpin` |
+
+**Installation recommandée : le plugin**, qui déclare tout d'un coup (socle, instructions, skills, agents,
+commandes) pour les groupes choisis :
+
+```json
+"plugin": [
+  ["starter-kit-opencode@git+https://github.com/dnum-mi/starter-kit-opencode.git", { "groups": ["dso"] }]
+]
+```
+
+Sans plugin, déclarer les URL (les agents et commandes ne sont alors pas installés) :
 
 ```json
 "instructions": [
@@ -103,11 +114,14 @@ déclaré n'est jamais chargé.
 ] }
 ```
 
+Ne pas combiner les deux : le contenu serait chargé deux fois.
+
 Règles pour les mainteneurs :
 
 - Le regroupement est propre à ce repo : le standard Agent Skills ne le définit pas. OpenCode charge chaque URL comme un catalogue indépendant.
 - Noms de skills **uniques entre groupes** : OpenCode les télécharge tous dans `~/.cache/opencode/skills/`.
 - Une instruction propre à un groupe va dans son `instructions.md`, **jamais ici** ; un groupe ne renvoie vers un autre qu'en le nommant (« voir le groupe `dso` »), sans supposer qu'il est installé.
+- Un agent ou une commande d'un groupe : `agents/<groupe>/<nom>.md` ou `commands/<groupe>/<nom>.md`, au format markdown natif d'OpenCode (frontmatter + prompt), préfixé par le groupe ou son domaine (`cpin-`) pour ne pas écraser `build`/`plan`. Vérifier : `make test-plugin`.
 - Après avoir ajouté ou retiré un fichier de skill : `node scripts/skills-index.mjs` (génère), `node scripts/skills-index.mjs --check` (vérifie).
 
 ## Gotchas

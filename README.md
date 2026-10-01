@@ -33,22 +33,30 @@ Le dossier `~/.agents/skills/` est automatiquement scanné par tous les clients 
 
 ## Installation via opencode.json
 
-Le socle `AGENTS.md` se charge toujours ; chaque groupe s'ajoute avec **deux URL** : ses instructions
-(`instructions.md`) et son catalogue de skills. Exemple pour le groupe `dso` seul :
+Le plus simple : le plugin du starter-kit, avec les groupes voulus. Il charge le socle `AGENTS.md` et, pour
+chaque groupe, ses instructions, ses skills, ses agents et ses commandes :
 
 ```json
 {
-  "instructions": [
-    "https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/AGENTS.md",
-    "https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/.agents/skills/dso/instructions.md"
-  ],
-  "skills": {
-    "urls": ["https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/.agents/skills/dso/"]
-  }
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": [
+    ["starter-kit-opencode@git+https://github.com/dnum-mi/starter-kit-opencode.git", { "groups": ["dso"] }]
+  ]
 }
 ```
 
-Pour `dev` et `dso` ensemble, déclarer les deux `instructions.md` et les deux URL de skills.
+`"groups": ["dev", "dso"]` pour les deux. Une valeur déclarée dans votre `opencode.json` (ex.
+`"agent": { "cpin-review": { "model": "…" } }`) l'emporte sur celle du plugin.
+
+Sans plugin, déclarer à la main les URL du socle, des `instructions.md` et des skills de chaque groupe (voir
+`AGENTS.md`) ; les agents et commandes ne sont alors pas installés.
+
+### Groupe `dso` : déployer sur Cloud Pi Native
+
+Lancer `/deployer-cpin` (ou passer sur l'agent `cpin-orchestrateur` avec Tab). L'orchestrateur suit le runbook
+`deploiement-cpin` : il pose les questions des portes humaines (phases 0 à 2), puis fait tourner
+`cpin-plan` → `cpin-build` → `cpin-review` jusqu'à ce que `check-cpin-rules.py` passe (3 essais au plus),
+et vous laisse commiter.
 
 ## Groupes de skills
 
