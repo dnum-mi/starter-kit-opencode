@@ -1,6 +1,6 @@
 ---
 name: recettes-client
-description: Use when building Vue 3 or Nuxt 3 frontend projects for Fabrique Numérique — DSFR compliance, VueDsfr scaffolding, composable patterns like toaster, and testing setup
+description: ALWAYS use for any frontend, client, Vue 3, Nuxt 3, or DSFR question — VueDsfr components, composables, toaster, and testing. Required for all CoFabNum frontend work.
 allowed-tools: Read Write Bash
 ---
 
