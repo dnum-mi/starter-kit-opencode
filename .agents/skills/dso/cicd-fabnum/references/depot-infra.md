@@ -46,6 +46,10 @@ Partir de [`cd.yml`](cd.yml), **retirer** `bump-chart`, `release-chart` et `lint
 ```
 
 `sync-cpin` reste dans ce dépôt : c'est lui qui déclenche le pipeline DSO qui construit l'image.
+Sans `helm/Chart.yaml`, ce pipeline lit la version dans `.release-please-manifest.json` (gabarit
+`deploiement-cpin/references/gitlab-ci-dso.yml`), à jour puisque `sync-cpin` passe après `release`.
+`ADDITIONAL_VARIABLES` de `sync-cpin` ne convient pas : ces variables vont au pipeline du projet `mirror`,
+pas à celui du dépôt.
 
 ## Côté dépôt d'infra
 
@@ -86,6 +90,8 @@ jobs:
       AUTOMERGE_PRERELEASE: ${{ inputs.AUTOMERGE_PRERELEASE == 'true' }}
       AUTOMERGE_RELEASE: ${{ inputs.AUTOMERGE_RELEASE == 'true' }}
       AUTOMERGE_METHOD: ${{ inputs.AUTOMERGE_METHOD }}
+      # Le dispatch arrive sur la branche visée (`BASE_BRANCH` de l'appelant) : la PR doit la viser aussi.
+      BASE_BRANCH: ${{ github.ref_name }}
     # App : une PR ouverte avec GITHUB_TOKEN ne déclenche pas la CI ci-dessous.
     secrets:
       APP_CLIENT_ID: ${{ secrets.APP_CLIENT_ID }}
@@ -162,7 +168,7 @@ Pas de `release-app` ni de publication OCI : ArgoCD lit le chart directement dan
 
 | Où | Nom | Remarque |
 |----|-----|----------|
-| les deux dépôts | `APP_CLIENT_ID`, `APP_PRIVATE_KEY` | une seule App, **installée sur les deux dépôts** |
+| les deux dépôts | `APP_CLIENT_ID`, `APP_PRIVATE_KEY` | une seule App, **installée sur les deux dépôts**. Avec un PAT à la place : secret `GH_PAT` (accès aux deux dépôts), passé en `GH_PAT: ${{ secrets.GH_PAT }}` au lieu des deux `APP_*` dans `dispatch-chart` et `update-chart` |
 | les deux dépôts | `GITLAB_TRIGGER_TOKEN`, `GITLAB_URL`, `GITLAB_MIRROR_ID` | mêmes valeurs (niveau projet console) |
 | chaque dépôt | `GITLAB_PROJECT_NAME` | le nom **de ce dépôt** dans la console |
 | console | accès au dépôt d'infra privé | informations d'accès saisies dans le formulaire du dépôt (phase 1 de `deploiement-cpin`) |
@@ -177,7 +183,8 @@ L'humain crée ces valeurs ; l'agent ne vérifie que les noms (`gh secret list -
 2. **Tag figé** : si `image.tag` est renseigné dans les values, le bump d'`appVersion` ne change pas
    l'image. Le laisser vide (repli sur `appVersion`), sauf pour épingler un environnement (skill `helm-chart-cpin`).
 3. **App non installée sur le dépôt d'infra** : le token App est émis pour `CHART_REPO` seulement ; le dispatch échoue.
-4. **Branche par défaut ≠ `main`** : passer `BASE_BRANCH`, sinon le dispatch échoue sur `defaultBranchRef`.
+4. **Branche par défaut ≠ `main`** : passer `BASE_BRANCH` à `dispatch-helm-chart` (sinon il échoue sur
+   `defaultBranchRef`) et mettre cette branche dans le `on.push.branches` du `cd.yml` d'infra.
 5. **Dispatch asynchrone** : le job applicatif est vert dès que le dispatch est accepté ; vérifier le run
    `update-app-version` côté infra (`gh run list -R <org>/<app>-infra`).
 6. **`GITLAB_PROJECT_NAME` recopié du dépôt applicatif** : la synchro du dépôt d'infra resynchronise

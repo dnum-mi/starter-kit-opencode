@@ -36,7 +36,16 @@ docker-build-app:
   before_script:
     - |
       # Un tag qui change à chaque livraison, sinon ArgoCD ne voit aucun diff et ne redéploie pas.
-      APP_VERSION=$(grep '^appVersion:' helm/Chart.yaml | awk '{print $2}' | tr -d '"')
+      if [ -f helm/Chart.yaml ]; then
+        APP_VERSION=$(grep '^appVersion:' helm/Chart.yaml | awk '{print $2}' | tr -d '"')
+      else
+        # Dépôt d'infra séparé : pas de chart ici, la version vient du manifest release-please
+        # (`-rc` sur la branche de pré-release).
+        MANIFEST=.release-please-manifest.json
+        [ "$CI_COMMIT_REF_NAME" != main ] && [ -f .release-please-manifest-rc.json ] && MANIFEST=.release-please-manifest-rc.json
+        APP_VERSION=$(sed -n 's/.*"\.": *"\([^"]*\)".*/\1/p' "$MANIFEST")
+      fi
+      [ -n "$APP_VERSION" ] || { echo "APP_VERSION introuvable"; exit 1; }
       # Tags uniques uniquement (bonnes pratiques CPiN) : pas de tag de branche, qui serait réécrit.
       export IMAGE_NAMES="monapp:${CI_COMMIT_SHORT_SHA} monapp:${APP_VERSION}"
       echo "Building with tags: $IMAGE_NAMES"
