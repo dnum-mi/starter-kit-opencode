@@ -35,6 +35,8 @@ tant qu'elle n'est pas franchie. Principe : **vérifier au PR, pas au déploieme
    environnement restent possibles : la synchro peut porter sur toutes les branches, et les
    « Déploiements » (beta, console ≥ 9.25.0) acceptent une révision par environnement.
    La doc officielle propose les deux formes (dépôts séparés ou monorepo) dans ses tutoriels.
+   Mise en place des deux dépôts (dispatch de la version, CI et CD du dépôt d'infra) : skill `cicd-fabnum`,
+   `references/depot-infra.md`.
 
 **Porte** : l'humain valide l'organisation des dépôts ; le port applicatif est connu.
 
@@ -50,9 +52,12 @@ Présenter cette checklist à l'humain et attendre qu'il confirme chaque ligne :
 - [ ] `GIT_MIRROR_TOKEN` (pipeline trigger token `glptt-`, pas un PAT `glpat-`) **récupéré dans la
       console** (secrets du projet, commande curl de synchro), avec l'id du projet `mirror` et l'URL GitLab.
 - [ ] Côté GitHub (job `sync-cpin`, skill `cicd-fabnum`) : secret `GITLAB_TRIGGER_TOKEN` et variables `GITLAB_URL`, `GITLAB_MIRROR_ID`, `GITLAB_PROJECT_NAME`.
+- [ ] GitHub App installée, secrets `APP_CLIENT_ID` et `APP_PRIVATE_KEY` (ou `GH_PAT`, câblé à leur place dans les jobs) : sans elle, la CI ne tourne pas sur les PR de release ni de bump, et ni l'automerge ni `dispatch-helm-chart` ne marchent.
+      **Avec un dépôt d'infra** : tout ce qui précède sur les deux dépôts, chacun avec son propre `GITLAB_PROJECT_NAME`.
+- [ ] Si `scan-sonarqube` est ajouté au `ci.yml` : secrets `SONAR_TOKEN` et `SONAR_PROJECT_KEY` (requis par le workflow).
 - [ ] Secrets applicatifs saisis **par l'humain** dans le Vault du projet (mount `<organisation>-<projet>`).
 
-**Porte** : `gh secret list` et `gh variable list` montrent les 4 noms attendus, et l'humain a confirmé les autres lignes.
+**Porte** : `gh secret list` et `gh variable list` montrent tous les noms cochés ci-dessus (sur chaque dépôt, avec `-R <org>/<dépôt>`), et l'humain a confirmé les autres lignes.
 
 ## Phase 2 : fichiers values chargés par ArgoCD
 
@@ -87,6 +92,7 @@ Présenter cette checklist à l'humain et attendre qu'il confirme chaque ligne :
 | Ce qui change | Ce qu'il faut faire |
 |---------------|---------------------|
 | Code (image) | nouveau **tag d'image** (version ou SHA court) → synchro → pipeline DSO (Kaniko, Trivy, Harbor) → tag reporté dans les values → ArgoCD. Tag inchangé ⇒ pas de redéploiement. |
+| Code, avec un dépôt d'infra | release applicative → synchro du dépôt applicatif (image) → PR de bump d'`appVersion` ouverte dans le dépôt d'infra → l'humain la merge **une fois le pipeline DSO de l'image vert** → synchro du dépôt d'infra → ArgoCD. |
 | Chart ou values seulement | commit dans le dépôt d'infra → synchro de ce dépôt → *REFRESH* puis *SYNC* ArgoCD. Aucune nouvelle image nécessaire *(à confirmer avec la Service Team : cas non documenté)*. |
 
 Auto-sync désactivé ⇒ *SYNC* manuel dans ArgoCD (instance **ArgoCD DSO**).

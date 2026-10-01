@@ -6,6 +6,7 @@
         "SKILL.md",
         "references/cd.yml",
         "references/ci.yml",
+        "references/depot-infra.md",
         "references/workflows.md"
       ]
     },
