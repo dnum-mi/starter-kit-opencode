@@ -51,6 +51,14 @@ chaque groupe, ses instructions, ses skills, ses agents et ses commandes :
 Sans plugin, déclarer à la main les URL du socle, des `instructions.md` et des skills de chaque groupe (voir
 `AGENTS.md`) ; les agents et commandes ne sont alors pas installés.
 
+### Groupe `dev` : implémenter un plan
+
+Lancer `/livrer <plan ou chemin du fichier de plan>` (agent `build`). Le sous-agent `dev-verif-plan` vérifie
+d'abord que les paquets et les API du plan existent vraiment dans le projet (`package.json`, `npm view`,
+`.d.ts`) et corrige le plan. `build` implémente, puis `dev-review`, dans une session neuve, lance typecheck,
+lint, tests et build du projet : il rend `PORTE: OK|KO`. En cas de KO, `build` corrige à la source et relance
+la review (3 essais au plus). Rien n'est commité.
+
 ### Groupe `dso` : déployer sur Cloud Pi Native
 
 Lancer `/deployer-cpin` (ou passer sur l'agent `cpin-orchestrateur` avec Tab). L'orchestrateur suit le runbook

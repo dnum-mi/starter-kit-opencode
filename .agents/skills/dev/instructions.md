@@ -22,6 +22,8 @@ Skills dans `.agents/skills/dev/` :
 
 Before and while implementing a plan (migration, feature, refactor) that touches external libraries:
 
+> With the starter-kit plugin, `/livrer <plan>` automates this: subagent `dev-verif-plan` checks steps 1–2, subagent `dev-review` is the gate for step 3.
+
 ### 1. Verify dependencies actually exist
 
 - [ ] Check the plan's packages match what's installed (`package.json`, lockfile) — a plan can reference a package that doesn't exist on npm or isn't the one used by the project
