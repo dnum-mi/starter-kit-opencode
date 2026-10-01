@@ -33,11 +33,26 @@ Le dossier `~/.agents/skills/` est automatiquement scanné par tous les clients 
 
 ## Installation via opencode.json
 
-Déclarer l'URL du groupe voulu dans `skills.urls` (voir `AGENTS.md`).
+Le socle `AGENTS.md` se charge toujours ; chaque groupe s'ajoute avec **deux URL** : ses instructions
+(`instructions.md`) et son catalogue de skills. Exemple pour le groupe `dso` seul :
+
+```json
+{
+  "instructions": [
+    "https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/AGENTS.md",
+    "https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/.agents/skills/dso/instructions.md"
+  ],
+  "skills": {
+    "urls": ["https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/.agents/skills/dso/"]
+  }
+}
+```
+
+Pour `dev` et `dso` ensemble, déclarer les deux `instructions.md` et les deux URL de skills.
 
 ## Groupes de skills
 
-Chaque groupe (`.agents/skills/<groupe>/`) a son `index.json` et se charge par URL dans `opencode.json` (`skills.urls`) — voir `AGENTS.md`. Régénérer les index : `node scripts/skills-index.mjs` ; vérifier : `node scripts/skills-index.mjs --check`.
+Chaque groupe (`.agents/skills/<groupe>/`) a son `index.json` et et son `instructions.md` (invariants, routage), chargés par URL dans `opencode.json` — voir `AGENTS.md`. Régénérer les index : `node scripts/skills-index.mjs` ; vérifier : `node scripts/skills-index.mjs --check`.
 
 ## Scripts disponibles
 
