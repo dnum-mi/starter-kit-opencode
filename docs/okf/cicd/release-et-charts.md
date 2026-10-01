@@ -24,6 +24,7 @@ tags: [cicd, release-please, helm, sync-prerelease]
 
 ## dispatch-helm-chart
 Déclenche `update-helm-chart` dans un dépôt de charts séparé ; requiert App/PAT.
+Cas CPiN « dépôt applicatif + dépôt d'infra » : recette complète dans le skill `cicd-fabnum`, `references/depot-infra.md` (workflow d'entrée `update-app-version.yml`, CI et CD du dépôt d'infra, merge du bump après le pipeline DSO de l'image).
 
 ## sync-prerelease-branch
 Rebase la branche de prerelease sur la branche de release ; **dernier job** du CD sur `main`, avec `needs` = tous les jobs qui y committent.

@@ -14,7 +14,7 @@ Les gabarits de `references/` sont validés contre les entrées et secrets réel
 | Question | Conséquence |
 |----------|-------------|
 | Une seule image ou plusieurs (monorepo) ? | plusieurs : `path-filter` + matrice `services` + une paire build/attest par composant |
-| Un chart Helm, et où ? | dans le dépôt : `update-helm-chart` (`RUN_MODE: local`) + `release-helm-local` ; dépôt dédié : `release-helm` ; autre dépôt : `dispatch-helm-chart` |
+| Un chart Helm, et où ? | dans le dépôt : `update-helm-chart` (`RUN_MODE: local`) + `release-helm-local` ; **dépôt d'infra séparé** (recommandé sur CPiN) : `dispatch-helm-chart`, recette [`references/depot-infra.md`](references/depot-infra.md) ; dépôt de charts publié : `release-helm` |
 | Branches `dev` (rc) et `main` (stable) ? | `ENABLE_PRERELEASE: true` + `sync-prerelease-branch` en dernier job |
 | Déploiement sur CPiN ? | job `sync-cpin` **après** le bump du chart |
 | Le dépôt exige-t-il une PR pour tout push (ruleset) ? | oui : GitHub App obligatoire pour le bump du chart |
@@ -64,6 +64,7 @@ Ajouter aussi au `ci.yml` le job bloquant `check-cpin-rules` (rendu `helm templa
 ## Pour aller plus loin
 
 - Catalogue et permissions par workflow : [`references/workflows.md`](references/workflows.md).
+- Dépôt applicatif + dépôt d'infra séparé (dispatch, CI et CD du dépôt d'infra, App sur les deux dépôts) : [`references/depot-infra.md`](references/depot-infra.md).
 - Doc interne : `docs/okf/cicd/` (contrat des workflows, release et charts, pièges), `docs/okf/decisions/github-app-vs-pat.md`, `docs/okf/cycle-de-vie/`.
 - Sources : `dnum-mi/fabnum-cicd/docs/workflows/`, exemple complet `IA-Generative/ocr-api` (`ci.yml`, `cd.yml`).
 - Déploiement du chart et contraintes CPiN : skills `helm-chart-cpin` et `deploiement-cpin` (groupe `dso`).
