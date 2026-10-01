@@ -52,11 +52,12 @@ Présenter cette checklist à l'humain et attendre qu'il confirme chaque ligne :
 - [ ] `GIT_MIRROR_TOKEN` (pipeline trigger token `glptt-`, pas un PAT `glpat-`) **récupéré dans la
       console** (secrets du projet, commande curl de synchro), avec l'id du projet `mirror` et l'URL GitLab.
 - [ ] Côté GitHub (job `sync-cpin`, skill `cicd-fabnum`) : secret `GITLAB_TRIGGER_TOKEN` et variables `GITLAB_URL`, `GITLAB_MIRROR_ID`, `GITLAB_PROJECT_NAME`.
-      **Avec un dépôt d'infra** : sur les deux dépôts, chacun avec son propre `GITLAB_PROJECT_NAME`, et la
-      GitHub App (`APP_CLIENT_ID`, `APP_PRIVATE_KEY`) installée sur les deux.
+- [ ] GitHub App installée, secrets `APP_CLIENT_ID` et `APP_PRIVATE_KEY` (ou `GH_PAT`) : sans elle, la CI ne tourne pas sur les PR de release ni de bump, et ni l'automerge ni `dispatch-helm-chart` ne marchent.
+      **Avec un dépôt d'infra** : tout ce qui précède sur les deux dépôts, chacun avec son propre `GITLAB_PROJECT_NAME`.
+- [ ] Si `scan-sonarqube` est ajouté au `ci.yml` : secrets `SONAR_TOKEN` et `SONAR_PROJECT_KEY` (requis par le workflow).
 - [ ] Secrets applicatifs saisis **par l'humain** dans le Vault du projet (mount `<organisation>-<projet>`).
 
-**Porte** : `gh secret list` et `gh variable list` montrent les 4 noms attendus (sur chaque dépôt, avec `-R <org>/<dépôt>`), et l'humain a confirmé les autres lignes.
+**Porte** : `gh secret list` et `gh variable list` montrent tous les noms cochés ci-dessus (sur chaque dépôt, avec `-R <org>/<dépôt>`), et l'humain a confirmé les autres lignes.
 
 ## Phase 2 : fichiers values chargés par ArgoCD
 
