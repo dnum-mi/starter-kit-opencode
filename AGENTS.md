@@ -90,7 +90,7 @@ installé n'est jamais chargé.
 
 | Groupe | Pour qui | Agents et commandes |
 |--------|----------|---------------------|
-| `dev` | développer une application (front, back, monorepo, poste dev) | — |
+| `dev` | développer une application (front, back, monorepo, poste dev) | `dev-verif-plan`, `dev-review` (sous-agents) ; `/livrer` |
 | `dso` | CI/CD fabnum-cicd, Helm, déploiement Cloud Pi Native | `cpin-orchestrateur` (primaire), `cpin-plan`, `cpin-build`, `cpin-review` ; `/deployer-cpin` |
 
 **Installation recommandée : le plugin**, qui déclare tout d'un coup (socle, instructions, skills, agents,
