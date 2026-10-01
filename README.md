@@ -128,7 +128,7 @@ accessible avec Tab) suit le runbook `deploiement-cpin` :
 
 | Phases | Qui | Ce qui se passe |
 |--------|-----|-----------------|
-| 0 à 2 : éligibilité, prérequis console, fichiers values | **vous** | l'orchestrateur pose toutes les questions d'un coup et s'arrête ; il ne vérifie que les **noms** des secrets et variables GitHub (`gh secret list`) |
+| 0 à 2 : éligibilité, prérequis console, fichiers values | **vous** | une phase à la fois : l'orchestrateur pose les questions de la phase en une seule liste et attend votre réponse avant de passer à la suivante ; il ne vérifie que les **noms** des secrets et variables GitHub (`gh secret list`) |
 | 3 : chart et CI | agents | `cpin-plan` → `cpin-build` → `cpin-review`, jusqu'à ce que `check-cpin-rules.py` sorte en 0 (3 essais au plus) |
 | 4 et 5 : livraison, vérification après synchro | **vous** | l'orchestrateur vous remet la marche à suivre et la table de dépannage |
 
