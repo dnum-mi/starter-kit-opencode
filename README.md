@@ -92,7 +92,7 @@ Dans le `opencode.json` du projet, ou dans `~/.config/opencode/opencode.json` :
 }
 ```
 
-Remplacer `dev` par `dso`, ou ajouter les deux. C'est la configuration du `opencode.json` de ce dépôt.
+Remplacer `dev` par `dso`, ou ajouter les deux.
 
 ### 3. Copie (Claude Code, Codex, autres)
 
@@ -177,6 +177,10 @@ Une valeur déclarée dans votre `opencode.json` l'emporte sur celle du plugin :
 - `opencode debug skill` ne liste pas les skills chargés par le plugin. Ils sont pourtant bien disponibles en session.
 
 ## Contribuer
+
+Le `opencode.json` de ce dépôt charge le plugin par son chemin local (`["./", { "groups": ["dev", "dso"] }]`) :
+OpenCode lancé dans le dépôt utilise les instructions, skills, agents et commandes de la copie de travail, sans
+passer par GitHub ni par le cache. Relancer OpenCode suffit pour tester une modification.
 
 | Commande | Vérifie |
 |----------|---------|

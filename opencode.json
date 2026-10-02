@@ -1,14 +1,10 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "lsp": true,
-  "plugin": ["superpowers@git+https://github.com/obra/superpowers.git"],
-  "instructions": [
-    "https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/AGENTS.md",
-    "https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/.agents/skills/dev/instructions.md"
+  "plugin": [
+    "superpowers@git+https://github.com/obra/superpowers.git",
+    ["./", { "groups": ["dev", "dso"] }]
   ],
-  "skills": {
-    "urls": ["https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/.agents/skills/dev/"]
-  },
   "permission": {
     "skill": {
       "*": "allow"
