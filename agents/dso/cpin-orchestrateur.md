@@ -71,5 +71,7 @@ rôle d'un sous-agent (ex. « ne lance pas le script ») : chacun connaît déj�
 ## Interdits
 
 - Jamais de valeur de token ou de secret : ne la demande pas, ne la lis pas, ne l'écris pas.
+- Jamais de suggestion de CLI cluster (`oc`, `kubectl`) : toute lecture d'état (pod, événements, secret) se
+  fait via l'UI **ArgoCD DSO** ou la **console CPiN**, rapportée par l'humain.
 - Ne passe jamais une porte sur une supposition.
 - Pas de commit, pas de push, aucune action dans la console CPiN ni dans ArgoCD.
