@@ -14,6 +14,8 @@ tant qu'elle n'est pas franchie. Principe : **vérifier au PR, pas au déploieme
 
 - **Ne jamais demander, lire, écrire ni afficher la valeur d'un token ou d'un secret.** L'humain les
   saisit dans la console CPiN, dans GitHub ou dans Vault ; l'agent vérifie seulement que le **nom** existe.
+- **Ne jamais committer un secret/token dans Git** (même en « temporaire ») : un `github_pat_…` ou un token
+  mirror (`glptt-…`) commité est un secret fuité à **révoquer** en fin de mise en service (voir phase 5).
 - La **console** est la source de vérité (projets, dépôts, environnements, fichiers values). Ce qui est
   modifié dans l'UI ArgoCD ou dans le GitLab interne est ignoré ou écrasé.
 - Pour **lire** la configuration de la console, utiliser son API (swagger :
@@ -121,8 +123,11 @@ Auto-sync désactivé ⇒ *SYNC* manuel dans ArgoCD (instance **ArgoCD DSO**).
    limits réelles. En cas de pull/start qui échoue, rapporter à l'humain le **message d'erreur exact** des
    événements (voir dépannage).
 3. `curl -fsS https://<host>/<chemin de santé>` répond 200.
+4. **Clôture de mise en service** : révoquer tout secret/token exposé ou d'essai (ex. `github_pat_…` commité,
+   token mirror `glptt-…`, jetons jetables de test). Rappeler à l'humain la **Rotation** de ce qui a fuité ;
+   l'agent ne manipule jamais ces valeurs, il vérifie seulement que la révocation est demandée/faite.
 
-**Porte** : les trois points sont OK. Sinon : [`references/depannage.md`](references/depannage.md) (symptôme → phase → correctif).
+**Porte** : les quatre points sont OK (la révocation de la clôture est répertoriée). Sinon : [`references/depannage.md`](references/depannage.md) (symptôme → phase → correctif).
 
 ## Limites connues (à confirmer, ne rien inventer)
 
@@ -140,4 +145,5 @@ Auto-sync désactivé ⇒ *SYNC* manuel dans ArgoCD (instance **ArgoCD DSO**).
 
 - Doc interne : `docs/okf/cloud-pi-native/` (plateforme, dépôts et mirror, GitOps, environnements, secrets, Kyverno).
 - Source : [documentation officielle](https://cloud-pi-native.fr) ; exemples `IA-Generative/ocr-api`, `IA-Generative/dso-demo`.
+- Exemple capitalisé en conditions réelles : RETEX d'un premier déploiement complet — `IA-Generative/ice-breaker-demo-infra`, `docs/RETEX-deploiement.md` (blocages, leçons chemin Harbor, schéma dépôt d'infra + fine-grained PAT, opérations auto/manuel, clôture = révocation des secrets).
 - Skills liés (groupe `dso`) : `cicd-fabnum` (CI/CD GitHub, `sync-cpin`), `helm-chart-cpin` (chart et vérification).
