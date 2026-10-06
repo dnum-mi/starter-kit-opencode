@@ -22,6 +22,9 @@ tant qu'elle n'est pas franchie. Principe : **vérifier au PR, pas au déploieme
   d'environnement. Krakend, cité dans la doc CPiN, est un exemple d'API gateway pour *vos* API : il ne
   donne pas accès à la console.
 - Une valeur critique (image, port, ingress, ressources) se vérifie sur le **rendu** `helm template`, pas sur `helm lint`.
+- **Ne jamais proposer un CLI de cluster (`oc`, `kubectl`)** : l'agent n'y a pas accès. Lire l'état réel
+  (pod, deployment, événements, secrets) via l'UI **ArgoCD DSO** (onglet application → Deployment/Pod/événements)
+  ou la **console CPiN**. Demander à l'humain ce qu'il y voit, jamais une commande CLI.
 
 ## Phase 0 : éligibilité et architecture
 
@@ -104,7 +107,9 @@ Auto-sync désactivé ⇒ *SYNC* manuel dans ArgoCD (instance **ArgoCD DSO**).
 ## Phase 5 : vérifier après la synchro
 
 1. ArgoCD : application `Synced` et `Healthy`.
-2. Le pod tourne avec l'image attendue (Harbor, bon tag) et ses limits réelles.
+2. **Lire l'état du pod via l'UI ArgoCD DSO** (jamais un CLI) : image attendue (Harbor, bon tag) et
+   limits réelles. En cas de pull/start qui échoue, rapporter à l'humain le **message d'erreur exact** des
+   événements (voir dépannage).
 3. `curl -fsS https://<host>/<chemin de santé>` répond 200.
 
 **Porte** : les trois points sont OK. Sinon : [`references/depannage.md`](references/depannage.md) (symptôme → phase → correctif).
