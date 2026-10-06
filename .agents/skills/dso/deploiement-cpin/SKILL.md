@@ -25,6 +25,11 @@ tant qu'elle n'est pas franchie. Principe : **vérifier au PR, pas au déploieme
 - **Ne jamais proposer un CLI de cluster (`oc`, `kubectl`)** : l'agent n'y a pas accès. Lire l'état réel
   (pod, deployment, événements, secrets) via l'UI **ArgoCD DSO** (onglet application → Deployment/Pod/événements)
   ou la **console CPiN**. Demander à l'humain ce qu'il y voit, jamais une commande CLI.
+- **Les instances n'ont pas toutes la même version de plateforme** (ex. la Scaleway est en ancienne
+  version **9.9.0**, la RIE plus récente ≥ 9.11). Une valeur documentée (chemin source ArgoCD, fichier de
+  pipeline, auto-sync, « Déploiements »…) est un **exemple par instance**, pas un universel : relever la
+  **version réelle de l'instance** (`console.<instance>/swagger-ui`) et vérifier chaque hypothèse contre
+  elle avant de supposer un comportement.
 
 ## Phase 0 : éligibilité et architecture
 
@@ -47,6 +52,11 @@ tant qu'elle n'est pas franchie. Principe : **vérifier au PR, pas au déploieme
 
 Présenter cette checklist à l'humain et attendre qu'il confirme chaque ligne :
 
+- [ ] **Version de l'instance relevée** (`console.<instance>/swagger-ui`, ex. RIE ≥ 9.11 vs Scaleway 9.9.0) et
+      notée. Chaque comportement supposé sera vérifié contre cette version, pas contre la doc générale.
+- [ ] **Nom du projet Harbor** (`PROJECT_PATH` de la console, peut différer du nom du dépôt/app — ex.
+      projet `icebreakerdemo` vs dépôt `ice-breaker-demo`) relevé : c'est lui qui alimente `--expected-image`
+      des phases 3/CI. Ne jamais le copier du nom du dépôt.
 - [ ] Projet créé dans la console (le nom ne change plus), équipe et rôles ajoutés.
 - [ ] Dépôts applicatif et infra déclarés **dans la console** (un dépôt `plugin-managed` inconnu d'elle est supprimé au reprovisionnement).
 - [ ] Environnement créé (dev/staging/integration/prod). **Quota relevé avec son unité** : CPU en `m`, mémoire en `Mi` ou `Gi` (ex. « 0.2 » de mémoire = `0.2Gi` ≈ `205Mi`).
@@ -121,6 +131,9 @@ Auto-sync désactivé ⇒ *SYNC* manuel dans ArgoCD (instance **ArgoCD DSO**).
 - **Token GitHub** : la doc demande un PAT avec le scope `repo`. Un token fine-grained en lecture seule a donné `403 Write access to repository not granted` sur `dso-demo`. La Service Team suggère la lecture seule : le moindre privilège suffisant n'est pas établi. En cas de 403, passer au PAT `repo` documenté.
 - **Registres Kyverno** : la doc liste `harbor.io/`, alors que le Harbor de chaque instance a son propre domaine (ex. `harbor.sdid.cpin.numerique-interieur.com`). `check-cpin-rules.py` accepte tout registre contenant `harbor`. À confirmer avant la prod, où la règle est bloquante.
 - Nom du fichier de pipeline incohérent dans les docs CPiN (`.gitlab-ci-dso.yml`/`.yaml`), catalogues Kaniko variables selon l'instance.
+- **Chemin source ArgoCD** : figé par la console sur notre instance (ex. `helm/`), il est un **exemple par
+  instance**, pas un universel — et peut dépendre de la **version de la plateforme** (RIE vs Scaleway 9.9.0).
+  Se vérifier au cas par cas dans la console, jamais copié tels quel d'une autre instance.
 - « Déploiements » (beta, console ≥ 9.25.0) : dès qu'il en existe un, il écrase la config des dépôts d'infra pour cet environnement.
 
 ## Pour aller plus loin
