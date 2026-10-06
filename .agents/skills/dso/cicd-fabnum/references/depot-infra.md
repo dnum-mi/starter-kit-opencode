@@ -175,6 +175,41 @@ Pas de `release-app` ni de publication OCI : ArgoCD lit le chart directement dan
 
 L'humain crée ces valeurs ; l'agent ne vérifie que les noms (`gh secret list -R <org>/<app>-infra`, `gh variable list -R …`).
 
+### Création du token GitHub fine-grained (alternative App → `GH_PAT`)
+
+Le `GH_PAT` **remplace la GitHub App** : il doit couvrir **les deux dépôts** (applicatif **et** infra),
+car `dispatch-helm-chart` (dépôt app) déclenche `update-app-version` (dépôt infra) qui ouvre et peut
+merger la PR de bump. Un token couvrant un seul des deux dépôts fait échouer le dispatch.
+
+> GitHub > Settings > Developer settings > **Fine-grained personal access tokens** > Generate new token.
+
+| Paramètre | Valeur |
+|---|---|
+| Resource owner | l'organisation du projet (ex. `IA-Generative`) |
+| Repository access | **Only select repositories** : le dépôt applicatif **et** le dépôt d'infra |
+| Expiration | durée choisie (ex. 90 j) — le token n'est pas illimité |
+
+**Repository permissions** (sur chacun des deux dépôts sélectionnés) :
+
+| Permission | Accès | Rôle |
+|---|---|---|
+| **Contents** | Read and write | chart, branche/tag de bump |
+| **Pull requests** | Read and write | ouvrir + merger les PR de bump (`update-helm-chart`) |
+| **Actions** | Read and write | `dispatch-helm-chart` (app) + `update-app-version`/CI (infra) |
+| **Metadata** | Read (requis) | lecture GitHub de base |
+
+**Account permissions** : aucune.
+
+Ensuite :
+1. Sauvegarder la valeur dans le secret **`GH_PAT` sur les deux dépôts**
+   (`gh secret set GH_PAT -R <org>/<app>`, `-R <org>/<app>-infra`).
+2. Dans les workflows, remplacer la paire `APP_CLIENT_ID`/`APP_PRIVATE_KEY` par
+   `GH_PAT: ${{ secrets.GH_PAT }}` (dans `dispatch-chart` et `update-chart`).
+3. **Ne jamais committer ni afficher la valeur** ; en cas de fuite, la révoquer (Rotation).
+
+> **Limite** : un PAT **classique** (`ghp_…`) ne suffit pas ici (pas de permissions fines par dépôt) —
+> créer un token **fine-grained**.
+
 ## Pièges
 
 1. **Image absente de Harbor** : `sync-cpin` ne fait que déclencher le pipeline DSO, qui construit l'image

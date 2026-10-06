@@ -18,4 +18,7 @@ tags: [décision, helm, release, monorepo]
   (il package exactement `CHECKOUT_REF`). Guide : `90-monorepo-release.md`.
 - Un **release-please unique** donne la même version aux images et au chart.
 - `update-helm-chart` en `local` pousse directement (`git pull --rebase` puis push) ; en `called` il ouvre une PR vers `BASE_BRANCH`.
-- Dispatch cross-repo : nécessite un token App ou PAT (`actions: write` sur le dépôt du chart).
+- Dispatch cross-repo : nécessite un token App ou PAT (`actions: write` sur le dépôt du chart). Avec un
+  `GH_PAT` (schéma « dépôt d'infra séparé »), le token doit être **fine-grained**, installer sur les deux
+  dépôts (`Contents`, `Pull requests`, `Actions`, `Metadata` en write) — guide complet :
+  `cicd-fabnum` → `references/depot-infra.md`.
