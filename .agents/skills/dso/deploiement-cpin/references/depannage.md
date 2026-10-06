@@ -28,7 +28,7 @@ vérification manquante pour que le problème ne revienne pas.
 | Le build échoue tout de suite | étape `read_secret` absente ou en échec | garder le job `.vault:read_secret` en premier stage |
 | Pod refusé en prod, accepté en dev | Kyverno en audit hors prod, **enforce en prod** | `check-cpin-rules.py` (skill `helm-chart-cpin`) |
 | `CreateContainerConfigError` / UID hors plage | `runAsUser`/`fsGroup` figés, SCC OpenShift | les mettre à `null` dans les values |
-| `ImagePullBackOff` | image absente de Harbor, tag erroné, pull secret non référencé | vérifier l'image dans Harbor ; `imagePullSecrets: [{name: registry-pull-secret}]` |
+| `ImagePullBackOff` / `401 Unauthorized` au pull | image absente de Harbor, tag erroné, pull secret non référencé, credentials invalides, ou **nom du projet Harbor incohérent** (ex. projet `icebreakerdemo` vs chemin `ice-breaker-demo` dans les values) | vérifier l'image dans Harbor ; vérifier le **chemin complet** `<registry>/<projet>/<repo>` contre le `PROJECT_PATH` de la console (le projet peut différer du nom du dépôt, tirets) ; `--expected-image` de `check-cpin-rules.py` le garantit ; `imagePullSecrets: [{name: registry-pull-secret}]` |
 | Application injoignable (hors 404/503) | namespace en deny-all | `networkPolicy` pour les flux non couverts par les règles injectées par Kyverno |
 | Dépôt qui disparaît du GitLab interne | dépôt `plugin-managed` non déclaré dans la console | toujours passer par la console |
 | Réglages ArgoCD ignorés | la console est source de vérité (≥ 9.11.5) | révision, chemin et fichiers values dans la console |

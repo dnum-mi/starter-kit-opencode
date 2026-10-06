@@ -4,6 +4,7 @@
 Usage : helm template <release> <chart> -f values.yaml -f values-cpin.yaml -f values-<env>.yaml \\
           | uv run --with pyyaml scripts/check-cpin-rules.py \\
               [--quota-cpu 200m] [--quota-memory 205Mi] [--app-port 3000] [--require-ingress]
+              [--expected-image harbor.example.com/projet/app]
 Code de sortie 1 s'il reste des ERREURS ; les AVERTISSEMENTS n'échouent pas.
 En plus des règles Kyverno, contrôle les pièges vécus au déploiement : image placeholder, ports
 conteneur/probe/Service/Ingress incohérents, host d'exemple, somme des limits au-dessus du quota.
@@ -59,7 +60,7 @@ def image_repository(image):
     return without_digest.rsplit(":", 1)[0] if ":" in without_digest.split("/")[-1] else without_digest
 
 
-def check_image(name, image):
+def check_image(name, image, expected_image=None):
     tag = image.rsplit(":", 1)[-1] if ":" in image.split("/")[-1] else ""
     errors = []
     if tag == "latest" or (not tag and "@sha256:" not in image):
@@ -68,6 +69,10 @@ def check_image(name, image):
         errors.append(f"{name}: registre non autorisé pour '{image}'")
     if image_repository(image).split("/")[-1] in PLACEHOLDER_IMAGES:
         errors.append(f"{name}: image placeholder '{image}' (repository du template jamais remplacé)")
+    if expected_image and image_repository(image) != expected_image:
+        errors.append(
+            f"{name}: chemin d'image '{image_repository(image)}' != chemin attendu '{expected_image}' "
+            "(nom du projet Harbor/PROJECT_PATH incohérent)")
     return errors
 
 
@@ -90,8 +95,8 @@ def check_app_port(name, container, app_port):
     return [f"{name}: containerPort {sorted(numbers)} alors que l'application écoute sur {app_port}"]
 
 
-def check_container(name, container, long_lived, app_port):
-    errors = check_image(name, container.get("image", "")) + check_probe_ports(name, container)
+def check_container(name, container, long_lived, app_port, expected_image):
+    errors = check_image(name, container.get("image", ""), expected_image) + check_probe_ports(name, container)
     errors += check_app_port(name, container, app_port)
     resources = container.get("resources", {})
     errors += [f"{name}: resources.{a}.{b} manquant" for a, b in RESOURCE_KEYS if b not in resources.get(a, {})]
@@ -102,7 +107,7 @@ def check_container(name, container, long_lived, app_port):
     return errors, []
 
 
-def check_pod(doc, app_port):
+def check_pod(doc, app_port, expected_image):
     name = f"{doc['kind']}/{doc['metadata']['name']}"
     labels, spec = pod_spec(doc)
     errors, warnings = check_labels(name, labels)
@@ -110,10 +115,10 @@ def check_pod(doc, app_port):
         if key in spec.get("securityContext", {}):
             warnings.append(f"{name}: {key} figé au niveau du pod (SCC OpenShift)")
     for container in spec.get("containers", []):
-        found, warned = check_container(f"{name}/{container['name']}", container, doc["kind"] in LONG_LIVED, app_port)
+        found, warned = check_container(f"{name}/{container['name']}", container, doc["kind"] in LONG_LIVED, app_port, expected_image)
         errors, warnings = errors + found, warnings + warned
     for container in spec.get("initContainers", []):
-        found, warned = check_container(f"{name}/{container['name']}", container, False, None)
+        found, warned = check_container(f"{name}/{container['name']}", container, False, None, expected_image)
         errors, warnings = errors + found, warnings + warned
     errors += [f"{name}: volume hostPath interdit" for volume in spec.get("volumes", []) if "hostPath" in volume]
     return errors, warnings
@@ -211,6 +216,7 @@ def parse_args():
     parser.add_argument("--quota-memory", type=parse_memory, help="quota mémoire, unité explicite (ex. 205Mi, 0.2Gi)")
     parser.add_argument("--app-port", type=int, help="port réellement écouté par l'application (EXPOSE du Dockerfile)")
     parser.add_argument("--require-ingress", action="store_true", help="erreur si aucun Ingress/Route n'est rendu")
+    parser.add_argument("--expected-image", help="chemin complet attendu <registry>/<project>/<repo> (sans tag), ex. harbor.sdid.cpin.numerique-interieur.com/icebreakerdemo/ice-breaker-demo")
     return parser.parse_args()
 
 
@@ -219,10 +225,14 @@ def main():
     docs = [doc for doc in yaml.safe_load_all(sys.stdin) if doc]
     ports = service_ports(docs)
     errors, warnings = [], []
+    resolved = []
     for doc in docs:
         if doc["kind"] in WORKLOADS:
-            found, warned = check_pod(doc, args.app_port)
+            found, warned = check_pod(doc, args.app_port, args.expected_image)
             errors, warnings = errors + found, warnings + warned
+            spec = pod_spec(doc)[1]
+            resolved += [c["image"] for c in spec.get("containers", [])]
+            resolved += [c["image"] for c in spec.get("initContainers", [])]
         if doc["kind"] == "Ingress":
             errors += check_ingress(doc, ports)
         errors += check_other(doc)
@@ -232,6 +242,8 @@ def main():
         (errors if args.require_ingress else warnings).append(message)
     quotas = (("cpu", args.quota_cpu, "{:.3f}".format), ("memory", args.quota_memory, lambda v: f"{v / MEBI:.0f}Mi"))
     found, warned = check_quota(docs, quotas)
+    for image in sorted(set(resolved)):
+        print(f"INFO          image résolue: {image}")
     for line in warnings + warned:
         print(f"AVERTISSEMENT {line}")
     for line in errors + found:
