@@ -32,6 +32,7 @@ vérification manquante pour que le problème ne revienne pas.
 | Application injoignable (hors 404/503) | namespace en deny-all | `networkPolicy` pour les flux non couverts par les règles injectées par Kyverno |
 | Dépôt qui disparaît du GitLab interne | dépôt `plugin-managed` non déclaré dans la console | toujours passer par la console |
 | Réglages ArgoCD ignorés | la console est source de vérité (≥ 9.11.5) | révision, chemin et fichiers values dans la console |
+| Comportement documenté absent / chemin source ArgoCD figé sur une valeur inattendue | **version de la plateforme** diffère selon l'instance (ex. Scaleway 9.9.0 vs RIE ≥ 9.11) | relever la **version réelle** de l'instance (`console.<instance>/swagger-ui`) ; considérer le chemin source ArgoCD, l'auto-sync, les « Déploiements » comme des **exemples par instance**, à vérifier dans la console |
 | Un environnement n'est plus régénéré | un « Déploiement » (beta ≥ 9.25.0) écrase la config des dépôts d'infra | reporter toute la config dans un déploiement par environnement |
 | Dérive (drift) détectée | paramètres saisis dans l'UI ArgoCD | tout mettre dans les values |
 | Application déployée mais pas à jour | auto-sync désactivé | *REFRESH* puis *SYNC* dans ArgoCD |
