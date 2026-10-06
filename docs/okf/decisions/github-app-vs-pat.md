@@ -14,6 +14,7 @@ Source : `fabnum-cicd/docs/workflows/05-authentication.md`. Partir du haut et s'
 | build/test/scan/push vers ghcr.io seulement | **`GITHUB_TOKEN`** (rien à configurer, seul `permissions:` compte) |
 | PR de release/chart qui doivent déclencher la CI ; automerge ; dispatch vers un autre dépôt ; releases de chart déclenchant `release:` ; limites d'API | **GitHub App** (`APP_CLIENT_ID`, `APP_PRIVATE_KEY`) ou `GH_PAT` |
 | `GH_PAT` déjà en place, rien à changer | `GH_PAT` reste supporté |
+| Mutualiser un seul credential cross-repo avec des permissions **fines par dépôt** (schéma « dépôt d'infra séparé ») | token GitHub **fine-grained** (création + permissions : `cicd-fabnum` → `references/depot-infra.md`) |
 
 - Ordre de résolution : **token App → `GH_PAT` → `GITHUB_TOKEN`**. Si App et PAT coexistent, l'App l'emporte (permet de vérifier une migration).
 - Fournir un seul de `APP_CLIENT_ID`/`APP_PRIVATE_KEY` **fait échouer** le job (pas de repli silencieux).
