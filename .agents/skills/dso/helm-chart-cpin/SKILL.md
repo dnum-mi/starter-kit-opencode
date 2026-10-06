@@ -65,11 +65,13 @@ Ordre de chargement par ArgoCD : `values.yaml` → `values-cpin.yaml` → `value
 helm lint . -f values.yaml -f values-cpin.yaml
 helm template <release> . -f values.yaml -f values-cpin.yaml -f values-<env>.yaml \
   | uv run --with pyyaml scripts/check-cpin-rules.py \
-      --quota-cpu 200m --quota-memory 0.2Gi --app-port 3000 --require-ingress
+      --quota-cpu 200m --quota-memory 0.2Gi --app-port 3000 --require-ingress \
+      --expected-image <registry>/<projet-harbor>/<repo>
 ```
 
 `check-cpin-rules.py` contrôle labels, resources, probes, image (tag, registre, placeholder), NodePort, hostPath, credentials en ConfigMap, UID figés,
 ports probe/conteneur, backend Ingress ↔ port du Service, host d'exemple ; avec options : somme des limits vs quota (`--quota-*`), port applicatif (`--app-port`), exposition obligatoire (`--require-ingress`).
+`--expected-image` valide le **chemin complet** `<registry>/<projet>/<repo>` (sans tag) de chaque image rendue : il prend sa valeur du **`PROJECT_PATH` de la console** (nom du projet Harbor), qui peut différer du nom du dépôt ou de l'app (tirets). Le script affiche les images résolues (`INFO`) et échoue en `ERREUR` si une image ne correspond pas au chemin attendu.
 Sortie 1 s'il reste des erreurs. Ce n'est pas Kyverno : les règles sont en **audit** en dev/preprod et **bloquantes en prod**, donc un rendu propre ici évite la surprise à la mise en prod, sans la garantir.
 Mettre la même commande en **job CI bloquant** (skill `cicd-fabnum`) : c'est ce qui arrête les erreurs avant ArgoCD.
 

@@ -81,8 +81,12 @@ Présenter cette checklist à l'humain et attendre qu'il confirme chaque ligne :
    ```bash
    helm template <release> <chart> -f values.yaml -f values-cpin.yaml -f values-<env>.yaml \
      | uv run --with pyyaml scripts/check-cpin-rules.py \
-         --quota-cpu <quota> --quota-memory <quota avec unité> --app-port <port> --require-ingress
+         --quota-cpu <quota> --quota-memory <quota avec unité> --app-port <port> --require-ingress \
+         --expected-image <registry>/<projet-harbor>/<repo>
    ```
+   `--expected-image` = le chemin complet **sans tag** issu du `PROJECT_PATH` réel de la console (nom du
+   projet Harbor). Il peut différer du nom du dépôt ou de l'app (ex. projet `icebreakerdemo`, dépôt
+   `ice-breaker-demo`) : tout écart fait échouer le check plutôt qu'un `ImagePullBackOff` 401 au déploiement.
 4. Ajouter cette commande en job CI bloquant (dans les `needs` de `all-jobs-passed`).
 
 **Porte** : `check-cpin-rules.py` sort en 0 localement et en CI.
