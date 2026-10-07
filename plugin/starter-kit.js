@@ -62,7 +62,35 @@ export const StarterKitPlugin = async (_input, options = {}) => ({
     config.agent ??= {}
     config.command ??= {}
     addUnique(config.instructions, path.join(ROOT, 'AGENTS.md'))
+    // Register root‑level commands (e.g. /feedback) in addition to per‑group commands
+    const ROOT_COMMANDS = path.join(ROOT, 'commands')
+    if (fs.existsSync(ROOT_COMMANDS)) {
+      register(config.command, ROOT_COMMANDS, 'template')
+    }
     for (const group of options.groups ?? DEFAULT_GROUPS)
       installGroup(config, group)
+  },
+  // Event listener: ask to open a feedback issue when a skill fails
+  "session.error": async ({ error, client }) => {
+    const msg = error?.message ?? ''
+    // Simple heuristic: trigger only if the error mentions a skill name or the word "contradiction"
+    if (/skill|contradiction/i.test(msg)) {
+      const confirm = await client.app.ask({
+        type: "confirm",
+        message: `J’ai détecté une erreur de skill : "${msg}". Souhaitez‑vous ouvrir automatiquement une issue de feedback ?`,
+        default: false,
+      })
+      if (confirm) {
+        // Run the global /feedback command with the error message pre‑filled as the "Contexte"
+        if (client.commands && typeof client.commands.run === "function") {
+          await client.commands.run('feedback', { prefill: msg })
+        } else {
+          // Fallback: suggest the user run the command manually
+          await client.app.message({
+            content: `/feedback prefill=\"${msg.replace(/"/g, '\\"')}\"`,
+          })
+        }
+      }
+    }
   },
 })
