@@ -30,6 +30,22 @@ Examples: `feat/worker-logs#353`, `refactor/reorganize-backend#360`
 
 Conventional Commits format. French is acceptable.
 
+## Actions manuelles
+
+Quand une intervention humaine est requise, utiliser ce format :
+
+> **🔧 Action manuelle requise**
+>
+> - <action à faire>
+> - <lien/référence si besoin>
+
+Exemple :
+
+> **🔧 Action manuelle requise**
+>
+> - Ouvrir la console CPiN et cliquer sur **Replay hooks** pour le projet `anonymisation`.
+> - Confirmer le statut dans l'UI ArgoCD DSO.
+
 ## Code Quality
 
 - Lines ≤ 120 (≤ 140 forbidden)
