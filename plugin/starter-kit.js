@@ -54,32 +54,73 @@ function installGroup(config, group) {
   register(config.command, path.join(ROOT, 'commands', group), 'template')
 }
 
-export const StarterKitPlugin = async ({ client }, options = {}) => ({
-  config: async (config) => {
-    config.instructions ??= []
-    config.skills ??= {}
-    config.skills.paths ??= []
-    config.agent ??= {}
-    config.command ??= {}
-    addUnique(config.instructions, path.join(ROOT, 'AGENTS.md'))
-    // Commandes racine (ex. /feedback) dans commands/root/
-    register(config.command, path.join(ROOT, 'commands', 'root'), 'template')
-    for (const group of options.groups ?? DEFAULT_GROUPS)
-      installGroup(config, group)
-  },
-  // Proposer d'ouvrir une issue de feedback quand un skill échoue
-  event: async ({ event }) => {
-    if (event.type !== 'session.error')
+const USER_MESSAGE_HISTORY = 10
+const SUGGEST_COOLDOWN_MS = 60_000
+
+export const StarterKitPlugin = async ({ client }, options = {}) => {
+  const recentUserMessages = []
+  const evaluatedMessages = new Set()
+  let lastSuggestion = 0
+
+  const suggestFeedback = async (reason, context) => {
+    const now = Date.now()
+    if (now - lastSuggestion < SUGGEST_COOLDOWN_MS)
       return
-    const message = event.properties.error?.message ?? ''
-    // Déclenche uniquement si l'erreur mentionne un skill ou une contradiction
-    if (!/skill|contradiction/i.test(message))
-      return
+    lastSuggestion = now
     await client.tui.showToast({
-      body: { message: 'Erreur de skill détectée — /feedback pour ouvrir une issue', variant: 'warning' },
+      body: { message: 'Situation détectée — /feedback pour documenter', variant: 'warning' },
     })
     await client.tui.appendPrompt({
-      body: { text: `/feedback ${JSON.stringify(message)}` },
+      body: { text: `/feedback ${reason} ${JSON.stringify(context)}` },
     })
-  },
-})
+  }
+
+  const handleUserMessage = async (info) => {
+    if (evaluatedMessages.has(info.id))
+      return
+    evaluatedMessages.add(info.id)
+    let text = ''
+    try {
+      const { parts } = await client.session.message({ path: { id: info.sessionID, messageID: info.id } })
+      text = parts.filter(p => p.type === 'text').map(p => p.text).join(' ').trim()
+    }
+    catch {
+      return
+    }
+    if (!text)
+      return
+    const norm = text.toLowerCase().replace(/\s+/g, ' ')
+    if (recentUserMessages.includes(norm))
+      await suggestFeedback('tourne-en-rond', text)
+    recentUserMessages.push(norm)
+    if (recentUserMessages.length > USER_MESSAGE_HISTORY)
+      recentUserMessages.shift()
+  }
+
+  return {
+    config: async (config) => {
+      config.instructions ??= []
+      config.skills ??= {}
+      config.skills.paths ??= []
+      config.agent ??= {}
+      config.command ??= {}
+      addUnique(config.instructions, path.join(ROOT, 'AGENTS.md'))
+      // Commandes racine (ex. /feedback) dans commands/root/
+      register(config.command, path.join(ROOT, 'commands', 'root'), 'template')
+      for (const group of options.groups ?? DEFAULT_GROUPS)
+        installGroup(config, group)
+    },
+    // Proposer /feedback quand l'utilisateur tourne en rond ou que le harnais bloque
+    event: async ({ event }) => {
+      if (event.type === 'message.updated' && event.properties.info?.role === 'user') {
+        await handleUserMessage(event.properties.info)
+        return
+      }
+      if (event.type === 'session.error') {
+        const message = event.properties.error?.message ?? ''
+        if (message)
+          await suggestFeedback('bloque', message)
+      }
+    },
+  }
+}

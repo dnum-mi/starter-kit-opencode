@@ -30,6 +30,13 @@ Examples: `feat/worker-logs#353`, `refactor/reorganize-backend#360`
 
 Conventional Commits format. French is acceptable.
 
+## Feedback
+
+Quand tu détectes l'une de ces situations, propose `/feedback` avec la raison et le contexte :
+- l'utilisateur **tourne en rond** (répète la même demande sans progression) ;
+- un problème **lié à un skill** ne peut pas être résolu par le harnais ;
+- une solution trouvée **contredit un skill** ou le harnais.
+
 ## Code Quality
 
 - Lines ≤ 120 (≤ 140 forbidden)

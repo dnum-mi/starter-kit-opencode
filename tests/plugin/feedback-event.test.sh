@@ -25,10 +25,15 @@ if grep -q '<await user input>' "$ROOT/commands/root/feedback.md"; then
 fi
 echo "OK   template sans <await user input>"
 
-# 3. Le handler d'événement n'utilise que des APIs documentées (event + client.tui)
+# 3. Le handler d'événement n'utilise que des APIs documentées
 if grep -qE 'client\.(app\.ask|commands\.run)' "$ROOT/plugin/starter-kit.js"; then
   echo "KO   handler utilise une API non documentée (client.app.ask / client.commands.run)" >&2
   exit 1
 fi
 grep -q 'event: async' "$ROOT/plugin/starter-kit.js" \
   && echo "OK   handler via le hook event (API documentée)"
+
+# 4. Le handler couvre les situations attendues (tourne en rond, harnais bloqué)
+grep -q "tourne-en-rond" "$ROOT/plugin/starter-kit.js" \
+  && grep -q "session.error" "$ROOT/plugin/starter-kit.js" \
+  && echo "OK   détection tourne-en-rond + session.error"

@@ -1,29 +1,37 @@
 ---
-description: Ouvrir une issue GitHub pour documenter une contradiction ou un problème lié à un skill
+description: Ouvrir une issue GitHub pour documenter un problème lié à un skill ou au harnais
 agent: build
 subtask: false
 ---
 
 # /feedback
 
-Ouvre une issue GitHub pour consigner un problème de skill : **Contexte**, **Symptôme**, **Attendu**, **Reproduction**.
+Ouvre une issue GitHub pour consigner un problème rencontré avec un skill ou le harnais : **Raison**, **Contexte**, **Symptôme**, **Attendu**, **Reproduction**.
 
-## Contexte
+## Raison
 
 $ARGUMENTS
 
 ## Déroulé
 
-1. **Contexte** : utilise `$ARGUMENTS` s'il est fourni (pré-rempli par l'événement `session.error`), sinon demande à l'utilisateur le message d'erreur ou la contradiction détectée.
-2. **Symptôme** : demande à l'utilisateur de décrire le symptôme observé (ou de coller le message d'erreur complet).
-3. **Attendu** : demande le comportement attendu.
-4. **Reproduction** : demande les étapes pour reproduire le problème.
+1. **Raison** : identifie le type de problème à partir de `$ARGUMENTS` :
+   - `tourne-en-rond` : l'utilisateur répète la même demande sans progression.
+   - `bloque` : le harnais n'a pas pu résoudre un problème lié à un skill.
+   - `contradiction` : une solution trouvée contredit un skill ou le harnais.
+   - (autre) : décris la situation.
+2. **Contexte** : utilise le contexte fourni dans `$ARGUMENTS` (après la raison), sinon demande à l'utilisateur le message d'erreur ou la contradiction détectée.
+3. **Symptôme** : demande à l'utilisateur de décrire le symptôme observé (ou de coller le message d'erreur complet).
+4. **Attendu** : demande le comportement attendu.
+5. **Reproduction** : demande les étapes pour reproduire le problème.
 
 ## Création de l'issue
 
-Une fois les 4 champs recueillis, écris le corps de l'issue dans `/tmp/feedback_body.md` au format :
+Une fois les champs recueillis, écris le corps de l'issue dans `/tmp/feedback_body.md` au format :
 
 ```markdown
+## Raison
+<raison>
+
 ## Contexte
 <contexte>
 
@@ -42,7 +50,7 @@ Puis crée l'issue :
 ```bash
 gh issue create \
   --repo dnum-mi/starter-kit-opencode \
-  --title "Feedback : <résumé>" \
+  --title "Feedback : <raison> — <résumé>" \
   --body "$(cat /tmp/feedback_body.md)" \
   --label documentation
 ```
