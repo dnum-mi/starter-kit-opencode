@@ -1,0 +1,16 @@
+{
+  "name": "cpin-debug",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "login": "node login.mjs",
+    "check:argocd": "node check-argocd.mjs",
+    "check:harbor": "node check-harbor.mjs",
+    "check:gitlab": "node check-gitlab.mjs",
+    "check:console": "node check-console.mjs"
+  },
+  "dependencies": {
+    "playwright": "^1.48.0"
+  }
+}
