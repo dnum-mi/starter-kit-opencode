@@ -28,3 +28,6 @@ test-cpin-rules: ## Teste check-cpin-rules.py (skill helm-chart-cpin) sur les fr
 
 test-plugin: ## Vérifie que le plugin installe chaque groupe, et rien des autres
 	tests/plugin/check-config.sh
+
+test-feedback: ## Smoke test for the new /feedback command and event handler
+	tests/plugin/feedback-event.test.sh

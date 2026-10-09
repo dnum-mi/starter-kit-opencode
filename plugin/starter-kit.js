@@ -54,7 +54,7 @@ function installGroup(config, group) {
   register(config.command, path.join(ROOT, 'commands', group), 'template')
 }
 
-export const StarterKitPlugin = async (_input, options = {}) => ({
+export const StarterKitPlugin = async ({ client }, options = {}) => ({
   config: async (config) => {
     config.instructions ??= []
     config.skills ??= {}
@@ -62,7 +62,24 @@ export const StarterKitPlugin = async (_input, options = {}) => ({
     config.agent ??= {}
     config.command ??= {}
     addUnique(config.instructions, path.join(ROOT, 'AGENTS.md'))
+    // Commandes racine (ex. /feedback) dans commands/root/
+    register(config.command, path.join(ROOT, 'commands', 'root'), 'template')
     for (const group of options.groups ?? DEFAULT_GROUPS)
       installGroup(config, group)
+  },
+  // Proposer d'ouvrir une issue de feedback quand un skill échoue
+  event: async ({ event }) => {
+    if (event.type !== 'session.error')
+      return
+    const message = event.properties.error?.message ?? ''
+    // Déclenche uniquement si l'erreur mentionne un skill ou une contradiction
+    if (!/skill|contradiction/i.test(message))
+      return
+    await client.tui.showToast({
+      body: { message: 'Erreur de skill détectée — /feedback pour ouvrir une issue', variant: 'warning' },
+    })
+    await client.tui.appendPrompt({
+      body: { text: `/feedback ${JSON.stringify(message)}` },
+    })
   },
 })
