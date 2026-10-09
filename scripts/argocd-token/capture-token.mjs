@@ -1,6 +1,11 @@
 import { firefox } from 'playwright'
+import { writeFile, chmod } from 'node:fs/promises'
+import { resolve } from 'node:path'
 
 const ARGOCD_URL = process.env.ARGOCD_URL ?? 'https://argocd.sdid.cpin.numerique-interieur.com'
+const HARBOR_URL = process.env.HARBOR_URL ?? 'https://harbor.sdid.cpin.numerique-interieur.com'
+const GITLAB_URL = process.env.GITLAB_URL ?? 'https://gitlab.sdid.cpin.numerique-interieur.com'
+const TOKEN_FILE = process.env.TOKEN_FILE ?? resolve(import.meta.dirname, '.token')
 const LOGIN_TIMEOUT_MS = 5 * 60 * 1000
 const POLL_INTERVAL_MS = 1000
 
@@ -35,25 +40,30 @@ async function waitForToken(page) {
   throw new Error(`Aucun token ArgoCD détecté après ${LOGIN_TIMEOUT_MS / 1000}s.`)
 }
 
-async function checkApplications(token) {
-  const response = await fetch(`${ARGOCD_URL}/api/v1/applications`, {
-    headers: { Authorization: `Bearer ${token}` },
-  })
-  const status = response.status
-  if (!response.ok) {
-    console.log(`GET /api/v1/applications → ${status}`)
+async function saveToken(token) {
+  await writeFile(TOKEN_FILE, token, { encoding: 'utf8', flag: 'w' })
+  await chmod(TOKEN_FILE, 0o600)
+  console.log(`Token sauvegardé (0600) : ${TOKEN_FILE}`)
+}
+
+async function testService(name, url, path, headers = {}) {
+  if (!url) {
+    console.log(`${name} : URL non configurée (variable d'env manquante)`)
     return
   }
-  const data = await response.json()
-  const apps = (data.items ?? []).map((app) => ({
-    name: app.metadata?.name,
-    health: app.status?.health?.status,
-    sync: app.status?.sync?.status,
-  }))
-  console.log(`GET /api/v1/applications → ${status} (${apps.length} applications)`)
-  for (const app of apps) {
-    console.log(`  - ${app.name}: health=${app.health ?? '?'} sync=${app.sync ?? '?'}`)
+  try {
+    const response = await fetch(`${url}${path}`, {
+      headers: { Authorization: `Bearer ${await readToken()}`, ...headers },
+    })
+    console.log(`${name} : GET ${path} → ${response.status}`)
+  } catch (error) {
+    console.log(`${name} : erreur réseau → ${error.message}`)
   }
+}
+
+async function readToken() {
+  const { readFile } = await import('node:fs/promises')
+  return (await readFile(TOKEN_FILE, 'utf8')).trim()
 }
 
 const browser = await firefox.launch({ headless: false })
@@ -66,7 +76,10 @@ try {
   }
   const token = await waitForToken(page)
   console.log(`Token ArgoCD capturé : ${redact(token)}`)
-  await checkApplications(token)
+  await saveToken(token)
+  await testService('ArgoCD', ARGOCD_URL, '/api/v1/applications')
+  await testService('Harbor', HARBOR_URL, '/api/v2.0/projects')
+  await testService('GitLab', GITLAB_URL, '/api/v4/user')
 } catch (error) {
   console.error(`Erreur : ${error.message}`)
   process.exitCode = 1
