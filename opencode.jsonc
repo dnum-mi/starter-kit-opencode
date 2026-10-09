@@ -1,0 +1,13 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "lsp": true,
+  "plugin": [
+    // "superpowers@git+https://github.com/obra/superpowers.git",
+    ["./", { "groups": ["dev", "dso"] }]
+  ],
+  "permission": {
+    "read": { "*": "allow", "**/.env.secrets": "deny" },
+    "edit": { "*": "allow", "**/.env.secrets": "deny" },
+    "skill": { "*": "allow" }
+  }
+}
