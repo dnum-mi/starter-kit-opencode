@@ -72,6 +72,16 @@ Présenter cette checklist à l'humain et attendre qu'il confirme chaque ligne :
 - [ ] Si `scan-sonarqube` est ajouté au `ci.yml` : secrets `SONAR_TOKEN` et `SONAR_PROJECT_KEY` (requis par le workflow).
 - [ ] Secrets applicatifs saisis **par l'humain** dans le Vault du projet (mount `<organisation>-<projet>`).
 
+À la fin de la checklist, **demander** à l'humain :
+
+> Veux-tu configurer le debug automatisé des services internes (scripts `scripts/cpin-debug/`) ?
+> Cela permet de vérifier ArgoCD, Harbor, GitLab et la console par API au lieu de l'UI.
+
+- **Oui** → vérifier que `scripts/cpin-debug/.env.secrets` existe (0600) et **demander** à l'humain d'y
+  ajouter `DSO_TOKEN` (console) et `GITLAB_PAT` (GitLab). L'agent ne lit jamais le contenu. Le token OIDC
+  (`ARGOCD_TOKEN`) sera ajouté plus tard par `login.mjs` (phase 5).
+- **Non** → debug manuel via l'UI uniquement. Rien n'est installé.
+
 **Porte** : `gh secret list` et `gh variable list` montrent tous les noms cochés ci-dessus (sur chaque dépôt, avec `-R <org>/<dépôt>`), et l'humain a confirmé les autres lignes.
 
 ## Phase 2 : fichiers values chargés par ArgoCD
@@ -126,6 +136,27 @@ Auto-sync désactivé ⇒ *SYNC* manuel dans ArgoCD (instance **ArgoCD DSO**).
 4. **Clôture de mise en service** : révoquer tout secret/token exposé ou d'essai (ex. `github_pat_…` commité,
    token mirror `glptt-…`, jetons jetables de test). Rappeler à l'humain la **Rotation** de ce qui a fuité ;
    l'agent ne manipule jamais ces valeurs, il vérifie seulement que la révocation est demandée/faite.
+5. **Debug automatisé (optionnel)** — **demander** à l'humain :
+
+> Veux-tu te logger (login Playwright) pour activer le debug automatisé des services ? Une fenêtre
+> navigateur s'ouvrira pour te connecter via le SSO Keycloak. Sinon, on vérifie via l'UI ArgoCD DSO.
+
+- **Ramification A — Login accepté** :
+  1. Lancer `npm run login` (dans `scripts/cpin-debug/`). Le navigateur s'ouvre, l'humain se connecte via
+     SSO Keycloak (2FA possible). Le token OIDC est écrit dans `.env.secrets` (0600), **jamais affiché**.
+  2. Lancer les checks : `check:argocd`, `check:harbor`, `check:gitlab`, `check:console`.
+  3. Lire les **statuts HTTP** (jamais les tokens) et les rapporter à l'humain.
+  4. **A1 — un check échoue** (ex. ArgoCD 401, Harbor 500) → consulter `references/depannage.md` et
+     proposer un correctif, ou demander à l'humain ce qu'il voit dans l'UI.
+- **Ramification B — Login refusé** : debug manuel via l'UI ArgoCD DSO (comportement actuel, inchangé).
+  Demander à l'humain ce qu'il voit (statut pod, événements, image attendue).
+- **Ramification C — Login accepté mais token manquant pour un service** :
+  - `ARGOCD_TOKEN` absent → relancer `login.mjs`.
+  - `DSO_TOKEN` ou `GITLAB_PAT` absent → **demander** à l'humain de les ajouter dans `.env.secrets`, ou
+    sauter le check de ce service en le signalant.
+
+**Règle absolue** : ne jamais lire, écrire, afficher ni demander la **valeur** d'un token. Vérifier
+seulement la **présence** des variables dans `.env.secrets` (ex. `grep -c '^ARGOCD_TOKEN='`).
 
 **Porte** : les quatre points sont OK (la révocation de la clôture est répertoriée). Sinon : [`references/depannage.md`](references/depannage.md) (symptôme → phase → correctif).
 
