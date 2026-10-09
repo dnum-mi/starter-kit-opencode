@@ -81,10 +81,48 @@ Un script par service, chacun lit son token depuis `.env.secrets` :
 
 ### 5. Runbook — `.agents/skills/dso/deploiement-cpin/SKILL.md`
 
-Nouvelle étape dans la phase 5 (vérifier après la synchro) : l'agent **propose** à l'utilisateur de se
-logger (login Playwright) pour activer le debug automatisé des services internes ; si refus, debug
-manuel via l'UI ArgoCD DSO. Expliquer ce qui se passe : token capturé en 0600 (`.env.secrets`), jamais
-affiché, services interrogés (ArgoCD, Harbor, GitLab, Console).
+Le runbook intègre le debug automatisé avec des **ramifications explicites** et des **demandes de
+saisie utilisateur**. L'agent ne lance jamais le login ni les checks sans avoir demandé à l'humain.
+
+#### Phase 1 (prérequis) — proposition de mise en place (optionnelle)
+
+À la fin de la checklist, l'agent **demande** :
+
+> Veux-tu configurer le debug automatisé des services internes (scripts `scripts/cpin-debug/`) ?
+> Cela permet de vérifier ArgoCD, Harbor, GitLab et la console par API au lieu de l'UI.
+
+- **Oui** → l'agent vérifie que `scripts/cpin-debug/.env.secrets` existe (0600) et **demande** à
+  l'humain d'y ajouter `DSO_TOKEN` (console) et `GITLAB_PAT` (GitLab). L'agent ne lit jamais le contenu.
+  Le token OIDC (`ARGOCD_TOKEN`) sera ajouté plus tard par `login.mjs` (phase 5).
+- **Non** → debug manuel via l'UI uniquement. Rien n'est installé.
+
+#### Phase 5 (vérifier après la synchro) — debug automatisé proposé
+
+Après la synchro, l'agent **demande** :
+
+> Veux-tu te logger (login Playwright) pour activer le debug automatisé des services ? Une fenêtre
+> navigateur s'ouvrira pour te connecter via le SSO Keycloak. Sinon, on vérifie via l'UI ArgoCD DSO.
+
+**Ramification A — Login accepté** :
+1. L'agent lance `npm run login` (dans `scripts/cpin-debug/`). Le navigateur s'ouvre, l'humain se
+   connecte via SSO Keycloak (2FA possible). Le token OIDC est écrit dans `.env.secrets` (0600),
+   **jamais affiché**.
+2. L'agent lance les checks : `check:argocd`, `check:harbor`, `check:gitlab`, `check:console`.
+3. L'agent lit les **statuts HTTP** (jamais les tokens) et les rapporte à l'humain.
+4. **Ramification A1 — un check échoue** (ex. ArgoCD 401, Harbor 500) → l'agent consulte
+   `references/depannage.md` et propose un correctif, ou demande à l'humain ce qu'il voit dans l'UI.
+
+**Ramification B — Login refusé** :
+1. Debug manuel via l'UI ArgoCD DSO (comportement actuel, inchangé).
+2. L'agent demande à l'humain ce qu'il voit (statut pod, événements, image attendue).
+
+**Ramification C — Login accepté mais token manquant pour un service** :
+- `ARGOCD_TOKEN` absent → relancer `login.mjs`.
+- `DSO_TOKEN` ou `GITLAB_PAT` absent → l'agent **demande** à l'humain de les ajouter dans
+  `.env.secrets`, ou saute le check de ce service en le signalant.
+
+**Règle absolue** : l'agent ne lit, n'écrit, n'affiche ni ne demande jamais la **valeur** d'un token.
+Il vérifie seulement la **présence** des variables dans `.env.secrets` (ex. `grep -c '^ARGOCD_TOKEN='`).
 
 ## Flux d'utilisation
 
@@ -93,8 +131,8 @@ affiché, services interrogés (ArgoCD, Harbor, GitLab, Console).
    écrit dans `.env.secrets` (0600).
 3. `npm run check:argocd` / `check:harbor` / `check:gitlab` / `check:console` : interroge le service et
    affiche le statut.
-4. Dans le runbook, l'agent propose le login à l'utilisateur ; si accepté, il lance les checks pour
-   aider au debug.
+4. Dans le runbook, l'agent propose le login à l'utilisateur (phase 5) ; si accepté, il lance les checks
+   pour aider au debug. Si refusé, debug manuel via l'UI.
 
 ## Hors périmètre
 
