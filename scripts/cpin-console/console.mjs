@@ -89,9 +89,15 @@ function validatePlan(plan) {
   }
   check('projet', plan.project?.name)
   if ((plan.project?.description ?? '').length > 280) errors.push('description > 280 caractères')
+  // un palier de quota n'est exigé que si un environnement l'utilise ; l'autre vaut 0
+  const stages = (plan.environments ?? []).map(env => env.stage)
+  const used = { prod: stages.includes('prod'), hprod: stages.some(stage => stage !== 'prod') }
   for (const tier of ['hprod', 'prod'])
-    for (const key of ['cpu', 'gpu', 'memory'])
-      if (typeof plan.project?.[tier]?.[key] !== 'number') errors.push(`project.${tier}.${key} requis (nombre)`)
+    for (const key of ['cpu', 'gpu', 'memory']) {
+      const value = plan.project?.[tier]?.[key]
+      if (used[tier] ? typeof value !== 'number' : value !== undefined && typeof value !== 'number')
+        errors.push(`project.${tier}.${key} requis (nombre)${used[tier] ? '' : ' ou absent'}`)
+    }
   if (!plan.environments?.length) errors.push('au moins un environnement requis')
   for (const env of plan.environments ?? []) {
     check('environnement', env.name)
@@ -110,6 +116,7 @@ function validatePlan(plan) {
 
 async function resolveIds(plan, token) {
   const [stages, clusters] = await Promise.all([api('GET', '/stages', { token }), api('GET', '/clusters', { token })])
+  if (!Array.isArray(stages) || !Array.isArray(clusters)) fail('réponse inattendue de la console : DSO_TOKEN invalide ou expiré ?')
   const errors = []
   const environments = plan.environments.map((env) => {
     const stage = stages.find(s => s.name === env.stage)
@@ -121,6 +128,12 @@ async function resolveIds(plan, token) {
     return { ...env, stageId: stage?.id, clusterId: cluster?.id }
   })
   return { environments, errors }
+}
+
+const ZERO = { cpu: 0, gpu: 0, memory: 0 }
+
+function withTiers(project) {
+  return { ...project, hprod: { ...ZERO, ...project.hprod }, prod: { ...ZERO, ...project.prod } }
 }
 
 function describe(plan, environments) {
@@ -174,6 +187,7 @@ const commands = {
     const plan = parseJson(args.plan)
     const errors = validatePlan(plan)
     if (errors.length) fail(`plan invalide :\n- ${errors.join('\n- ')}`)
+    plan.project = withTiers(plan.project)
     const { environments, errors: refErrors } = await resolveIds(plan, await requireToken())
     if (refErrors.length) fail(`plan invalide :\n- ${refErrors.join('\n- ')}`)
     describe(plan, environments)

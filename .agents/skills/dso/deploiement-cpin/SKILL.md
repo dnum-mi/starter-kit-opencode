@@ -109,10 +109,15 @@ Une question par paramètre des `POST` de l'API ; proposer une valeur par défau
 |----------|----------------------------|
 | Nom du **projet** | 2 à 20 car., `[a-z0-9]` **uniquement, pas de tiret** (« translate-rt » est refusé). Ne change plus ensuite. Il fixe le nom du projet Harbor (`PROJECT_PATH`). |
 | Description | 280 car. max |
-| Quotas du projet, **hors-prod** et **prod** : cpu, gpu, mémoire (ou `limitless`) | nombres ; relever l'unité affichée par la console |
-| **Environnements** : nom, stage, cluster, cpu, gpu, mémoire | nom 2 à 11 car. `[a-z0-9]` ; stage et cluster pris dans `catalog` ; cluster autorisé pour le stage |
+| **Quels environnements ?** (stages de `catalog` : dev, staging, integration, prod…). Poser cette question **avant toute question de quota** | un stage par environnement ; ne **pas** supposer de prod : demander s'il y en a une |
+| Pour chaque environnement : nom, cluster, cpu, gpu, mémoire | nom 2 à 11 car. `[a-z0-9]` ; cluster autorisé pour le stage |
+| **Quota du projet, uniquement pour les paliers utilisés** : hors-prod (si un environnement non-prod existe), prod (si, et seulement si, un environnement `prod` existe) ; ou `limitless` | nombres ; relever l'unité affichée par la console. Un palier inutilisé n'est **pas demandé** : il est envoyé à 0 |
 | **Dépôts** : nom interne, URL `https://….git`, public ou privé, applicatif ou infra | nom 2 à 20 car. `[a-z0-9-]` ; un dépôt privé exige `INFRA_REPO_USER`/`INFRA_REPO_TOKEN` |
 | **Membres** à ajouter (e-mails) | optionnel |
+
+**Ordre des questions** : projet → environnements → quotas des paliers utilisés → dépôts → membres.
+Ne jamais demander un quota ou un détail d'un palier dont l'humain n'a pas confirmé l'existence.
+Rappeler au passage qu'on peut ajouter un environnement plus tard (la création est rejouable).
 
 ### 4. Simuler, faire confirmer, appliquer
 
