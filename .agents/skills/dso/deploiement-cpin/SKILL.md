@@ -57,10 +57,11 @@ L'agent crée lui-même ce qui est dans la console (script `scripts/cpin-console
 
 ### 1. Prérequis humains (les seuls)
 
-- Un **jeton API de la console** dans `scripts/cpin-console/.env.secrets` (0600) : `DSO_TOKEN=…`
-  (console > profil > jetons). Pour un dépôt privé : `INFRA_REPO_USER` et `INFRA_REPO_TOKEN`
-  (PAT GitHub, scope `repo`) dans le même fichier. L'agent vérifie seulement la **présence** des noms
-  (`grep -c '^DSO_TOKEN='`), jamais la valeur.
+- Le **jeton API de la console** : l'agent lance `node scripts/cpin-console/console.mjs init`, qui **crée**
+  `scripts/cpin-console/.env.secrets` (0600, valeurs vides) et affiche son chemin réel. L'humain y colle
+  seulement `DSO_TOKEN=…` (console > profil > jetons) ; pour un dépôt privé aussi `INFRA_REPO_USER` et
+  `INFRA_REPO_TOKEN` (PAT GitHub, scope `repo`). L'agent relance `init` pour vérifier « renseigné » /
+  « vide » : jamais la valeur. Ne pas lui demander de créer ou d'éditer ce fichier à la main.
 - Les **secrets applicatifs** saisis dans le Vault du projet (mount `<organisation>-<projet>`).
 - La **GitHub App** installée sur les dépôts (secrets `APP_CLIENT_ID` et `APP_PRIVATE_KEY`, ou `GH_PAT`) :
   sans elle, pas de CI sur les PR de release/bump, ni d'automerge, ni de `dispatch-helm-chart`.

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Console CPiN par son API (swagger : <console>/swagger-ui). Sans dépendance.
 //
+//   node console.mjs init                         crée .env.secrets (0600, valeurs vides) s'il manque, dit quels noms sont renseignés
 //   node console.mjs version
 //   node console.mjs catalog                      stages, clusters, zones disponibles
 //   node console.mjs plan  --plan '<json>'        valide le plan, n'écrit rien (aussi : apply sans --apply)
@@ -10,7 +11,7 @@
 //
 // DSO_TOKEN (jeton API console) est lu dans scripts/cpin-console/.env.secrets (0600).
 // INFRA_REPO_USER / INFRA_REPO_TOKEN y sont lus pour un dépôt privé. Aucune valeur n'est jamais affichée.
-import { readFile } from 'node:fs/promises'
+import { readFile, writeFile, chmod } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
 
@@ -68,7 +69,7 @@ async function api(method, path, { body, query, token } = {}) {
 
 async function requireToken() {
   const { DSO_TOKEN } = await loadSecrets()
-  if (!DSO_TOKEN) fail(`DSO_TOKEN absent de ${SECRETS_FILE} (jeton API : console > profil > jetons, ou POST /user/tokens)`)
+  if (!DSO_TOKEN) fail(`DSO_TOKEN vide ou absent de ${SECRETS_FILE} (lancer « init », puis y coller le jeton API : console > profil > jetons)`)
   return DSO_TOKEN
 }
 
@@ -136,7 +137,25 @@ function describe(plan, environments) {
 
 // --- commandes --------------------------------------------------------------------------------
 
+const SECRET_NAMES = ['DSO_TOKEN', 'INFRA_REPO_USER', 'INFRA_REPO_TOKEN']
+
 const commands = {
+  // Crée le fichier (jamais écrasé) avec des valeurs vides ; l'humain y colle ses valeurs.
+  // Ne rapporte que « renseigné » / « vide » : la valeur n'est jamais lue vers la sortie.
+  async init() {
+    const current = await loadSecrets()
+    let created = false
+    try {
+      await readFile(SECRETS_FILE, 'utf8')
+    } catch {
+      await writeFile(SECRETS_FILE, `${SECRET_NAMES.map(name => `${name}=`).join('\n')}\n`, { mode: 0o600 })
+      created = true
+    }
+    await chmod(SECRETS_FILE, 0o600)
+    console.log(`${created ? 'créé' : 'existant'} : ${SECRETS_FILE} (0600)`)
+    for (const name of SECRET_NAMES) console.log(`  ${name} : ${current[name] ? 'renseigné' : 'vide'}`)
+  },
+
   async version() {
     console.log(`${CONSOLE_URL} → ${JSON.stringify(await api('GET', '/version'))}`)
   },
