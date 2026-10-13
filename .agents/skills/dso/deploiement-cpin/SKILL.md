@@ -12,6 +12,12 @@ tant qu'elle n'est pas franchie. Principe : **vérifier au PR, pas au déploieme
 
 ## Règles pour l'agent
 
+- **Suivi visible, dès le départ, quel que soit l'agent** : avant toute autre action, `todowrite` avec six
+  todos `Phase 0 — Éligibilité`, `Phase 1 — Console et jetons`, `Phase 2 — Valeurs vitales`,
+  `Phase 3 — Chart et CI`, `Phase 4 — Livrer`, `Phase 5 — Vérifier` (c'est le panneau de droite
+  d'OpenCode). Une seule `in_progress` ; passer à `completed` quand la porte est franchie, **avant** d'écrire
+  la suite. Chaque message commence par `▶ Phase N/5 — <nom> · étape : <étape>`, puis : ce que je fais,
+  pourquoi, ce que ça change (rien / ce qui est écrit et où), ce dont j'ai besoin de l'humain.
 - **Ne jamais demander, lire, écrire ni afficher la valeur d'un token ou d'un secret.** L'humain les
   saisit dans la console CPiN, dans GitHub ou dans Vault ; l'agent vérifie seulement que le **nom** existe.
 - **Ne jamais committer un secret/token dans Git** (même en « temporaire ») : un `github_pat_…` ou un token
