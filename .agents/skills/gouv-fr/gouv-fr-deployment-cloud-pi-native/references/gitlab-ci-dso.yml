@@ -1,0 +1,41 @@
+# Gabarit .gitlab-ci-dso.yml — une image construite par Kaniko et poussée dans Harbor.
+# Base : IA-Generative/ocr-api/.gitlab-ci-dso.yml (simplifié). NON testé sur une instance CPiN :
+# les noms de jobs du catalogue ($CATALOG_PATH) varient selon les sources (`.kaniko:build-push`
+# chez ocr-api, `.kaniko:simple-build-push` et `.kaniko:build` dans la doc) — les vérifier dans
+# le projet catalogue de votre instance avant usage.
+include:
+  - project: $CATALOG_PATH
+    file:
+      - vault-ci.yml
+      - kaniko-ci.yml
+    ref: main
+
+variables:
+  REGISTRY_URL: "${REGISTRY_HOST}/${PROJECT_PATH}"   # variables fournies par la plateforme
+
+stages:
+  - read-secret
+  - docker-build
+
+# Obligatoire : sans lecture des secrets de chaîne, le build échoue.
+read_secret:
+  stage: read-secret
+  extends:
+    - .vault:read_secret
+
+docker-build-app:
+  stage: docker-build
+  extends:
+    - .kaniko:build-push
+  variables:
+    DOCKERFILE: "Dockerfile"
+    WORKING_DIR: "."
+    IMAGE_NAMES: ""   # calculé dans before_script
+    # Miroir des images de base, fourni par la plateforme (comme ocr-api)
+    EXTRA_BUILD_ARGS: "--build-arg DOCKERHUB_MIRROR_URL=${DOCKERHUB_MIRROR_URL}"
+  before_script:
+    - |
+      # Un tag qui change à chaque livraison, sinon ArgoCD ne voit aucun diff et ne redéploie pas.
+      APP_VERSION=$(grep '^appVersion:' helm/Chart.yaml | awk '{print $2}' | tr -d '"')
+      export IMAGE_NAMES="monapp:${CI_COMMIT_SHORT_SHA} monapp:${CI_COMMIT_REF_SLUG} monapp:${APP_VERSION}"
+      echo "Building with tags: $IMAGE_NAMES"

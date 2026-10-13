@@ -1,0 +1,24 @@
+# Surcharge Cloud Pi Native (OpenShift + Kyverno) — à passer en dernier : helm ... -f values-cpin.yaml
+commonLabels:
+  app: monapp
+  env: dev          # dev|formation|qualif|test|preprod|prod
+  tier: backend     # frontend|backend|db|cache|auth
+  criticality: low  # high|medium|low
+  component: node   # nginx|node|postgres|redis|...
+api:
+  image:
+    registry: harbor.example.gouv.fr   # registre Harbor du projet
+    repository: mi-monprojet/monapp    # <ORG>-<PROJET>/<image>
+    tag: "1.2.3"                       # jamais latest
+  imagePullSecrets:
+  - name: registry-pull-secret
+  # OpenShift alloue l'UID/GID par namespace : ne rien figer (null supprime la clé du défaut du chart).
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: null
+    runAsGroup: null
+    fsGroup: null
+    fsGroupChangePolicy: null
+  securityContext:
+    runAsUser: null
+    runAsGroup: null

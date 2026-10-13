@@ -108,6 +108,7 @@ installé n'est jamais chargé.
 |--------|----------|---------------------|
 | `dev` | développer une application (front, back, monorepo, poste dev) | `dev-verif-plan`, `dev-review` (sous-agents) ; `/livrer` |
 | `dso` | CI/CD fabnum-cicd, Helm, déploiement Cloud Pi Native | `cpin-orchestrateur` (primaire), `cpin-plan`, `cpin-build`, `cpin-review` ; `/deployer-cpin` |
+| `gouv-fr` | catalogue Fabrique Numérique (43 skills `gouv-fr-*`) : architecture, front Vue/React + DSFR, back, qualité et conformité, sécurité et audit, CI/CD CPiN, données ouvertes | aucun (skills seuls) |
 
 Installation (plugin, URL ou copie des skills), prérequis et ce que font les agents : voir le
 [README](https://github.com/dnum-mi/starter-kit-opencode#readme). Ne pas combiner plugin et URL : le contenu

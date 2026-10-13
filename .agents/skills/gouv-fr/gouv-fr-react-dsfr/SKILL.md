@@ -1,0 +1,305 @@
+---
+name: gouv-fr-react-dsfr
+description: "Créer des interfaces React conformes au Design System de l'État avec @codegouvfr/react-dsfr. Setup Next.js App Router (anti-flash thème), routing, icônes, couleurs, composants natifs (pas MUI), patterns de mise en page et de formulaire."
+category: frontend
+version: 0.1.0
+author: etalab-ia, Hermes Agent
+license: MIT
+platforms: [linux, macos]
+metadata:
+  hermes:
+    tags: [dsfr, react, design-system, frontend, nextjs, etat, gouv-fr, ui]
+    related_skills: [gouv-fr-design-system, gouv-fr-frontend-vue3, gouv-fr-compliance-rgaa, gouv-fr-composants-vue]
+---
+
+# Gouv-fr — React DSFR (@codegouvfr/react-dsfr)
+
+> Source : [`etalab-ia/skills`](https://github.com/etalab-ia/skills) (`react-dsfr`), adapté au préfixe `gouv-fr-`. Couvre la voie **React** ; le DSFR CSS générique est dans `gouv-fr-design-system`, la voie Vue dans `gouv-fr-composants-vue`.
+
+Bibliothèque React pour le Design System de l'État français. Package : `@codegouvfr/react-dsfr`.
+
+## Import pattern
+
+Chaque composant a son propre chemin d'import :
+```tsx
+import { Button } from "@codegouvfr/react-dsfr/Button";
+import { Alert } from "@codegouvfr/react-dsfr/Alert";
+import { Card } from "@codegouvfr/react-dsfr/Card";
+// etc.
+```
+
+## Setup Next.js App Router
+
+> ⚠️ **Pattern obligatoire** : sans `getScriptToRunAsap()` dans `<head>`, le mode sombre cause un **flash blanc visible au chargement** (régression la plus courante). Le code ci-dessous est le minimum incompressible — ne pas écrire un `layout.tsx` plus simple.
+
+Pattern minimal en 3 fichiers (Next.js 14+ App Router, react-dsfr v1.30+), aligné sur le starter officiel react-dsfr (`dsfr-bootstrap`) :
+
+**1. `src/dsfr-bootstrap/defaultColorScheme.ts`** — constante partagée par le layout (serveur) et le provider (client) :
+
+```tsx
+export const defaultColorScheme = "system" as const;
+```
+
+**2. `src/dsfr-bootstrap/index.tsx`** — wrapper `"use client"` qui importe `Link` :
+
+```tsx
+"use client";
+
+import {
+    DsfrProviderBase,
+    StartDsfrOnHydration,
+    type DsfrProviderProps
+} from "@codegouvfr/react-dsfr/next-app-router";
+import { defaultColorScheme } from "./defaultColorScheme";
+import Link from "next/link";
+
+declare module "@codegouvfr/react-dsfr/next-app-router" {
+    interface RegisterLink {
+        Link: typeof Link;
+    }
+}
+
+export function DsfrProvider(props: DsfrProviderProps) {
+    return (
+        <DsfrProviderBase
+            defaultColorScheme={defaultColorScheme}
+            Link={Link}
+            {...props}
+        />
+    );
+}
+
+export { StartDsfrOnHydration };
+```
+
+**3. `src/app/layout.tsx`** — composant serveur, ne passe au provider que des props sérialisables :
+
+```tsx
+import { createGetHtmlAttributes } from "@codegouvfr/react-dsfr/next-app-router/getHtmlAttributes";
+import { getScriptToRunAsap } from "@codegouvfr/react-dsfr/useIsDark/scriptToRunAsap";
+import "@codegouvfr/react-dsfr/dsfr/dsfr.min.css";
+import "@codegouvfr/react-dsfr/dsfr/utility/icons/icons.main.min.css";
+import { DsfrProvider, StartDsfrOnHydration } from "../dsfr-bootstrap";
+import { defaultColorScheme } from "../dsfr-bootstrap/defaultColorScheme";
+
+const { getHtmlAttributes } = createGetHtmlAttributes({ defaultColorScheme });
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+    return (
+        <html {...getHtmlAttributes({ lang: "fr" })}>
+            <head>
+                <script
+                    dangerouslySetInnerHTML={{
+                        __html: getScriptToRunAsap({
+                            defaultColorScheme,
+                            nonce: undefined,
+                            trustedTypesPolicyName: "react-dsfr",
+                        }),
+                    }}
+                />
+            </head>
+            <body>
+                <DsfrProvider lang="fr">
+                    {children}
+                    <StartDsfrOnHydration />
+                </DsfrProvider>
+            </body>
+        </html>
+    );
+}
+```
+
+**Pourquoi le wrapper `"use client"` ?** `layout.tsx` est un composant serveur ; `DsfrProviderBase` est un composant client (module `"use client"` dans le package). Le pattern officiel react-dsfr garde l'import de `Link` et la déclaration `RegisterLink` dans un module client dédié, le layout serveur ne passant que des props sérialisables (`lang`, `children`). `defaultColorScheme` vit dans son propre module (hors `"use client"`) car il est lu des deux côtés de la frontière serveur/client.
+
+**Trois éléments critiques** (ne pas omettre) :
+
+1. **`createGetHtmlAttributes()`** : pose `data-fr-scheme` / `data-fr-theme` / `suppressHydrationWarning` sur `<html>` côté SSR
+2. **`getScriptToRunAsap()` dans `<head>`** : script inline qui détecte le thème (localStorage ou `prefers-color-scheme`) **avant le premier paint CSS** — c'est lui qui élimine le flash. `nonce: undefined` ne vaut qu'en dev ; **sous CSP**, passer un `nonce` par requête (cf. [references/setup.md](references/setup.md#pattern-1--recommandé--sans-transpilepackages-imports-directs))
+3. **`StartDsfrOnHydration`** : re-scan du DOM après hydratation React pour bind les `Display`, modales, accordéons (sans ça, les boutons `aria-controls` sont muets au clic)
+
+**Noms react-dsfr v1.30+** : `DsfrProviderBase`, `StartDsfrOnHydration`, `createGetHtmlAttributes`, `DsfrHeadBase`. Les anciens noms (`DsfrProvider`, `StartDsfr`, `getHtmlAttributes`, `DsfrHead`) **n'existent plus dans le package** — ne pas les écrire. (Le wrapper local `DsfrProvider` créé ci-dessus est le nôtre, calqué sur le starter officiel — ce n'est pas un export du package.)
+
+Cette approche n'a **pas besoin de `transpilePackages`** dans `next.config.mjs` (les imports directs depuis `.../getHtmlAttributes` et `.../scriptToRunAsap` évitent le tree-shake de `DsfrHead.js` qui tire les `.woff2`). Pour les variantes (avec `DsfrHeadBase` + `transpilePackages`, icônes dynamiques via `iconId`, re-init manuelle DSFR), voir [references/setup.md](references/setup.md#nextjs-app-router).
+
+## Routing et liens
+
+Enregistrer le composant `Link` du framework une seule fois au démarrage. Tous les composants react-dsfr utilisant `linkProps` s'en serviront automatiquement.
+
+- Liens internes : utilisent le routeur (client-side navigation)
+- URLs externes (`https://...`) : rendus comme `<a>` classiques
+- `href="#"` + `onClick` : convertis automatiquement en `<button>` accessible
+
+Voir [references/setup.md](references/setup.md) pour le setup par framework (Next.js, Vite, CRA).
+
+## Utilitaire CSS : `fr.cx()`
+
+```tsx
+import { fr } from "@codegouvfr/react-dsfr";
+
+// Appliquer des classes utilitaires DSFR
+<div className={fr.cx("fr-grid-row", "fr-grid-row--gutters")}>
+    <div className={fr.cx("fr-col-12", "fr-col-md-6")}>...</div>
+</div>
+
+// Spacing
+<div className={fr.cx("fr-mt-4w", "fr-mb-2w", "fr-p-3w")}>...</div>
+```
+
+## Grille
+
+Le DSFR utilise une grille 12 colonnes :
+```tsx
+<div className={fr.cx("fr-grid-row", "fr-grid-row--gutters")}>
+    <div className={fr.cx("fr-col-12", "fr-col-md-6", "fr-col-lg-4")}>Col 1</div>
+    <div className={fr.cx("fr-col-12", "fr-col-md-6", "fr-col-lg-4")}>Col 2</div>
+    <div className={fr.cx("fr-col-12", "fr-col-lg-4")}>Col 3</div>
+</div>
+```
+
+Breakpoints : `sm` (576px), `md` (768px), `lg` (992px), `xl` (1248px).
+
+## Icônes
+
+Deux familles d'icônes disponibles :
+- **DSFR** : `fr-icon-*` (ex: `"fr-icon-add-line"`, `"fr-icon-delete-fill"`, `"fr-icon-arrow-right-line"`)
+- **Remix Icon** : `ri-*` (ex: `"ri-account-box-line"`, `"ri-information-line"`)
+
+Les icônes sont typées : TypeScript offre l'autocomplétion.
+
+## Couleurs et thème
+
+```tsx
+import { useColors } from "@codegouvfr/react-dsfr/useColors";
+
+function MyComponent() {
+    const theme = useColors();
+    // theme.decisions.background.default.grey.default
+    // theme.decisions.text.title.grey.default
+    // theme.decisions.border.default.grey.default
+}
+```
+
+Le thème respecte automatiquement le mode clair/sombre, à condition que le setup du layout soit complet (cf. section "Setup Next.js App Router" plus haut). Le mode sombre est résolu côté SSR + script anti-flash dans `<head>` ; le `useColors()` lit ensuite la palette résolue.
+
+## Pattern : page complète
+
+```tsx
+import { Header } from "@codegouvfr/react-dsfr/Header";
+import { Footer } from "@codegouvfr/react-dsfr/Footer";
+import { Breadcrumb } from "@codegouvfr/react-dsfr/Breadcrumb";
+import { fr } from "@codegouvfr/react-dsfr";
+
+export function Page() {
+    return (
+        <>
+            <Header
+                brandTop={<>RÉPUBLIQUE<br />FRANÇAISE</>}
+                homeLinkProps={{ href: "/", title: "Accueil" }}
+                serviceTitle="Mon service"
+            />
+            <div className={fr.cx("fr-container", "fr-my-4w")}>
+                <Breadcrumb
+                    homeLinkProps={{ href: "/" }}
+                    segments={[{ label: "Section", linkProps: { href: "/section" } }]}
+                    currentPageLabel="Page courante"
+                />
+                <h1>Titre de la page</h1>
+                {/* Contenu */}
+            </div>
+            <Footer
+                accessibility="partially compliant"
+                brandTop={<>RÉPUBLIQUE<br />FRANÇAISE</>}
+                homeLinkProps={{ href: "/", title: "Accueil" }}
+            />
+        </>
+    );
+}
+```
+
+## Pattern : page avec menu latéral
+
+```tsx
+<div className={fr.cx("fr-container", "fr-my-4w")}>
+    <div className={fr.cx("fr-grid-row", "fr-grid-row--gutters")}>
+        <div className={fr.cx("fr-col-12", "fr-col-md-4")}>
+            <SideMenu
+                title="Rubrique"
+                burgerMenuButtonText="Menu"
+                items={[
+                    { text: "Page 1", linkProps: { href: "/p1" }, isActive: true },
+                    { text: "Page 2", linkProps: { href: "/p2" } },
+                ]}
+            />
+        </div>
+        <div className={fr.cx("fr-col-12", "fr-col-md-8")}>
+            {/* Contenu principal */}
+        </div>
+    </div>
+</div>
+```
+
+## Pattern : formulaire
+
+```tsx
+import { Input } from "@codegouvfr/react-dsfr/Input";
+import { Select } from "@codegouvfr/react-dsfr/Select";
+import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
+import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
+import { Alert } from "@codegouvfr/react-dsfr/Alert";
+
+export function MyForm() {
+    return (
+        <form>
+            <Input label="Nom" nativeInputProps={{ required: true }} />
+            <Input label="Email" nativeInputProps={{ type: "email" }} />
+            <Select label="Département" nativeSelectProps={{ name: "dept" }}>
+                <option value="" disabled hidden>Sélectionnez</option>
+                <option value="75">Paris</option>
+            </Select>
+            <Checkbox
+                legend="Préférences"
+                options={[{ label: "Newsletter", nativeInputProps: { name: "newsletter" } }]}
+            />
+            <ButtonsGroup
+                inlineLayoutWhen="always"
+                buttons={[
+                    { children: "Envoyer", type: "submit" },
+                    { children: "Annuler", priority: "secondary", type: "reset" },
+                ]}
+            />
+        </form>
+    );
+}
+```
+
+## Pattern : liste de cartes
+
+```tsx
+<div className={fr.cx("fr-grid-row", "fr-grid-row--gutters")}>
+    {items.map(item => (
+        <div key={item.id} className={fr.cx("fr-col-12", "fr-col-md-6", "fr-col-lg-4")}>
+            <Card
+                enlargeLink
+                title={item.title}
+                desc={item.description}
+                linkProps={{ href: `/items/${item.id}` }}
+                imageUrl={item.imageUrl}
+                imageAlt={item.imageAlt}
+                badge={<Badge severity="info">{item.category}</Badge>}
+            />
+        </div>
+    ))}
+</div>
+```
+
+## Référence des composants
+
+Consulter [references/components.md](references/components.md) pour l'API complète de chaque composant :
+- **Layout** : Header, Footer, SideMenu, Breadcrumb, Pagination, Stepper
+- **Contenu** : Card, Tile, Table, Accordion, Tabs, Badge, Tag, Quote, Highlight, CallOut
+- **Formulaires** : Input, Select, Checkbox, RadioButtons, ToggleSwitch, Upload, Button, ButtonsGroup
+- **Feedback** : Alert, Notice, Modal
+
+## Setup par framework
+
+Le **setup Next.js App Router** est documenté en tête de ce fichier (section "Setup Next.js App Router"). Pour les autres frameworks (Next.js Pages Router, Vite, Create React App) et les pièges avancés (transpilePackages, icônes dynamiques via `iconId`, re-init DSFR manuelle, config ESLint), voir [references/setup.md](references/setup.md).
