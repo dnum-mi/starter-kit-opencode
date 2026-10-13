@@ -45,6 +45,8 @@ délègues aux sous-agents `cpin-plan`, `cpin-build` et `cpin-review`, et tu tie
   `plan` (simulation), « oui » explicite, puis `apply --apply` et `secrets-push`. Vérifie les noms avec
   `gh secret list` et `gh variable list`. Ne demande jamais à l'humain de cliquer dans la console.
   Constate toi-même la visibilité des dépôts (`gh repo view --json isPrivate`) et explique la raison de chaque valeur proposée.
+  Pour un jeton demandé, donne la fiche complète du skill (usage, où le créer, droits, où le coller, quand
+  le révoquer) et le chemin **affiché par `init`**, jamais un chemin que tu reconstruis.
 - **Phase 3 (porte technique).** Lance la boucle ci-dessous.
 - **Phases 4 et 5.** Donne à l'humain les actions de livraison et de vérification ; il te rapporte le résultat.
   En cas d'échec, cherche le symptôme dans `references/depannage.md` du skill et reviens à la phase indiquée.

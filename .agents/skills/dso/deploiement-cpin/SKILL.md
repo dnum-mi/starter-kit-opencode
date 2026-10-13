@@ -67,6 +67,25 @@ L'agent crée lui-même ce qui est dans la console (script `scripts/cpin-console
   Un dépôt qui n'existe pas encore (erreur `gh`) : demander à l'humain s'il sera privé. Un dépôt public
   n'a besoin d'aucun identifiant : le dire, ne pas les réclamer.
 
+### Les jetons, un par un
+
+Quand l'agent demande un jeton, il donne **toute** cette fiche (pas seulement le nom de la variable) et
+précise lesquels sont demandés **maintenant** et lesquels viendront **plus tard**. Le chemin du fichier est
+celui **affiché par `init`**, jamais un chemin reconstruit.
+
+| Jeton | À quoi il sert | Où le créer | Droits / format | Où il va | Quand |
+|-------|----------------|-------------|-----------------|----------|-------|
+| `DSO_TOKEN` | Le script appelle l'API de la console **à ta place** : créer projet, environnements, dépôts ; lire les secrets du miroir | console > profil > jetons (ou `POST /api/v1/user/tokens`) : un nom, **une date d'expiration** (obligatoire) | Il a **tes droits** sur la console. Envoyé dans l'en-tête `x-dso-token`. La valeur n'est affichée **qu'une fois** à la création | `scripts/cpin-console/.env.secrets` | **maintenant**. Choisir une expiration courte (quelques jours), révoquer à la clôture (phase 5) |
+| `INFRA_REPO_USER` | Nom du compte GitHub qui possède le PAT ci-dessous | — (ton identifiant GitHub) | Pas un secret | `.env.secrets` | maintenant, **seulement si un dépôt est privé** |
+| `INFRA_REPO_TOKEN` | La console s'en sert pour **cloner** ton dépôt privé vers son miroir GitLab interne. Il est transmis à la console (`externalToken`) | github.com > Settings > Developer settings > Personal access tokens | PAT avec le scope `repo` (documenté). Un fine-grained en lecture seule a donné `403 Write access to repository not granted` : en cas de 403, passer au PAT `repo` | `.env.secrets` | maintenant, **seulement si un dépôt est privé**. Révoquer à la clôture |
+| `GITLAB_TRIGGER_TOKEN` (`glptt-…`) | Le job `sync-cpin` de GitHub déclenche la synchro vers le miroir. **Pipeline trigger token**, pas un PAT `glpat-` | Récupéré **par le script** dans les secrets du projet (`secrets-push`) | — | secret GitHub, posé par `gh secret set` ; **tu ne le vois ni ne le tapes** | après `apply` |
+| `APP_CLIENT_ID` + `APP_PRIVATE_KEY` (ou `GH_PAT`) | Identité de la GitHub App : CI sur les PR de release/bump, automerge, `dispatch-helm-chart` | github.com > Settings > Developer settings > GitHub Apps | Clé privée `.pem` ; l'App doit être installée sur **les deux dépôts** | secrets GitHub, saisis **par toi** | avant la phase 4 |
+| `ARGOCD_TOKEN`, `GITLAB_PAT` | **Optionnels** : debug automatisé des phases 5 (voir plus bas) | login Playwright / GitLab | — | `scripts/cpin-debug/.env.secrets` | phase 5, si tu acceptes le debug automatisé |
+
+L'agent **ne lit, n'affiche et ne demande jamais** une valeur : tu les colles toi-même dans le fichier,
+il vérifie seulement « renseigné » / « vide » avec `init`. Aucun de ces jetons ne doit finir dans Git, dans
+le chat ou dans un `values.yaml`.
+
 ### Expliquer ses choix
 
 Chaque valeur que l'agent propose ou déduit est **accompagnée de sa raison** (« public, constaté par
