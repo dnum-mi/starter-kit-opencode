@@ -57,8 +57,9 @@ L'agent crée lui-même ce qui est dans la console (script `scripts/cpin-console
 
 ### 1. Prérequis humains (les seuls)
 
-Le script est dans le kit, pas dans le projet : `<kit>` = `../../../..` **depuis le dossier de ce skill**
-(le dossier de base du skill chargé), donc `<kit>/scripts/cpin-console/console.mjs`. L'appeler par ce
+Le script est dans le kit installé par le plugin, pas dans le projet. `<kit>` est le chemin donné par
+l'orchestrateur (« Où est quoi ») ; à défaut `../../../..` **depuis le dossier de ce skill**. Il ne faut
+jamais supposer un dépôt `starter-kit-opencode` local : l'utilisateur n'en a pas. L'appeler par ce
 chemin **absolu**, **depuis le dossier du projet** (c'est là que vit `.cpin/.env.secrets`). Ne jamais le
 copier dans le projet : la copie ne suivrait pas les mises à jour.
 
