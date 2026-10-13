@@ -57,8 +57,13 @@ L'agent crée lui-même ce qui est dans la console (script `scripts/cpin-console
 
 ### 1. Prérequis humains (les seuls)
 
-- Le **jeton API de la console** : l'agent lance `node scripts/cpin-console/console.mjs init`, qui **crée**
-  `scripts/cpin-console/.env.secrets` (0600, valeurs vides) et affiche son chemin réel. L'humain y colle
+Le script est dans le kit, pas dans le projet : `<kit>` = `../../../..` **depuis le dossier de ce skill**
+(le dossier de base du skill chargé), donc `<kit>/scripts/cpin-console/console.mjs`. L'appeler par ce
+chemin **absolu**, **depuis le dossier du projet** (c'est là que vit `.cpin/.env.secrets`). Ne jamais le
+copier dans le projet : la copie ne suivrait pas les mises à jour.
+
+- Le **jeton API de la console** : l'agent lance `node <kit>/scripts/cpin-console/console.mjs init`, qui **crée**
+  `.cpin/.env.secrets` **dans le dossier du projet** (0600, valeurs vides, dossier auto-ignoré par git) et affiche son chemin réel. L'humain y colle
   `DSO_TOKEN=…` (console > profil > jetons). L'agent relance `init` pour vérifier « renseigné » / « vide » :
   jamais la valeur. Ne pas lui demander de créer ou d'éditer ce fichier à la main.
 - **Un seul jeton GitHub** : un PAT **fine-grained** couvrant le dépôt applicatif **et** le dépôt d'infra
@@ -78,7 +83,7 @@ celui **affiché par `init`**, jamais un chemin reconstruit.
 
 | Jeton | À quoi il sert | Où le créer | Droits / format | Où il va | Quand |
 |-------|----------------|-------------|-----------------|----------|-------|
-| `DSO_TOKEN` | Le script appelle l'API de la console **à ta place** : créer projet, environnements, dépôts ; lire les secrets du miroir | console > profil > jetons (ou `POST /api/v1/user/tokens`) : un nom, **une date d'expiration** (obligatoire) | Il a **tes droits** sur la console. Envoyé dans l'en-tête `x-dso-token`. La valeur n'est affichée **qu'une fois** à la création | `scripts/cpin-console/.env.secrets` | **maintenant**. Choisir une expiration courte (quelques jours), révoquer à la clôture (phase 5) |
+| `DSO_TOKEN` | Le script appelle l'API de la console **à ta place** : créer projet, environnements, dépôts ; lire les secrets du miroir | console > profil > jetons (ou `POST /api/v1/user/tokens`) : un nom, **une date d'expiration** (obligatoire) | Il a **tes droits** sur la console. Envoyé dans l'en-tête `x-dso-token`. La valeur n'est affichée **qu'une fois** à la création | `<projet>/.cpin/.env.secrets` | **maintenant**. Choisir une expiration courte (quelques jours), révoquer à la clôture (phase 5) |
 | `GH_USER` | Compte GitHub qui possède le PAT ; transmis à la console avec lui pour un dépôt privé | — (ton identifiant GitHub) | Pas un secret | `.env.secrets` | maintenant |
 | `GH_PAT` | **Un seul jeton GitHub pour tout** : (1) la console clone ton dépôt privé vers son miroir GitLab (`externalToken`) ; (2) secret des workflows : CI sur PR de release/bump, automerge, `dispatch-helm-chart` | github.com > Settings > Developer settings > **Fine-grained** personal access tokens | Resource owner = l'organisation ; **les deux dépôts** sélectionnés ; Contents, Pull requests, Actions : Read and write ; Metadata : Read ; expiration choisie. Un PAT classique ne suffit pas (pas de droits par dépôt) | `.env.secrets`, puis secret GitHub `GH_PAT` posé par `pat-push` sur les deux dépôts | maintenant. Révoquer à la clôture |
 | `GITLAB_TRIGGER_TOKEN` (`glptt-…`) | Le job `sync-cpin` de GitHub déclenche la synchro vers le miroir. **Pipeline trigger token**, pas un PAT `glpat-` | Récupéré **par le script** dans les secrets du projet (`secrets-push`) | — | secret GitHub, posé par `gh secret set` ; **tu ne le vois ni ne le tapes** | après `apply` |
@@ -101,7 +106,7 @@ L'humain doit pouvoir corriger un choix en comprenant d'où il vient ; une valeu
 
 ### 2. Relever l'instance
 
-`node scripts/cpin-console/console.mjs version` (route publique) puis `catalog` (stages, clusters, zones).
+`node <kit>/scripts/cpin-console/console.mjs version` (route publique) puis `catalog` (stages, clusters, zones).
 Chaque comportement supposé se vérifie contre **cette version**, pas contre la doc générale.
 
 ### 3. Poser les questions, **en une seule liste**, puis attendre
@@ -130,10 +135,10 @@ Rappeler au passage qu'on peut ajouter un environnement plus tard (la création 
 ### 4. Simuler, faire confirmer, appliquer
 
 1. Construire le plan JSON à partir des réponses, puis simuler :
-   `node scripts/cpin-console/console.mjs plan --plan '<json>'`. La simulation valide les contraintes
+   `node <kit>/scripts/cpin-console/console.mjs plan --plan '<json>'`. La simulation valide les contraintes
    ci-dessus et les couples stage/cluster, **sans rien écrire**.
 2. Montrer la sortie à l'humain et obtenir un **« oui » explicite**.
-3. `node scripts/cpin-console/console.mjs apply --plan '<json>' --apply` crée projet, environnements,
+3. `node <kit>/scripts/cpin-console/console.mjs apply --plan '<json>' --apply` crée projet, environnements,
    dépôts et membres (une commande déjà exécutée est rejouable : l'existant est réutilisé). Le script
    relit ensuite la console : c'est cette **relecture** (noms, quotas réels) qui alimente la fiche.
 4. Relever le **nom du projet Harbor** réel (`PROJECT_PATH`) : il alimente `--expected-image` des
@@ -141,7 +146,7 @@ Rappeler au passage qu'on peut ajouter un environnement plus tard (la création 
 
 ### 5. Secrets et variables GitHub (sur chaque dépôt, chacun avec son propre `GITLAB_PROJECT_NAME`)
 
-1. `node scripts/cpin-console/console.mjs secrets-list --project <nom>` : affiche les **noms** des secrets
+1. `node <kit>/scripts/cpin-console/console.mjs secrets-list --project <nom>` : affiche les **noms** des secrets
    du projet (service puis clé), jamais les valeurs.
 2. `… secrets-push --project <nom> --repo <org>/<dépôt> --secret GITLAB_TRIGGER_TOKEN=<service>.<clé>
    --var GITLAB_URL=<service>.<clé> --var GITLAB_MIRROR_ID=<service>.<clé>` : le script lit la valeur et la
@@ -150,7 +155,7 @@ Rappeler au passage qu'on peut ajouter un environnement plus tard (la création 
    le dire à l'humain plutôt que deviner.
 3. `GITLAB_PROJECT_NAME` n'est pas un secret de la console : c'est le nom du dépôt dans le miroir, à
    poser avec `gh variable set GITLAB_PROJECT_NAME -R <org>/<dépôt> --body <nom>` (valeur non sensible).
-4. `node scripts/cpin-console/console.mjs pat-push --repo <org>/<app> --repo <org>/<app>-infra` : pose
+4. `node <kit>/scripts/cpin-console/console.mjs pat-push --repo <org>/<app> --repo <org>/<app>-infra` : pose
    `GH_PAT` sur les deux dépôts (valeur lue dans `.env.secrets`, jamais affichée).
 5. Si `scan-sonarqube` est ajouté au `ci.yml` : secrets `SONAR_TOKEN` et `SONAR_PROJECT_KEY`, saisis par l'humain.
 

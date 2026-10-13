@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Console CPiN par son API (swagger : <console>/swagger-ui). Sans dépendance.
 //
-//   node console.mjs init                         crée .env.secrets (0600, valeurs vides) s'il manque, dit quels noms sont renseignés
+//   node console.mjs init                         crée .cpin/.env.secrets (0600, valeurs vides, auto-ignoré) s'il manque ; dit quels noms sont renseignés
 //   node console.mjs version
 //   node console.mjs catalog                      stages, clusters, zones disponibles
 //   node console.mjs plan  --plan '<json>'        valide le plan, n'écrit rien (aussi : apply sans --apply)
@@ -10,22 +10,26 @@
 //   node console.mjs secrets-push --project <nom> --repo <org/dépôt> [--repo …] --secret NOM=service.clé --var NOM=service.clé
 //   node console.mjs pat-push --repo <org/dépôt> [--repo <org/infra>]   pose le secret GH_PAT (lu dans .env.secrets) sur chaque dépôt
 //
-// DSO_TOKEN (jeton API console) est lu dans scripts/cpin-console/.env.secrets (0600).
+// DSO_TOKEN (jeton API console) est lu dans <dossier courant>/.cpin/.env.secrets (0600).
 // GH_USER / GH_PAT (un seul PAT GitHub fine-grained) y sont lus : GH_PAT sert à la console pour un dépôt privé
 // et est posé en secret GitHub par pat-push. Aucune valeur n'est jamais affichée.
-import { readFile, writeFile, chmod } from 'node:fs/promises'
-import { resolve } from 'node:path'
+import { readFile, writeFile, chmod, mkdir } from 'node:fs/promises'
+import { dirname, resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
 
 const CONSOLE_URL = process.env.CONSOLE_URL ?? 'https://console.sdid.cpin.numerique-interieur.com'
-const SECRETS_FILE = resolve(import.meta.dirname, '.env.secrets')
+// Les jetons vivent dans le PROJET de l'humain (dossier courant), pas dans le dossier du plugin, qui est un
+// cache que OpenCode peut vider. Le dossier .cpin/ s'ignore lui-même (.gitignore interne).
+const SECRETS_FILE = resolve(process.env.CPIN_SECRETS_FILE ?? resolve(process.cwd(), '.cpin/.env.secrets'))
+// anciens noms, avant le PAT unique
+const LEGACY = { INFRA_REPO_USER: 'GH_USER', INFRA_REPO_TOKEN: 'GH_PAT' }
 
 async function loadSecrets() {
   const secrets = {}
   try {
     for (const line of (await readFile(SECRETS_FILE, 'utf8')).split('\n')) {
       const match = line.match(/^([A-Z_]+)=(.*)$/)
-      if (match) secrets[match[1]] = match[2]
+      if (match) secrets[LEGACY[match[1]] ?? match[1]] ||= match[2]
     }
   } catch {}
   return secrets
@@ -163,6 +167,8 @@ const commands = {
     try {
       await readFile(SECRETS_FILE, 'utf8')
     } catch {
+      await mkdir(dirname(SECRETS_FILE), { recursive: true })
+      await writeFile(resolve(dirname(SECRETS_FILE), '.gitignore'), '*\n', { flag: 'wx' }).catch(() => {})
       await writeFile(SECRETS_FILE, `${SECRET_NAMES.map(name => `${name}=`).join('\n')}\n`, { mode: 0o600 })
       created = true
     }

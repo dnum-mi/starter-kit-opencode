@@ -15,10 +15,10 @@ permission:
     "gh repo view*": allow
     "git diff*": allow
     "ls*": allow
-    "node scripts/cpin-console/console.mjs *": allow
-    "node scripts/cpin-console/console.mjs * --apply*": ask
-    "node scripts/cpin-console/console.mjs secrets-push*": ask
-    "node scripts/cpin-console/console.mjs pat-push*": ask
+    "node */scripts/cpin-console/console.mjs *": allow
+    "node */scripts/cpin-console/console.mjs * --apply*": ask
+    "node */scripts/cpin-console/console.mjs secrets-push*": ask
+    "node */scripts/cpin-console/console.mjs pat-push*": ask
     "grep -c *.env.secrets": allow
   task:
     "*": deny
