@@ -202,6 +202,16 @@ const commands = {
 
   async version() {
     console.log(`${CONSOLE_URL} → ${JSON.stringify(await api('GET', '/version'))}`)
+    // le swagger est public : on constate ce que l'API d'un dépôt accepte, on ne le suppose pas d'après la version
+    try {
+      const spec = await (await fetch(`${CONSOLE_URL}/swagger-ui/json`)).json()
+      const schema = spec.paths?.['/api/v1/repositories']?.post?.requestBody?.content?.['application/json']?.schema
+      const fields = Object.keys(schema?.properties ?? {})
+      const valuesFields = fields.filter(name => /values|helm|revision|path/i.test(name))
+      console.log(`réglage des fichiers values par l'API (dépôt) : ${valuesFields.length ? `oui (${valuesFields.join(', ')})` : 'non : champs du dépôt = ' + fields.join(', ')}`)
+    } catch {
+      console.log('réglage des fichiers values par l\'API (dépôt) : indéterminé (swagger illisible)')
+    }
   },
 
   async catalog() {

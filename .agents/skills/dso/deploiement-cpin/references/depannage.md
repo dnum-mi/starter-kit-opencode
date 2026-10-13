@@ -10,7 +10,7 @@ vérification manquante pour que le problème ne revienne pas.
 |----------|-------|-------|-----------|
 | `pods ... forbidden: exceeded quota: dso-quota` | somme des `limits` > quota (500m/2Gi, puis 256Mi, pour un quota de 200m/0.2Gi) | 1, 3 | relever le quota **avec son unité** ; `--quota-cpu`/`--quota-memory` dans `check-cpin-rules.py` |
 | Le pod tire `docker.io/debian:<tag>` | `repository` placeholder du template resté dans `values.yaml` ; la surcharge était dans un fichier non chargé | 2, 3 | image Harbor dans `values.yaml` ; le script signale « image placeholder » |
-| Valeurs de `values-dev.yaml` sans effet | fichier non déclaré dans la console | 2 | déclarer les fichiers values dans la console, ou mettre les valeurs vitales dans `values.yaml` |
+| Valeurs de `values-dev.yaml` sans effet | le chargement de `values-<env>.yaml` n'est pas garanti (aucun réglage de fichiers values sur une console 9.9.0) | 2 | mettre les valeurs vitales dans `values.yaml` |
 | Pod `Running` mais jamais `Ready`, ou `connection refused` | containerPort/probes sur 8080 alors que l'app écoute sur 3000 | 0, 3 | `--app-port <port>` dans le script |
 | 404 sur l'URL | `ingress.enabled: false` par défaut dans le template tobi, ou host d'exemple | 2, 3 | ingress activé avec le host réel dans `values.yaml` ; `--require-ingress` |
 | 503 sur l'URL | backend de l'Ingress sur le containerPort (3000) au lieu du **port du Service** (80) | 3 | `backend.service.port` = `Service.port` ; le script le signale |
@@ -31,7 +31,7 @@ vérification manquante pour que le problème ne revienne pas.
 | `ImagePullBackOff` / `401 Unauthorized` au pull | image absente de Harbor, tag erroné, pull secret non référencé, credentials invalides, ou **nom du projet Harbor incohérent** (ex. projet `icebreakerdemo` vs chemin `ice-breaker-demo` dans les values) | vérifier l'image dans Harbor ; lire le **message exact** (`unauthorized`/`pull access denied`/`no such host`) dans les **événements ArgoCD DSO** (pas un CLI) ; vérifier le **chemin complet** `<registry>/<projet>/<repo>` contre le `PROJECT_PATH` de la console (le projet peut différer du nom du dépôt, tirets) ; `--expected-image` de `check-cpin-rules.py` le garantit ; `imagePullSecrets: [{name: registry-pull-secret}]` |
 | Application injoignable (hors 404/503) | namespace en deny-all | `networkPolicy` pour les flux non couverts par les règles injectées par Kyverno |
 | Dépôt qui disparaît du GitLab interne | dépôt `plugin-managed` non déclaré dans la console | toujours passer par la console |
-| Réglages ArgoCD ignorés | la console est source de vérité (≥ 9.11.5) | révision, chemin et fichiers values dans la console |
+| Réglages ArgoCD ignorés | la console est source de vérité (≥ 9.11.5) | révision et chemin dans la console, lorsque la version les expose |
 | Comportement documenté absent / chemin source ArgoCD figé sur une valeur inattendue | **version de la plateforme** diffère selon l'instance (`/api/v1/version`) | relever la **version réelle** de l'instance (`console.<instance>/swagger-ui`) ; considérer le chemin source ArgoCD, l'auto-sync, les « Déploiements » comme des **exemples par instance**, à vérifier dans la console |
 | Un environnement n'est plus régénéré | un « Déploiement » (beta ≥ 9.25.0) écrase la config des dépôts d'infra | reporter toute la config dans un déploiement par environnement |
 | Dérive (drift) détectée | paramètres saisis dans l'UI ArgoCD | tout mettre dans les values |

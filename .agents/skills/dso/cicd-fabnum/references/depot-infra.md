@@ -101,7 +101,7 @@ jobs:
 ### `.github/workflows/ci.yml` : porte sur chaque PR (bump compris)
 
 Copier `scripts/check-cpin-rules.py` du skill `helm-chart-cpin` dans `ci/scripts/`. Un job par environnement
-déclaré, avec **les fichiers values et l'ordre déclarés dans la console** (skill `deploiement-cpin`, phase 2) :
+déclaré, avec **les mêmes fichiers values et le même ordre que ceux du chart** (`values.yaml` en premier ; skill `deploiement-cpin`, phase 2) :
 
 ```yaml
 name: CI

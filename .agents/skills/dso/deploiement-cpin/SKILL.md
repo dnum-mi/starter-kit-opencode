@@ -16,7 +16,7 @@ tant qu'elle n'est pas franchie. Principe : **vérifier au PR, pas au déploieme
   saisit dans la console CPiN, dans GitHub ou dans Vault ; l'agent vérifie seulement que le **nom** existe.
 - **Ne jamais committer un secret/token dans Git** (même en « temporaire ») : un `github_pat_…` ou un token
   mirror (`glptt-…`) commité est un secret fuité à **révoquer** en fin de mise en service (voir phase 5).
-- La **console** est la source de vérité (projets, dépôts, environnements, fichiers values). Ce qui est
+- La **console** est la source de vérité (projets, dépôts, environnements). Ce qui est
   modifié dans l'UI ArgoCD ou dans le GitLab interne est ignoré ou écrasé.
 - Pour **lire et configurer** la console, utiliser son API (swagger :
   `https://console.<instance>/swagger-ui`, ex. `console.sdid.cpin.numerique-interieur.com`), via
@@ -175,19 +175,19 @@ Rappeler au passage qu'on peut ajouter un environnement plus tard (la création 
 de la GitHub App si elle est utilisée) ; la relecture de la console montre projet, environnements et dépôts attendus ; l'humain a
 confirmé les secrets Vault.
 
-## Phase 2 : fichiers values chargés par ArgoCD
+## Phase 2 : valeurs vitales dans `values.yaml`
 
-1. La console applique **la liste de fichiers values qu'on y déclare, dans l'ordre déclaré** : chaque
-   fichier surcharge les précédents. `<env>` est remplacé par le nom de l'environnement. Sans fichier
-   déclaré (Déploiements), seul `values.yaml` est pris. Convention du starter-kit : déclarer
-   `values.yaml`, `values-cpin.yaml`, `values-<env>.yaml`.
-2. Faire vérifier par l'humain (console > dépôt d'infra > fichiers values, ou swagger) que **ces fichiers
-   sont bien déclarés**. Si un fichier n'est pas déclaré, il est ignoré sans erreur.
-3. Tant que ce n'est pas confirmé, mettre les valeurs vitales **dans `values.yaml`** : image Harbor,
+1. **Ne rien demander à l'humain de « déclarer »** : sur une console 9.9.0, le dépôt n'a aucun réglage de
+   fichiers values (ni dans l'UI, ni dans l'API : `console.mjs version` le constate). Ne pas inventer ce
+   réglage et ne pas poser la question. Si une autre instance l'expose (`version` répond « oui »), c'est
+   l'humain qui le règle dans l'UI ; l'agent ne le suppose jamais.
+2. Seul `values.yaml` est **garanti** chargé. Y mettre toutes les valeurs vitales : image Harbor,
    `registry-pull-secret`, ressources sous le quota, labels, port, ingress activé avec son host réel.
-   Ne mettre dans `values-<env>.yaml` que ce qui est propre à l'environnement.
+3. `values-<env>.yaml` n'est qu'un complément propre à l'environnement : son effet **se constate** au
+   déploiement (phase 5), il n'est pas supposé acquis.
 
-**Porte** : la liste des fichiers déclarés dans la console est connue et recopiée dans la PR.
+**Porte** : toutes les valeurs vitales sont dans `values.yaml` et le rendu `helm template -f values.yaml`
+seul passe `check-cpin-rules.py`.
 
 ## Phase 3 : chart et CI, vérifiés avant la merge
 
@@ -254,7 +254,7 @@ seulement la **présence** des variables dans `.env.secrets` (ex. `grep -c '^ARG
 ## Limites connues (à confirmer, ne rien inventer)
 
 - **Route vs Ingress** : la doc ne rend jamais la Route obligatoire, et les tutoriels officiels (`cloud-pi-native/tuto-*-infra-helm`) utilisent un Ingress. L'Ingress fonctionne aussi sur l'instance SDID.
-- **Fichiers values** : sur un premier déploiement, seul `values.yaml` semblait pris en compte. Cause probable : `values-cpin.yaml` et `values-dev.yaml` non déclarés dans la console (d'où la porte de la phase 2).
+- **Fichiers values** : sur une console 9.9.0, le dépôt n'expose aucun réglage de fichiers values (swagger : champs `internalRepoName`, `externalRepoUrl`, `isPrivate`, `isInfra`, identifiants). Le chargement de `values-<env>.yaml` n'est donc pas établi ; seul `values.yaml` est supposé chargé, d'où la phase 2.
 - **Token GitHub** : la doc demande un PAT avec le scope `repo`. Un token fine-grained en lecture seule a donné `403 Write access to repository not granted`. La Service Team suggère la lecture seule : le moindre privilège suffisant n'est pas établi. En cas de 403, passer au PAT `repo` documenté.
 - **Registres Kyverno** : la doc liste `harbor.io/`, alors que le Harbor de chaque instance a son propre domaine (ex. `harbor.sdid.cpin.numerique-interieur.com`). `check-cpin-rules.py` accepte tout registre contenant `harbor`. À confirmer avant la prod, où la règle est bloquante.
 - Nom du fichier de pipeline incohérent dans les docs CPiN (`.gitlab-ci-dso.yml`/`.yaml`), catalogues Kaniko variables selon l'instance.

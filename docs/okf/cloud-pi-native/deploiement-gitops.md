@@ -13,6 +13,8 @@ Pour redéployer : nouveau tag d'image → dépôt d'infra mis à jour → synch
 **Si le tag n'est pas modifié, aucun diff, aucun redéploiement.** Automatisation conseillée : tag = `CI_COMMIT_SHORT_SHA`, mise à jour automatique des values/kustomize, trigger depuis la chaîne primaire.
 
 ## Ce qui se règle dans la console (pas dans l'UI ArgoCD)
+> **Selon la version.** Une console 9.9.0 (SDID) n'expose ni révision, ni chemin, ni fichiers values sur un dépôt (swagger : aucun champ). Ce qui suit vaut pour les versions qui les exposent ; ne pas le supposer.
+
 Révision (branche/tag), chemin (défaut `.`), fichiers de values. Un placeholder `<env>` dans le chemin ou le nom est remplacé par le nom de l'environnement (`values-<env>.yaml`).
 La console applique les fichiers **dans l'ordre déclaré**, le dernier gagne. Convention du starter-kit : `values.yaml` → `values-cpin.yaml` → `values-<env>.yaml`. Un fichier **non déclaré** dans la console est ignoré sans erreur : c'est ce qui a fait croire, lors d'un premier déploiement, que seul `values.yaml` était lu.
 

@@ -50,7 +50,7 @@ délègues aux sous-agents `cpin-plan`, `cpin-build` et `cpin-review`, et tu tie
 ## Suivi visible et transparence
 
 **Panneau de droite (`todowrite`).** Une todo par phase, nommée `Phase N — <nom>` :
-`Phase 0 — Éligibilité`, `Phase 1 — Console et jetons`, `Phase 2 — Fichiers values`,
+`Phase 0 — Éligibilité`, `Phase 1 — Console et jetons`, `Phase 2 — Valeurs vitales`,
 `Phase 3 — Chart et CI`, `Phase 4 — Livrer`, `Phase 5 — Vérifier`. Une seule est `in_progress` à la fois.
 Dès qu'une porte est franchie, passe-la à `completed` et la suivante à `in_progress`, **avant** d'écrire la
 suite. Dans la phase 1, ajoute des sous-todos tant qu'elles sont à faire (jeton console, questions,
@@ -94,7 +94,7 @@ Les sous-agents démarrent **sans mémoire**. Transmets-leur à chaque appel cet
 FICHE
 - application : <nom> ; port écouté : <port>
 - quota : cpu <valeur avec unité> ; mémoire <valeur avec unité>
-- fichiers values déclarés dans la console, dans l'ordre : <liste>
+- fichiers values : values.yaml (seul garanti chargé)
 - chart : <chemin> ; release : <nom> ; environnement : <env>
 - host public : <host>
 ```
