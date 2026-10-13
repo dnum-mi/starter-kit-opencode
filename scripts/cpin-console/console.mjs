@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Console CPiN par son API (swagger : <console>/swagger-ui). Sans dépendance.
 //
-//   node console.mjs init                         crée .cpin/.env.secrets (0600, valeurs vides, auto-ignoré) s'il manque ; dit quels noms sont renseignés
+//   node console.mjs init                         crée .cpin/.env.secrets (0600, valeurs vides, auto-ignoré) s'il manque, l'exclut du .dockerignore ; dit quels noms sont renseignés
 //   node console.mjs version
 //   node console.mjs catalog                      stages, clusters, zones disponibles
 //   node console.mjs plan  --plan '<json>'        valide le plan, n'écrit rien (aussi : apply sans --apply)
@@ -179,6 +179,24 @@ function describe(plan, environments) {
 
 // --- commandes --------------------------------------------------------------------------------
 
+// .cpin/ ne doit jamais entrer dans un contexte de build (COPY . .) : ajouté au .dockerignore s'il existe,
+// ou créé si un Dockerfile est présent à la racine. Sans .dockerignore ni Dockerfile, on ne touche à rien.
+async function ignoreInDockerContext() {
+  const file = resolve(process.cwd(), '.dockerignore')
+  let current = null
+  try { current = await readFile(file, 'utf8') } catch {}
+  if (current === null) {
+    try { await readFile(resolve(process.cwd(), 'Dockerfile'), 'utf8') } catch { return }
+    current = ''
+  }
+  if (current.split('\n').some(line => /^\/?\.cpin\/?$/.test(line.trim()))) {
+    console.log('.dockerignore : .cpin/ déjà exclu')
+    return
+  }
+  await writeFile(file, `${current}${current && !current.endsWith('\n') ? '\n' : ''}.cpin/\n`)
+  console.log('.dockerignore : .cpin/ ajouté')
+}
+
 const SECRET_NAMES = ['DSO_TOKEN', 'GH_USER', 'GH_PAT']
 
 const commands = {
@@ -197,6 +215,7 @@ const commands = {
     }
     await chmod(SECRETS_FILE, 0o600)
     console.log(`${created ? 'créé' : 'existant'} : ${SECRETS_FILE} (0600)`)
+    await ignoreInDockerContext()
     for (const name of SECRET_NAMES) console.log(`  ${name} : ${current[name] ? 'renseigné' : 'vide'}`)
   },
 
