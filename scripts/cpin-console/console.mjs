@@ -24,6 +24,27 @@ const SECRETS_FILE = resolve(process.env.CPIN_SECRETS_FILE ?? resolve(process.cw
 // anciens noms, avant le PAT unique
 const LEGACY = { INFRA_REPO_USER: 'GH_USER', INFRA_REPO_TOKEN: 'GH_PAT' }
 
+// Filet de sécurité : toute sortie passe par scrub(). Les valeurs connues (.env.secrets, secrets lus dans la
+// console) et les formats de jetons usuels y sont masqués, même si un message d'erreur les contenait.
+const known = new Set()
+const TOKEN_FORMATS = /\b(?:glptt|glpat|ghp|gho|ghs|github_pat)[-_][A-Za-z0-9_-]{8,}/g
+function scrub(args) {
+  return args.map((arg) => {
+    if (typeof arg !== 'string') return arg
+    let text = arg
+    for (const value of known) text = text.split(value).join('***')
+    return text.replace(TOKEN_FORMATS, '***')
+  })
+}
+for (const method of ['log', 'error', 'warn']) {
+  const original = console[method].bind(console)
+  console[method] = (...args) => original(...scrub(args))
+}
+function remember(value) {
+  if (typeof value === 'string' && value.length >= 8) known.add(value)
+  else if (value && typeof value === 'object') Object.values(value).forEach(remember)
+}
+
 async function loadSecrets() {
   const secrets = {}
   try {
@@ -31,6 +52,7 @@ async function loadSecrets() {
       const match = line.match(/^([A-Z_]+)=(.*)$/)
       if (match) secrets[LEGACY[match[1]] ?? match[1]] ||= match[2]
     }
+    remember(secrets)
   } catch {}
   return secrets
 }
@@ -66,6 +88,7 @@ async function api(method, path, { body, query, token } = {}) {
   const text = await response.text()
   let data = text
   try { data = JSON.parse(text) } catch {}
+  if (path.endsWith('/secrets')) remember(data)
   if (!response.ok) {
     // le message d'erreur de la console ne contient pas de valeur de secret ; on n'affiche jamais le corps envoyé
     fail(`${method} ${path} → ${response.status} ${typeof data === 'string' ? data.slice(0, 300) : JSON.stringify(data.message ?? data.error ?? data).slice(0, 300)}`)

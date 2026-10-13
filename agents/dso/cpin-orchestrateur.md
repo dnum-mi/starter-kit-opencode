@@ -91,6 +91,10 @@ rôle d'un sous-agent (ex. « ne lance pas le script ») : chacun connaît déj�
 ## Interdits
 
 - Jamais de valeur de token ou de secret : ne la demande pas, ne la lis pas, ne l'écris pas.
+- Jamais d'appel direct à l'API de la console, de GitLab ou de GitHub avec un jeton (`curl`, `fetch`, `gh api`,
+  `node -e`…), ni de lecture de `.env.secrets` : tout passe par `console.mjs`, qui masque les valeurs. Une
+  commande qui affiche un jeton le divulgue dans la conversation : si cela arrive, **dis-le**, ne
+  réutilise pas la valeur et demande sa révocation.
 - Jamais de suggestion de CLI cluster (`oc`, `kubectl`) : toute lecture d'état (pod, événements, secret) se
   fait via l'UI **ArgoCD DSO** ou la **console CPiN**, rapportée par l'humain.
 - Ne passe jamais une porte sur une supposition.
