@@ -89,15 +89,15 @@ function validatePlan(plan) {
   }
   check('projet', plan.project?.name)
   if ((plan.project?.description ?? '').length > 280) errors.push('description > 280 caractères')
-  // un palier de quota n'est exigé que si un environnement l'utilise ; l'autre vaut 0
-  const stages = (plan.environments ?? []).map(env => env.stage)
-  const used = { prod: stages.includes('prod'), hprod: stages.some(stage => stage !== 'prod') }
-  for (const tier of ['hprod', 'prod'])
-    for (const key of ['cpu', 'gpu', 'memory']) {
-      const value = plan.project?.[tier]?.[key]
-      if (used[tier] ? typeof value !== 'number' : value !== undefined && typeof value !== 'number')
-        errors.push(`project.${tier}.${key} requis (nombre)${used[tier] ? '' : ' ou absent'}`)
-    }
+  // Prod : pas encore pris en charge. Le palier prod part à 0 (withTiers) et un stage « prod » est refusé.
+  // À réactiver le jour où la prod est visée :
+  // const used = { prod: stages.includes('prod'), hprod: stages.some(stage => stage !== 'prod') }
+  // puis exiger project.prod.{cpu,gpu,memory} quand used.prod (et hprod seulement quand used.hprod).
+  for (const key of ['cpu', 'gpu', 'memory'])
+    if (typeof plan.project?.hprod?.[key] !== 'number') errors.push(`project.hprod.${key} requis (nombre)`)
+  if (plan.project?.prod) errors.push('project.prod : la prod n\'est pas encore prise en charge')
+  if ((plan.environments ?? []).some(env => env.stage === 'prod'))
+    errors.push('stage « prod » : la prod n\'est pas encore prise en charge')
   if (!plan.environments?.length) errors.push('au moins un environnement requis')
   for (const env of plan.environments ?? []) {
     check('environnement', env.name)
