@@ -59,9 +59,20 @@ L'agent crée lui-même ce qui est dans la console (script `scripts/cpin-console
 
 - Le **jeton API de la console** : l'agent lance `node scripts/cpin-console/console.mjs init`, qui **crée**
   `scripts/cpin-console/.env.secrets` (0600, valeurs vides) et affiche son chemin réel. L'humain y colle
-  seulement `DSO_TOKEN=…` (console > profil > jetons) ; pour un dépôt privé aussi `INFRA_REPO_USER` et
-  `INFRA_REPO_TOKEN` (PAT GitHub, scope `repo`). L'agent relance `init` pour vérifier « renseigné » /
-  « vide » : jamais la valeur. Ne pas lui demander de créer ou d'éditer ce fichier à la main.
+  `DSO_TOKEN=…` (console > profil > jetons). L'agent relance `init` pour vérifier « renseigné » / « vide » :
+  jamais la valeur. Ne pas lui demander de créer ou d'éditer ce fichier à la main.
+- **Identifiants d'un dépôt privé** (`INFRA_REPO_USER`, `INFRA_REPO_TOKEN` : PAT GitHub, scope `repo`) :
+  **ne les demander que si un dépôt déclaré est privé**. L'agent le **constate** au lieu de poser la question :
+  `git remote get-url origin` pour le dépôt applicatif, puis `gh repo view <org>/<dépôt> --json isPrivate`.
+  Un dépôt qui n'existe pas encore (erreur `gh`) : demander à l'humain s'il sera privé. Un dépôt public
+  n'a besoin d'aucun identifiant : le dire, ne pas les réclamer.
+
+### Expliquer ses choix
+
+Chaque valeur que l'agent propose ou déduit est **accompagnée de sa raison** (« public, constaté par
+`gh repo view` », « 2 déploiements ⇒ 2 × le quota du service », « port 8080 lu dans le Dockerfile »).
+L'humain doit pouvoir corriger un choix en comprenant d'où il vient ; une valeur sans raison est une supposition.
+
 - Les **secrets applicatifs** saisis dans le Vault du projet (mount `<organisation>-<projet>`).
 - La **GitHub App** installée sur les dépôts (secrets `APP_CLIENT_ID` et `APP_PRIVATE_KEY`, ou `GH_PAT`) :
   sans elle, pas de CI sur les PR de release/bump, ni d'automerge, ni de `dispatch-helm-chart`.
