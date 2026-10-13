@@ -200,6 +200,9 @@ merger la PR de bump. Un token couvrant un seul des deux dépôts fait échouer 
 
 **Account permissions** : aucune.
 
+Le **même** token sert aussi à la console pour cloner un dépôt privé (informations d'accès du dépôt,
+phase 1 de `deploiement-cpin`) : un seul jeton à créer, à révoquer et à renouveler.
+
 Ensuite :
 1. Sauvegarder la valeur dans le secret **`GH_PAT` sur les deux dépôts**
    (`gh secret set GH_PAT -R <org>/<app>`, `-R <org>/<app>-infra`).

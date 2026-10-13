@@ -61,11 +61,14 @@ L'agent crée lui-même ce qui est dans la console (script `scripts/cpin-console
   `scripts/cpin-console/.env.secrets` (0600, valeurs vides) et affiche son chemin réel. L'humain y colle
   `DSO_TOKEN=…` (console > profil > jetons). L'agent relance `init` pour vérifier « renseigné » / « vide » :
   jamais la valeur. Ne pas lui demander de créer ou d'éditer ce fichier à la main.
-- **Identifiants d'un dépôt privé** (`INFRA_REPO_USER`, `INFRA_REPO_TOKEN` : PAT GitHub, scope `repo`) :
-  **ne les demander que si un dépôt déclaré est privé**. L'agent le **constate** au lieu de poser la question :
-  `git remote get-url origin` pour le dépôt applicatif, puis `gh repo view <org>/<dépôt> --json isPrivate`.
-  Un dépôt qui n'existe pas encore (erreur `gh`) : demander à l'humain s'il sera privé. Un dépôt public
-  n'a besoin d'aucun identifiant : le dire, ne pas les réclamer.
+- **Un seul jeton GitHub** : un PAT **fine-grained** couvrant le dépôt applicatif **et** le dépôt d'infra
+  (`GH_PAT`, plus `GH_USER`, l'identifiant du compte qui le possède). Il est utilisé **deux fois** :
+  par la console pour cloner un dépôt **privé**, et comme secret `GH_PAT` des workflows (il **remplace la
+  GitHub App**). L'humain le colle une fois dans `.env.secrets` ; `pat-push` le pose sur les deux dépôts.
+  L'agent **constate** la visibilité au lieu de la demander (`git remote get-url origin`, puis
+  `gh repo view <org>/<dépôt> --json isPrivate`) pour dire si la console en a besoin ; un dépôt qui
+  n'existe pas encore : demander s'il sera privé. Le PAT reste nécessaire aux workflows même si les deux
+  dépôts sont publics.
 
 ### Les jetons, un par un
 
@@ -76,10 +79,9 @@ celui **affiché par `init`**, jamais un chemin reconstruit.
 | Jeton | À quoi il sert | Où le créer | Droits / format | Où il va | Quand |
 |-------|----------------|-------------|-----------------|----------|-------|
 | `DSO_TOKEN` | Le script appelle l'API de la console **à ta place** : créer projet, environnements, dépôts ; lire les secrets du miroir | console > profil > jetons (ou `POST /api/v1/user/tokens`) : un nom, **une date d'expiration** (obligatoire) | Il a **tes droits** sur la console. Envoyé dans l'en-tête `x-dso-token`. La valeur n'est affichée **qu'une fois** à la création | `scripts/cpin-console/.env.secrets` | **maintenant**. Choisir une expiration courte (quelques jours), révoquer à la clôture (phase 5) |
-| `INFRA_REPO_USER` | Nom du compte GitHub qui possède le PAT ci-dessous | — (ton identifiant GitHub) | Pas un secret | `.env.secrets` | maintenant, **seulement si un dépôt est privé** |
-| `INFRA_REPO_TOKEN` | La console s'en sert pour **cloner** ton dépôt privé vers son miroir GitLab interne. Il est transmis à la console (`externalToken`) | github.com > Settings > Developer settings > Personal access tokens | PAT avec le scope `repo` (documenté). Un fine-grained en lecture seule a donné `403 Write access to repository not granted` : en cas de 403, passer au PAT `repo` | `.env.secrets` | maintenant, **seulement si un dépôt est privé**. Révoquer à la clôture |
+| `GH_USER` | Compte GitHub qui possède le PAT ; transmis à la console avec lui pour un dépôt privé | — (ton identifiant GitHub) | Pas un secret | `.env.secrets` | maintenant |
+| `GH_PAT` | **Un seul jeton GitHub pour tout** : (1) la console clone ton dépôt privé vers son miroir GitLab (`externalToken`) ; (2) secret des workflows : CI sur PR de release/bump, automerge, `dispatch-helm-chart` | github.com > Settings > Developer settings > **Fine-grained** personal access tokens | Resource owner = l'organisation ; **les deux dépôts** sélectionnés ; Contents, Pull requests, Actions : Read and write ; Metadata : Read ; expiration choisie. Un PAT classique ne suffit pas (pas de droits par dépôt) | `.env.secrets`, puis secret GitHub `GH_PAT` posé par `pat-push` sur les deux dépôts | maintenant. Révoquer à la clôture |
 | `GITLAB_TRIGGER_TOKEN` (`glptt-…`) | Le job `sync-cpin` de GitHub déclenche la synchro vers le miroir. **Pipeline trigger token**, pas un PAT `glpat-` | Récupéré **par le script** dans les secrets du projet (`secrets-push`) | — | secret GitHub, posé par `gh secret set` ; **tu ne le vois ni ne le tapes** | après `apply` |
-| `APP_CLIENT_ID` + `APP_PRIVATE_KEY` (ou `GH_PAT`) | Identité de la GitHub App : CI sur les PR de release/bump, automerge, `dispatch-helm-chart` | github.com > Settings > Developer settings > GitHub Apps | Clé privée `.pem` ; l'App doit être installée sur **les deux dépôts** | secrets GitHub, saisis **par toi** | avant la phase 4 |
 | `ARGOCD_TOKEN`, `GITLAB_PAT` | **Optionnels** : debug automatisé des phases 5 (voir plus bas) | login Playwright / GitLab | — | `scripts/cpin-debug/.env.secrets` | phase 5, si tu acceptes le debug automatisé |
 
 L'agent **ne lit, n'affiche et ne demande jamais** une valeur : tu les colles toi-même dans le fichier,
@@ -93,8 +95,9 @@ Chaque valeur que l'agent propose ou déduit est **accompagnée de sa raison** (
 L'humain doit pouvoir corriger un choix en comprenant d'où il vient ; une valeur sans raison est une supposition.
 
 - Les **secrets applicatifs** saisis dans le Vault du projet (mount `<organisation>-<projet>`).
-- La **GitHub App** installée sur les dépôts (secrets `APP_CLIENT_ID` et `APP_PRIVATE_KEY`, ou `GH_PAT`) :
-  sans elle, pas de CI sur les PR de release/bump, ni d'automerge, ni de `dispatch-helm-chart`.
+- Pas de GitHub App par défaut : le PAT ci-dessus la remplace. Dans les workflows, `GH_PAT` prend la place
+  de la paire `APP_CLIENT_ID`/`APP_PRIVATE_KEY` (skill `cicd-fabnum`, `references/depot-infra.md`). Si une App
+  est déjà installée, elle l'emporte sur `GH_PAT` : c'est un choix, pas un prérequis.
 
 ### 2. Relever l'instance
 
@@ -112,7 +115,7 @@ Une question par paramètre des `POST` de l'API ; proposer une valeur par défau
 | **Quels environnements ?** (stages de `catalog`, **hors `prod`** : dev, staging, integration…). Poser cette question **avant toute question de quota** | un stage par environnement. La **prod n'est pas prise en charge pour l'instant** : ne pas la proposer ni poser de question à son sujet |
 | Pour chaque environnement : nom, cluster, cpu, gpu, mémoire | nom 2 à 11 car. `[a-z0-9]` ; cluster autorisé pour le stage |
 | **Quota hors-prod du projet** : cpu, gpu, mémoire (ou `limitless`) | nombres ; relever l'unité affichée par la console. Le palier prod est envoyé à 0 par le script |
-| **Dépôts** : nom interne, URL `https://….git`, public ou privé, applicatif ou infra | nom 2 à 20 car. `[a-z0-9-]` ; un dépôt privé exige `INFRA_REPO_USER`/`INFRA_REPO_TOKEN` |
+| **Dépôts** : nom interne, URL `https://….git`, public ou privé, applicatif ou infra | nom 2 à 20 car. `[a-z0-9-]` ; un dépôt privé exige `GH_USER`/`GH_PAT` |
 | **Membres** à ajouter (e-mails) | optionnel |
 
 **Ordre des questions** : projet → environnements → quota hors-prod → dépôts → membres.
@@ -147,7 +150,9 @@ Rappeler au passage qu'on peut ajouter un environnement plus tard (la création 
    le dire à l'humain plutôt que deviner.
 3. `GITLAB_PROJECT_NAME` n'est pas un secret de la console : c'est le nom du dépôt dans le miroir, à
    poser avec `gh variable set GITLAB_PROJECT_NAME -R <org>/<dépôt> --body <nom>` (valeur non sensible).
-4. Si `scan-sonarqube` est ajouté au `ci.yml` : secrets `SONAR_TOKEN` et `SONAR_PROJECT_KEY`, saisis par l'humain.
+4. `node scripts/cpin-console/console.mjs pat-push --repo <org>/<app> --repo <org>/<app>-infra` : pose
+   `GH_PAT` sur les deux dépôts (valeur lue dans `.env.secrets`, jamais affichée).
+5. Si `scan-sonarqube` est ajouté au `ci.yml` : secrets `SONAR_TOKEN` et `SONAR_PROJECT_KEY`, saisis par l'humain.
 
 ### 6. Debug automatisé (optionnel)
 
@@ -160,9 +165,9 @@ Rappeler au passage qu'on peut ajouter un environnement plus tard (la création 
 - **Non** → debug manuel via l'UI uniquement. Rien n'est installé.
 
 **Porte** : `gh secret list` et `gh variable list` montrent, sur chaque dépôt (`-R <org>/<dépôt>`),
-`GITLAB_TRIGGER_TOKEN`, `GITLAB_URL`, `GITLAB_MIRROR_ID`, `GITLAB_PROJECT_NAME` (et les secrets de la
-GitHub App) ; la relecture de la console montre projet, environnements et dépôts attendus ; l'humain a
-confirmé les secrets Vault et la GitHub App.
+`GITLAB_TRIGGER_TOKEN`, `GITLAB_URL`, `GITLAB_MIRROR_ID`, `GITLAB_PROJECT_NAME` (et `GH_PAT`, ou les secrets
+de la GitHub App si elle est utilisée) ; la relecture de la console montre projet, environnements et dépôts attendus ; l'humain a
+confirmé les secrets Vault.
 
 ## Phase 2 : fichiers values chargés par ArgoCD
 

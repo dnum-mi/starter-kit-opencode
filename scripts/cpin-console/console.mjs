@@ -7,10 +7,12 @@
 //   node console.mjs plan  --plan '<json>'        valide le plan, n'écrit rien (aussi : apply sans --apply)
 //   node console.mjs apply --plan '<json>' --apply   crée projet, environnements, dépôts, membres
 //   node console.mjs secrets-list --project <nom>    NOMS des secrets du projet (jamais les valeurs)
-//   node console.mjs secrets-push --project <nom> --repo <org/dépôt> --secret NOM=service.clé --var NOM=service.clé
+//   node console.mjs secrets-push --project <nom> --repo <org/dépôt> [--repo …] --secret NOM=service.clé --var NOM=service.clé
+//   node console.mjs pat-push --repo <org/dépôt> [--repo <org/infra>]   pose le secret GH_PAT (lu dans .env.secrets) sur chaque dépôt
 //
 // DSO_TOKEN (jeton API console) est lu dans scripts/cpin-console/.env.secrets (0600).
-// INFRA_REPO_USER / INFRA_REPO_TOKEN y sont lus pour un dépôt privé. Aucune valeur n'est jamais affichée.
+// GH_USER / GH_PAT (un seul PAT GitHub fine-grained) y sont lus : GH_PAT sert à la console pour un dépôt privé
+// et est posé en secret GitHub par pat-push. Aucune valeur n'est jamais affichée.
 import { readFile, writeFile, chmod } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
@@ -43,7 +45,7 @@ function parseArgs(argv) {
     const next = argv[i + 1]
     if (next === undefined || next.startsWith('--')) { args[key] = true; continue }
     i++
-    if (key === 'secret' || key === 'var') (args.multi[key] ??= []).push(next)
+    if (key === 'secret' || key === 'var' || key === 'repo') (args.multi[key] ??= []).push(next)
     else args[key] = next
   }
   return args
@@ -150,7 +152,7 @@ function describe(plan, environments) {
 
 // --- commandes --------------------------------------------------------------------------------
 
-const SECRET_NAMES = ['DSO_TOKEN', 'INFRA_REPO_USER', 'INFRA_REPO_TOKEN']
+const SECRET_NAMES = ['DSO_TOKEN', 'GH_USER', 'GH_PAT']
 
 const commands = {
   // Crée le fichier (jamais écrasé) avec des valeurs vides ; l'humain y colle ses valeurs.
@@ -229,14 +231,14 @@ const commands = {
     const existingRepos = await api('GET', '/repositories', { token, query: { projectId: project.id } })
     for (const repo of plan.repositories ?? []) {
       if (existingRepos.some(r => r.internalRepoName === repo.name)) { console.log(`= dépôt ${repo.name} existe déjà`); continue }
-      if (repo.private && !(secrets.INFRA_REPO_USER && secrets.INFRA_REPO_TOKEN))
-        fail(`dépôt privé ${repo.name} : INFRA_REPO_USER et INFRA_REPO_TOKEN requis dans ${SECRETS_FILE}`)
+      if (repo.private && !(secrets.GH_USER && secrets.GH_PAT))
+        fail(`dépôt privé ${repo.name} : GH_USER et GH_PAT requis dans ${SECRETS_FILE}`)
       await api('POST', '/repositories', {
         token,
         body: {
           internalRepoName: repo.name, externalRepoUrl: repo.url, isPrivate: repo.private, isInfra: repo.infra,
           projectId: project.id,
-          ...(repo.private ? { externalUserName: secrets.INFRA_REPO_USER, externalToken: secrets.INFRA_REPO_TOKEN } : {}),
+          ...(repo.private ? { externalUserName: secrets.GH_USER, externalToken: secrets.GH_PAT } : {}),
         },
       })
       console.log(`+ dépôt ${repo.name} créé`)
@@ -266,7 +268,7 @@ const commands = {
 
   async 'secrets-push'(args) {
     const { token, project } = await projectContext(args)
-    if (!args.repo) fail('--repo <org/dépôt> requis')
+    const repos = args.multi.repo ?? fail('--repo <org/dépôt> requis')
     const secrets = await api('GET', `/projects/${project.id}/secrets`, { token })
     const lookup = (spec) => {
       const [name, source] = spec.split('=')
@@ -275,16 +277,27 @@ const commands = {
       if (!name || value === undefined) fail(`${spec} : valeur introuvable (voir secrets-list)`)
       return [name, String(value)]
     }
-    const gh = (kind, name, value) => {
-      const result = spawnSync('gh', [kind, 'set', name, '-R', args.repo, ...(kind === 'variable' ? ['--body', value] : [])], {
-        input: kind === 'secret' ? value : undefined, encoding: 'utf8',
-      })
-      if (result.status !== 0) fail(`gh ${kind} set ${name} → ${result.stderr.trim().split('\n')[0]}`)
-      console.log(`+ ${kind} ${name} → ${args.repo}`)
+    for (const repo of repos) {
+      for (const spec of args.multi.secret ?? []) ghSet(repo, 'secret', ...lookup(spec))
+      for (const spec of args.multi.var ?? []) ghSet(repo, 'variable', ...lookup(spec))
     }
-    for (const spec of args.multi.secret ?? []) gh('secret', ...lookup(spec))
-    for (const spec of args.multi.var ?? []) gh('variable', ...lookup(spec))
   },
+
+  // Le PAT GitHub unique : lu dans .env.secrets, passé à `gh secret set` sur stdin, jamais affiché.
+  async 'pat-push'(args) {
+    const repos = args.multi.repo ?? fail('--repo <org/dépôt> requis (un par dépôt)')
+    const { GH_PAT } = await loadSecrets()
+    if (!GH_PAT) fail(`GH_PAT vide ou absent de ${SECRETS_FILE}`)
+    for (const repo of repos) ghSet(repo, 'secret', 'GH_PAT', GH_PAT)
+  },
+}
+
+function ghSet(repo, kind, name, value) {
+  const result = spawnSync('gh', [kind, 'set', name, '-R', repo, ...(kind === 'variable' ? ['--body', value] : [])], {
+    input: kind === 'secret' ? value : undefined, encoding: 'utf8',
+  })
+  if (result.status !== 0) fail(`gh ${kind} set ${name} -R ${repo} → ${result.stderr.trim().split('\n')[0]}`)
+  console.log(`+ ${kind} ${name} → ${repo}`)
 }
 
 function parseJson(text) {
