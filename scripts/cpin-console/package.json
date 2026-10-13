@@ -1,0 +1,14 @@
+{
+  "name": "cpin-console",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "version": "node console.mjs version",
+    "catalog": "node console.mjs catalog",
+    "plan": "node console.mjs plan",
+    "apply": "node console.mjs apply",
+    "secrets:list": "node console.mjs secrets-list",
+    "secrets:push": "node console.mjs secrets-push"
+  }
+}

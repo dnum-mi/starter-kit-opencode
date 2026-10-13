@@ -13,6 +13,10 @@ permission:
     "git log*": allow
     "git diff*": allow
     "ls*": allow
+    "node scripts/cpin-console/console.mjs *": allow
+    "node scripts/cpin-console/console.mjs * --apply*": ask
+    "node scripts/cpin-console/console.mjs secrets-push*": ask
+    "grep -c *.env.secrets": allow
   task:
     "*": deny
     "cpin-*": allow
@@ -32,10 +36,12 @@ délègues aux sous-agents `cpin-plan`, `cpin-build` et `cpin-review`, et tu tie
 
 ## Tenir les portes
 
-- **Phases 0, 1 et 2 (portes humaines).** Lis d'abord le dépôt (Dockerfile, chart, CI) pour pré-remplir ce
+- **Phases 0 et 2 (portes humaines).** Lis d'abord le dépôt (Dockerfile, chart, CI) pour pré-remplir ce
   que tu peux. Pose ensuite à l'humain les questions de la phase **en une seule liste**, puis arrête-toi
   jusqu'à sa réponse. Un sous-agent ne peut pas parler à l'humain : c'est toi qui demandes.
-- **Phase 1.** Vérifie toi-même les noms avec `gh secret list` et `gh variable list`.
+- **Phase 1 (automatisée).** Suis le skill : `version`, `catalog`, questions de l'humain en une liste,
+  `plan` (simulation), « oui » explicite, puis `apply --apply` et `secrets-push`. Vérifie les noms avec
+  `gh secret list` et `gh variable list`. Ne demande jamais à l'humain de cliquer dans la console.
 - **Phase 3 (porte technique).** Lance la boucle ci-dessous.
 - **Phases 4 et 5.** Donne à l'humain les actions de livraison et de vérification ; il te rapporte le résultat.
   En cas d'échec, cherche le symptôme dans `references/depannage.md` du skill et reviens à la phase indiquée.
@@ -74,4 +80,4 @@ rôle d'un sous-agent (ex. « ne lance pas le script ») : chacun connaît déj�
 - Jamais de suggestion de CLI cluster (`oc`, `kubectl`) : toute lecture d'état (pod, événements, secret) se
   fait via l'UI **ArgoCD DSO** ou la **console CPiN**, rapportée par l'humain.
 - Ne passe jamais une porte sur une supposition.
-- Pas de commit, pas de push, aucune action dans la console CPiN ni dans ArgoCD.
+- Pas de commit, pas de push, aucune action dans ArgoCD ; dans la console CPiN, uniquement via `scripts/cpin-console/` et après un « oui » explicite.

@@ -18,19 +18,19 @@ tant qu'elle n'est pas franchie. Principe : **vérifier au PR, pas au déploieme
   mirror (`glptt-…`) commité est un secret fuité à **révoquer** en fin de mise en service (voir phase 5).
 - La **console** est la source de vérité (projets, dépôts, environnements, fichiers values). Ce qui est
   modifié dans l'UI ArgoCD ou dans le GitLab interne est ignoré ou écrasé.
-- Pour **lire** la configuration de la console, utiliser son API (swagger :
-  `https://console.<instance>/swagger-ui`, ex. `console.sdid.cpin.numerique-interieur.com`). Elle
-  s'authentifie par un **jeton API** (en-tête `x-dso-token`) que l'humain crée et place dans une variable
-  d'environnement. Krakend, cité dans la doc CPiN, est un exemple d'API gateway pour *vos* API : il ne
+- Pour **lire et configurer** la console, utiliser son API (swagger :
+  `https://console.<instance>/swagger-ui`, ex. `console.sdid.cpin.numerique-interieur.com`), via
+  `scripts/cpin-console/`. Elle s'authentifie par un **jeton API** (en-tête `x-dso-token`) que l'humain
+  crée et place dans `.env.secrets`. Toute écriture se fait après un « oui » explicite de l'humain. Krakend, cité dans la doc CPiN, est un exemple d'API gateway pour *vos* API : il ne
   donne pas accès à la console.
 - Une valeur critique (image, port, ingress, ressources) se vérifie sur le **rendu** `helm template`, pas sur `helm lint`.
 - **Ne jamais proposer un CLI de cluster (`oc`, `kubectl`)** : l'agent n'y a pas accès. Lire l'état réel
   (pod, deployment, événements, secrets) via l'UI **ArgoCD DSO** (onglet application → Deployment/Pod/événements)
   ou la **console CPiN**. Demander à l'humain ce qu'il y voit, jamais une commande CLI.
-- **Les instances n'ont pas toutes la même version de plateforme** (ex. la Scaleway est en ancienne
-  version **9.9.0**, la RIE plus récente ≥ 9.11). Une valeur documentée (chemin source ArgoCD, fichier de
+- **Les instances n'ont pas toutes la même version de plateforme** (SDID répond **9.9.0** sur
+  `/api/v1/version`, d'autres instances sont plus récentes). Une valeur documentée (chemin source ArgoCD, fichier de
   pipeline, auto-sync, « Déploiements »…) est un **exemple par instance**, pas un universel : relever la
-  **version réelle de l'instance** (`console.<instance>/swagger-ui`) et vérifier chaque hypothèse contre
+  **version réelle de l'instance** (`/api/v1/version`) et vérifier chaque hypothèse contre
   elle avant de supposer un comportement.
 
 ## Phase 0 : éligibilité et architecture
@@ -50,29 +50,65 @@ tant qu'elle n'est pas franchie. Principe : **vérifier au PR, pas au déploieme
 
 **Porte** : l'humain valide l'organisation des dépôts ; le port applicatif est connu.
 
-## Phase 1 : prérequis, à faire par l'humain AVANT le premier run
+## Phase 1 : console CPiN et GitHub, automatisés par API
 
-Présenter cette checklist à l'humain et attendre qu'il confirme chaque ligne :
+L'agent crée lui-même ce qui est dans la console (script `scripts/cpin-console/console.mjs`, API
+`console.<instance>/swagger-ui`). **L'humain répond aux questions et confirme : il ne clique pas dans la console.**
 
-- [ ] **Version de l'instance relevée** (`console.<instance>/swagger-ui`, ex. RIE ≥ 9.11 vs Scaleway 9.9.0) et
-      notée. Chaque comportement supposé sera vérifié contre cette version, pas contre la doc générale.
-- [ ] **Nom du projet Harbor** (`PROJECT_PATH` de la console, peut différer du nom du dépôt/app — ex.
-      projet `icebreakerdemo` vs dépôt `ice-breaker-demo`) relevé : c'est lui qui alimente `--expected-image`
-      des phases 3/CI. Ne jamais le copier du nom du dépôt.
-- [ ] Projet créé dans la console (le nom ne change plus), équipe et rôles ajoutés.
-- [ ] Dépôts applicatif et infra déclarés **dans la console** (un dépôt `plugin-managed` inconnu d'elle est supprimé au reprovisionnement).
-- [ ] Environnement créé (dev/staging/integration/prod). **Quota relevé avec son unité** : CPU en `m`, mémoire en `Mi` ou `Gi` (ex. « 0.2 » de mémoire = `0.2Gi` ≈ `205Mi`).
-- [ ] **Si le dépôt GitHub est privé** : informations d'accès saisies dans le formulaire du dépôt de la
-      console. La doc officielle demande un PAT avec le scope `repo`.
-- [ ] `GIT_MIRROR_TOKEN` (pipeline trigger token `glptt-`, pas un PAT `glpat-`) **récupéré dans la
-      console** (secrets du projet, commande curl de synchro), avec l'id du projet `mirror` et l'URL GitLab.
-- [ ] Côté GitHub (job `sync-cpin`, skill `cicd-fabnum`) : secret `GITLAB_TRIGGER_TOKEN` et variables `GITLAB_URL`, `GITLAB_MIRROR_ID`, `GITLAB_PROJECT_NAME`.
-- [ ] GitHub App installée, secrets `APP_CLIENT_ID` et `APP_PRIVATE_KEY` (ou `GH_PAT`, câblé à leur place dans les jobs) : sans elle, la CI ne tourne pas sur les PR de release ni de bump, et ni l'automerge ni `dispatch-helm-chart` ne marchent.
-      **Avec un dépôt d'infra** : tout ce qui précède sur les deux dépôts, chacun avec son propre `GITLAB_PROJECT_NAME`.
-- [ ] Si `scan-sonarqube` est ajouté au `ci.yml` : secrets `SONAR_TOKEN` et `SONAR_PROJECT_KEY` (requis par le workflow).
-- [ ] Secrets applicatifs saisis **par l'humain** dans le Vault du projet (mount `<organisation>-<projet>`).
+### 1. Prérequis humains (les seuls)
 
-À la fin de la checklist, **demander** à l'humain :
+- Un **jeton API de la console** dans `scripts/cpin-console/.env.secrets` (0600) : `DSO_TOKEN=…`
+  (console > profil > jetons). Pour un dépôt privé : `INFRA_REPO_USER` et `INFRA_REPO_TOKEN`
+  (PAT GitHub, scope `repo`) dans le même fichier. L'agent vérifie seulement la **présence** des noms
+  (`grep -c '^DSO_TOKEN='`), jamais la valeur.
+- Les **secrets applicatifs** saisis dans le Vault du projet (mount `<organisation>-<projet>`).
+- La **GitHub App** installée sur les dépôts (secrets `APP_CLIENT_ID` et `APP_PRIVATE_KEY`, ou `GH_PAT`) :
+  sans elle, pas de CI sur les PR de release/bump, ni d'automerge, ni de `dispatch-helm-chart`.
+
+### 2. Relever l'instance
+
+`node scripts/cpin-console/console.mjs version` (route publique) puis `catalog` (stages, clusters, zones).
+Chaque comportement supposé se vérifie contre **cette version**, pas contre la doc générale.
+
+### 3. Poser les questions, **en une seule liste**, puis attendre
+
+Une question par paramètre des `POST` de l'API ; proposer une valeur par défaut déduite du dépôt quand c'est possible.
+
+| Question | Contrainte (swagger 9.9.0) |
+|----------|----------------------------|
+| Nom du **projet** | 2 à 20 car., `[a-z0-9]` **uniquement, pas de tiret** (« translate-rt » est refusé). Ne change plus ensuite. Il fixe le nom du projet Harbor (`PROJECT_PATH`). |
+| Description | 280 car. max |
+| Quotas du projet, **hors-prod** et **prod** : cpu, gpu, mémoire (ou `limitless`) | nombres ; relever l'unité affichée par la console |
+| **Environnements** : nom, stage, cluster, cpu, gpu, mémoire | nom 2 à 11 car. `[a-z0-9]` ; stage et cluster pris dans `catalog` ; cluster autorisé pour le stage |
+| **Dépôts** : nom interne, URL `https://….git`, public ou privé, applicatif ou infra | nom 2 à 20 car. `[a-z0-9-]` ; un dépôt privé exige `INFRA_REPO_USER`/`INFRA_REPO_TOKEN` |
+| **Membres** à ajouter (e-mails) | optionnel |
+
+### 4. Simuler, faire confirmer, appliquer
+
+1. Construire le plan JSON à partir des réponses, puis simuler :
+   `node scripts/cpin-console/console.mjs plan --plan '<json>'`. La simulation valide les contraintes
+   ci-dessus et les couples stage/cluster, **sans rien écrire**.
+2. Montrer la sortie à l'humain et obtenir un **« oui » explicite**.
+3. `node scripts/cpin-console/console.mjs apply --plan '<json>' --apply` crée projet, environnements,
+   dépôts et membres (une commande déjà exécutée est rejouable : l'existant est réutilisé). Le script
+   relit ensuite la console : c'est cette **relecture** (noms, quotas réels) qui alimente la fiche.
+4. Relever le **nom du projet Harbor** réel (`PROJECT_PATH`) : il alimente `--expected-image` des
+   phases 3/CI. Ne jamais le copier du nom du dépôt.
+
+### 5. Secrets et variables GitHub (sur chaque dépôt, chacun avec son propre `GITLAB_PROJECT_NAME`)
+
+1. `node scripts/cpin-console/console.mjs secrets-list --project <nom>` : affiche les **noms** des secrets
+   du projet (service puis clé), jamais les valeurs.
+2. `… secrets-push --project <nom> --repo <org>/<dépôt> --secret GITLAB_TRIGGER_TOKEN=<service>.<clé>
+   --var GITLAB_URL=<service>.<clé> --var GITLAB_MIRROR_ID=<service>.<clé>` : le script lit la valeur et la
+   passe directement à `gh secret set` / `gh variable set`. `GITLAB_TRIGGER_TOKEN` est un pipeline trigger
+   token `glptt-`, pas un PAT `glpat-`. Choisir la clé d'après son **nom** ; si aucune ne correspond,
+   le dire à l'humain plutôt que deviner.
+3. `GITLAB_PROJECT_NAME` n'est pas un secret de la console : c'est le nom du dépôt dans le miroir, à
+   poser avec `gh variable set GITLAB_PROJECT_NAME -R <org>/<dépôt> --body <nom>` (valeur non sensible).
+4. Si `scan-sonarqube` est ajouté au `ci.yml` : secrets `SONAR_TOKEN` et `SONAR_PROJECT_KEY`, saisis par l'humain.
+
+### 6. Debug automatisé (optionnel)
 
 > Veux-tu configurer le debug automatisé des services internes (scripts `scripts/cpin-debug/`) ?
 > Cela permet de vérifier ArgoCD, Harbor, GitLab et la console par API au lieu de l'UI.
@@ -82,7 +118,10 @@ Présenter cette checklist à l'humain et attendre qu'il confirme chaque ligne :
   (`ARGOCD_TOKEN`) sera ajouté plus tard par `login.mjs` (phase 5).
 - **Non** → debug manuel via l'UI uniquement. Rien n'est installé.
 
-**Porte** : `gh secret list` et `gh variable list` montrent tous les noms cochés ci-dessus (sur chaque dépôt, avec `-R <org>/<dépôt>`), et l'humain a confirmé les autres lignes.
+**Porte** : `gh secret list` et `gh variable list` montrent, sur chaque dépôt (`-R <org>/<dépôt>`),
+`GITLAB_TRIGGER_TOKEN`, `GITLAB_URL`, `GITLAB_MIRROR_ID`, `GITLAB_PROJECT_NAME` (et les secrets de la
+GitHub App) ; la relecture de la console montre projet, environnements et dépôts attendus ; l'humain a
+confirmé les secrets Vault et la GitHub App.
 
 ## Phase 2 : fichiers values chargés par ArgoCD
 
@@ -163,18 +202,18 @@ seulement la **présence** des variables dans `.env.secrets` (ex. `grep -c '^ARG
 ## Limites connues (à confirmer, ne rien inventer)
 
 - **Route vs Ingress** : la doc ne rend jamais la Route obligatoire, et les tutoriels officiels (`cloud-pi-native/tuto-*-infra-helm`) utilisent un Ingress. L'Ingress fonctionne aussi sur l'instance SDID.
-- **Fichiers values** : sur `dso-demo`, seul `values.yaml` semblait pris en compte. Cause probable : `values-cpin.yaml` et `values-dev.yaml` non déclarés dans la console (d'où la porte de la phase 2).
-- **Token GitHub** : la doc demande un PAT avec le scope `repo`. Un token fine-grained en lecture seule a donné `403 Write access to repository not granted` sur `dso-demo`. La Service Team suggère la lecture seule : le moindre privilège suffisant n'est pas établi. En cas de 403, passer au PAT `repo` documenté.
+- **Fichiers values** : sur un premier déploiement, seul `values.yaml` semblait pris en compte. Cause probable : `values-cpin.yaml` et `values-dev.yaml` non déclarés dans la console (d'où la porte de la phase 2).
+- **Token GitHub** : la doc demande un PAT avec le scope `repo`. Un token fine-grained en lecture seule a donné `403 Write access to repository not granted`. La Service Team suggère la lecture seule : le moindre privilège suffisant n'est pas établi. En cas de 403, passer au PAT `repo` documenté.
 - **Registres Kyverno** : la doc liste `harbor.io/`, alors que le Harbor de chaque instance a son propre domaine (ex. `harbor.sdid.cpin.numerique-interieur.com`). `check-cpin-rules.py` accepte tout registre contenant `harbor`. À confirmer avant la prod, où la règle est bloquante.
 - Nom du fichier de pipeline incohérent dans les docs CPiN (`.gitlab-ci-dso.yml`/`.yaml`), catalogues Kaniko variables selon l'instance.
 - **Chemin source ArgoCD** : figé par la console sur notre instance (ex. `helm/`), il est un **exemple par
-  instance**, pas un universel — et peut dépendre de la **version de la plateforme** (RIE vs Scaleway 9.9.0).
+  instance**, pas un universel — et peut dépendre de la **version de la plateforme** (relever `/api/v1/version`).
   Se vérifier au cas par cas dans la console, jamais copié tels quel d'une autre instance.
 - « Déploiements » (beta, console ≥ 9.25.0) : dès qu'il en existe un, il écrase la config des dépôts d'infra pour cet environnement.
 
 ## Pour aller plus loin
 
 - Doc interne : `docs/okf/cloud-pi-native/` (plateforme, dépôts et mirror, GitOps, environnements, secrets, Kyverno).
-- Source : [documentation officielle](https://cloud-pi-native.fr) ; exemples `IA-Generative/ocr-api`, `IA-Generative/dso-demo`.
+- Source : [documentation officielle](https://cloud-pi-native.fr) ; exemple `IA-Generative/ocr-api`.
 - Exemple capitalisé en conditions réelles : RETEX d'un premier déploiement complet — `IA-Generative/ice-breaker-demo-infra`, `docs/RETEX-deploiement.md` (blocages, leçons chemin Harbor, schéma dépôt d'infra + fine-grained PAT, opérations auto/manuel, clôture = révocation des secrets).
 - Skills liés (groupe `dso`) : `cicd-fabnum` (CI/CD GitHub, `sync-cpin`), `helm-chart-cpin` (chart et vérification).

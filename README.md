@@ -186,7 +186,7 @@ passer par GitHub ni par le cache. Relancer OpenCode suffit pour tester une modi
 |----------|---------|
 | `make skills-index` / `make skills-index-check` | régénère / vérifie les `index.json` des groupes |
 | `make test-plugin` | le plugin installe ce qu'il faut pour chaque groupe, et rien des autres (sans appel au modèle) |
-| `make test-cpin-rules` | `check-cpin-rules.py` détecte chaque friction réelle du déploiement de dso-demo |
+| `make test-cpin-rules` | `check-cpin-rules.py` détecte chaque friction réelle d'un premier déploiement |
 
 Les règles de rangement (où mettre une instruction, comment nommer les agents) sont dans la section « Groupes » de
 `AGENTS.md`.
@@ -207,7 +207,7 @@ Les règles de rangement (où mettre une instruction, comment nommer les agents)
 
 Skills tirés de la documentation de la [Fabrique Numérique](https://docs.fabrique-numerique.fr/)
 (`dnum-mi/transversal-doc`) et de celle de [Cloud Pi Native](https://cloud-pi-native.fr), ainsi que du retour
-d'expérience du déploiement de `IA-Generative/dso-demo`.
+d'expérience d'un premier déploiement.
 
 ## Références
 

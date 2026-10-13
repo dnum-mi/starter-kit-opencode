@@ -1,10 +1,10 @@
 # URLs des instances
 
 Tableau des URLs des services internes par instance. Les URLs Cloud Pi sont des **exemples par instance** :
-les instances n'ont pas toutes la même version de plateforme (ex. Scaleway 9.9.0 vs RIE ≥ 9.11). Relever la
+les instances n'ont pas toutes la même version de plateforme (`/api/v1/version`). Relever la
 version réelle de l'instance avant de supposer un comportement.
 
-| Service | Scaleway (sdid) | Cloud Pi |
+| Service | SDID | Autre instance |
 |---|---|---|
 | Console | `console.sdid.cpin.numerique-interieur.com` | `console.<instance>` |
 | ArgoCD | `argocd.sdid.cpin.numerique-interieur.com` | `argocd.<zone>` |
