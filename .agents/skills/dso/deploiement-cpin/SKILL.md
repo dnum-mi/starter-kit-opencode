@@ -190,6 +190,11 @@ reproposer, **une seule fois par difficulté** ; après deux refus, ne plus insi
 Les scripts sont dans `<kit>/scripts/cpin-debug/` et se lancent **depuis le dossier du projet**, comme
 `console.mjs` : ils lisent `.cpin/.env.secrets` du dossier courant.
 
+**Vault** : `vault-login.mjs` capture `VAULT_TOKEN` en réutilisant les cookies SSO Keycloak stockés par
+`login.mjs` (auto-login, sans ressaisie). `vault-secret.mjs` gère les secrets via l'API (kv-v2) :
+`list <mount>`, `read <mount>/<path>`, `write <mount>/<path> KEY...` (valeurs lues dans les variables
+d'environnement, jamais affichées), `delete <mount>/<path>`.
+
 **Porte** : `gh secret list` et `gh variable list` montrent, sur chaque dépôt (`-R <org>/<dépôt>`),
 `GITLAB_TRIGGER_TOKEN`, `GITLAB_URL`, `GITLAB_MIRROR_ID`, `GITLAB_PROJECT_NAME` (et `GH_PAT`, ou les secrets
 de la GitHub App si elle est utilisée) ; la relecture de la console montre projet, environnements et dépôts attendus ; l'humain a
@@ -257,6 +262,8 @@ Auto-sync désactivé ⇒ *SYNC* manuel dans ArgoCD (instance **ArgoCD DSO**).
   1. `node <kit>/scripts/cpin-debug/login.mjs` (depuis le dossier du projet). Le navigateur s'ouvre,
      l'humain se connecte via le SSO Keycloak (2FA possible). Le token OIDC est écrit dans
      `.cpin/.env.secrets` (0600), **jamais affiché**.
+  1bis. Vault (si besoin) : `node <kit>/scripts/cpin-debug/vault-login.mjs` capture `VAULT_TOKEN` sans
+     ressaisie (cookies SSO déjà stockés), puis `vault-secret.mjs` liste/lit/écrit les secrets.
   2. Lancer les checks : `node <kit>/scripts/cpin-debug/check-argocd.mjs`, `check-harbor.mjs`,
      `check-gitlab.mjs`, `check-console.mjs`.
   3. Lire les **statuts HTTP** (jamais les tokens) et les rapporter à l'humain, avec ce que chacun prouve.

@@ -31,6 +31,17 @@ async function waitForToken(page) {
   throw new Error(`Aucun token ArgoCD détecté après ${LOGIN_TIMEOUT_MS / 1000}s.`)
 }
 
+async function saveKeycloakCookies(context) {
+  const cookies = await context.cookies()
+  const kc = cookies.filter(
+    (c) => c.domain.includes('keycloak') && /^[A-Z_]+$/.test(c.name),
+  )
+  for (const c of kc) {
+    await saveSecret(c.name, c.value)
+  }
+  return kc.map((c) => c.name)
+}
+
 const browser = await firefox.launch({ headless: false })
 const page = await browser.newPage()
 try {
@@ -43,6 +54,8 @@ try {
   console.log(`Token ArgoCD capturé : ${redact(token)}`)
   await saveSecret('ARGOCD_TOKEN', token)
   console.log('ARGOCD_TOKEN écrit dans .cpin/.env.secrets (0600) — jamais affiché.')
+  const kcNames = await saveKeycloakCookies(page.context())
+  console.log(`Cookies SSO Keycloak stockés : ${kcNames.join(', ') || 'aucun'}`)
 } catch (error) {
   console.error(`Erreur : ${error.message}`)
   process.exitCode = 1
