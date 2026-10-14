@@ -4,6 +4,22 @@ Chercher le message exact dans la colonne « Symptôme ». La colonne « Phase �
 (`SKILL.md`) : c'est là que le problème aurait dû être arrêté. Corriger à la source, puis ajouter la
 vérification manquante pour que le problème ne revienne pas.
 
+## Quel check de debug éclaire quel symptôme
+
+Les checks (`node <kit>/scripts/cpin-debug/check-*.mjs`, voir `SKILL.md`, phase 1 §6) ne renvoient que des
+**statuts HTTP** : ils prouvent qu'un service est joignable et que le jeton est accepté, pas pourquoi un pod
+échoue. Ils servent à **éliminer** une cause (jeton expiré, service injoignable) avant de chercher plus loin.
+
+| Symptôme | Check | Ce qu'un statut dit |
+|----------|-------|---------------------|
+| Synchro qui échoue, dépôt absent du GitLab interne | `check-gitlab` | 200 : GitLab joignable et `GITLAB_PAT` valide ; 401 : jeton refusé |
+| `ImagePullBackOff`, `401` au pull, image introuvable | `check-harbor` | 200 : Harbor joignable avec le jeton SSO ; 401/403 : session SSO expirée (relancer `login.mjs`) |
+| Application absente ou `OutOfSync`, rien ne se déploie | `check-argocd` | 200 : ArgoCD joignable et l'API répond ; 401 : session SSO expirée |
+| Projet, environnement ou dépôt qui ne se crée pas, quota | `check-console` | 200 : `DSO_TOKEN` valide ; 401 : jeton expiré ou révoqué |
+
+Un statut 200 ne dit **pas** que la cause est ailleurs : il restreint seulement les hypothèses. Le message
+exact des événements ArgoCD reste la preuve.
+
 ## Vécu (premier déploiement complet, releases 0.1.1 → 0.1.7)
 
 | Symptôme | Cause | Phase | Correctif |

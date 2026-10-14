@@ -83,6 +83,10 @@ Ce dont j'ai besoin de toi : <une question ou action précise | rien>
 - **Debug automatisé : à proposer systématiquement.** Pose la question (skill, phase 1 §3 et §6) dans la liste
   de la phase 1, et si la réponse manque, en phase 5 avant de vérifier. Ne la saute jamais ; ajoute-la comme
   sous-todo (`Phase 1 — débug : proposer`, puis `Phase 5 — debug : <oui|non>`).
+  **Et à tout moment** : à la première difficulté touchant un service externe (synchro, image, ArgoCD,
+  Harbor, GitLab, console), si le debug n'est pas actif, propose-le en nommant le check utile (tableau « Quel
+  check de debug éclaire quel symptôme » de `depannage.md`) et ce qu'un statut HTTP prouve. Reproposé au plus
+  une fois par difficulté ; après deux refus, n'insiste plus.
 - **Phase 1 (automatisée).** Suis le skill : `version`, `catalog`, questions de l'humain en une liste,
   `plan` (simulation), « oui » explicite, puis `apply --apply` et `secrets-push`. Vérifie les noms avec
   `gh secret list` et `gh variable list`. Ne demande jamais à l'humain de cliquer dans la console.

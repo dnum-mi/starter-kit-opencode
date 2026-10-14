@@ -181,6 +181,12 @@ de quitter la phase 1, avec cette explication :
   sera écrit plus tard par le login (phase 5).
 - **Non** → debug manuel via l'UI uniquement. Rien n'est installé.
 
+**À tout moment** : dès qu'une difficulté touche un service externe (synchro, image, ArgoCD, Harbor,
+GitLab, console, jeton refusé, ressource introuvable) et que le debug n'est pas actif, le **proposer à ce
+moment**, en disant quel check éclairerait ce symptôme (`references/depannage.md`, « Quel check de debug
+éclaire quel symptôme ») et ce qu'un statut prouve ou non. Même un « non » antérieur n'interdit pas de
+reproposer, **une seule fois par difficulté** ; après deux refus, ne plus insister et rester sur l'UI.
+
 Les scripts sont dans `<kit>/scripts/cpin-debug/` et se lancent **depuis le dossier du projet**, comme
 `console.mjs` : ils lisent `.cpin/.env.secrets` du dossier courant.
 
