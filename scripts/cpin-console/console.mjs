@@ -197,7 +197,8 @@ async function ignoreInDockerContext() {
   console.log('.dockerignore : .cpin/ ajouté')
 }
 
-const SECRET_NAMES = ['DSO_TOKEN', 'GH_USER', 'GH_PAT']
+const SECRET_NAMES = ['DSO_TOKEN', 'GH_USER', 'GH_PAT', 'GITLAB_PAT', 'ARGOCD_TOKEN']
+const OPTIONAL = new Set(['GITLAB_PAT', 'ARGOCD_TOKEN']) // debug automatisé : GITLAB_PAT saisi, ARGOCD_TOKEN écrit par login.mjs
 
 const commands = {
   // Crée le fichier (jamais écrasé) avec des valeurs vides ; l'humain y colle ses valeurs.
@@ -216,7 +217,7 @@ const commands = {
     await chmod(SECRETS_FILE, 0o600)
     console.log(`${created ? 'créé' : 'existant'} : ${SECRETS_FILE} (0600)`)
     await ignoreInDockerContext()
-    for (const name of SECRET_NAMES) console.log(`  ${name} : ${current[name] ? 'renseigné' : 'vide'}`)
+    for (const name of SECRET_NAMES) console.log(`  ${name} : ${current[name] ? 'renseigné' : 'vide'}${OPTIONAL.has(name) ? ' (optionnel, debug)' : ''}`)
   },
 
   async version() {

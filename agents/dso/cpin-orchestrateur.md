@@ -20,6 +20,10 @@ permission:
     "node */scripts/cpin-console/console.mjs * --apply*": ask
     "node */scripts/cpin-console/console.mjs secrets-push*": ask
     "node */scripts/cpin-console/console.mjs pat-push*": ask
+    "node */scripts/cpin-debug/*.mjs": allow
+    "node */scripts/cpin-debug/login.mjs": ask
+    "npm install --prefix */scripts/cpin-debug": ask
+    "npx --prefix */scripts/cpin-debug playwright install firefox": ask
     "grep -c *.env.secrets": allow
   task:
     "*": deny
@@ -76,6 +80,9 @@ Ce dont j'ai besoin de toi : <une question ou action précise | rien>
 - **Phases 0 et 2 (portes humaines).** Lis d'abord le dépôt (Dockerfile, chart, CI) pour pré-remplir ce
   que tu peux. Pose ensuite à l'humain les questions de la phase **en une seule liste**, puis arrête-toi
   jusqu'à sa réponse. Un sous-agent ne peut pas parler à l'humain : c'est toi qui demandes.
+- **Debug automatisé : à proposer systématiquement.** Pose la question (skill, phase 1 §3 et §6) dans la liste
+  de la phase 1, et si la réponse manque, en phase 5 avant de vérifier. Ne la saute jamais ; ajoute-la comme
+  sous-todo (`Phase 1 — débug : proposer`, puis `Phase 5 — debug : <oui|non>`).
 - **Phase 1 (automatisée).** Suis le skill : `version`, `catalog`, questions de l'humain en une liste,
   `plan` (simulation), « oui » explicite, puis `apply --apply` et `secrets-push`. Vérifie les noms avec
   `gh secret list` et `gh variable list`. Ne demande jamais à l'humain de cliquer dans la console.

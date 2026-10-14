@@ -42,7 +42,7 @@ try {
   const token = await waitForToken(page)
   console.log(`Token ArgoCD capturé : ${redact(token)}`)
   await saveSecret('ARGOCD_TOKEN', token)
-  console.log('ARGOCD_TOKEN écrit dans .env.secrets (0600) — jamais affiché.')
+  console.log('ARGOCD_TOKEN écrit dans .cpin/.env.secrets (0600) — jamais affiché.')
 } catch (error) {
   console.error(`Erreur : ${error.message}`)
   process.exitCode = 1

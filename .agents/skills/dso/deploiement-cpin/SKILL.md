@@ -94,7 +94,7 @@ celui **affiché par `init`**, jamais un chemin reconstruit.
 | `GH_USER` | Compte GitHub qui possède le PAT ; transmis à la console avec lui pour un dépôt privé | — (ton identifiant GitHub) | Pas un secret | `.env.secrets` | maintenant |
 | `GH_PAT` | **Un seul jeton GitHub pour tout** : (1) la console clone ton dépôt privé vers son miroir GitLab (`externalToken`) ; (2) secret des workflows : CI sur PR de release/bump, automerge, `dispatch-helm-chart` | github.com > Settings > Developer settings > **Fine-grained** personal access tokens | Resource owner = l'organisation ; **les deux dépôts** sélectionnés ; Contents, Pull requests, Actions : Read and write ; Metadata : Read ; expiration choisie. Un PAT classique ne suffit pas (pas de droits par dépôt) | `.env.secrets`, puis secret GitHub `GH_PAT` posé par `pat-push` sur les deux dépôts | maintenant. Révoquer à la clôture |
 | `GITLAB_TRIGGER_TOKEN` (`glptt-…`) | Le job `sync-cpin` de GitHub déclenche la synchro vers le miroir. **Pipeline trigger token**, pas un PAT `glpat-` | Récupéré **par le script** dans les secrets du projet (`secrets-push`) | — | secret GitHub, posé par `gh secret set` ; **tu ne le vois ni ne le tapes** | après `apply` |
-| `ARGOCD_TOKEN`, `GITLAB_PAT` | **Optionnels** : debug automatisé des phases 5 (voir plus bas) | login Playwright / GitLab | — | `scripts/cpin-debug/.env.secrets` | phase 5, si tu acceptes le debug automatisé |
+| `ARGOCD_TOKEN`, `GITLAB_PAT` | **Optionnels** : debug automatisé (voir §6 et phase 5) | `ARGOCD_TOKEN` : écrit par le login Playwright ; `GITLAB_PAT` : GitLab > profil > jetons d'accès, scope `read_api` | `GITLAB_PAT` : lecture seule | `.cpin/.env.secrets` (le même fichier que les autres) | seulement si tu acceptes le debug automatisé |
 
 L'agent **ne lit, n'affiche et ne demande jamais** une valeur : tu les colles toi-même dans le fichier,
 il vérifie seulement « renseigné » / « vide » avec `init`. Aucun de ces jetons ne doit finir dans Git, dans
@@ -129,6 +129,7 @@ Une question par paramètre des `POST` de l'API ; proposer une valeur par défau
 | **Quota hors-prod du projet** : cpu, gpu, mémoire (ou `limitless`) | nombres ; relever l'unité affichée par la console. Le palier prod est envoyé à 0 par le script |
 | **Dépôts** : nom interne, URL `https://….git`, public ou privé, applicatif ou infra | nom 2 à 20 car. `[a-z0-9-]` ; un dépôt privé exige `GH_USER`/`GH_PAT` |
 | **Membres** à ajouter (e-mails) | optionnel |
+| **Debug automatisé ?** vérifier ArgoCD, Harbor, GitLab et la console par API au lieu de l'UI (voir §6) | oui / non. **À poser ici, dans la même liste**, pas plus tard : c'est l'humain qui décide |
 
 **Ordre des questions** : projet → environnements → quota hors-prod → dépôts → membres.
 Ne jamais demander un quota ou un détail d'un palier dont l'humain n'a pas confirmé l'existence.
@@ -166,15 +167,22 @@ Rappeler au passage qu'on peut ajouter un environnement plus tard (la création 
    `GH_PAT` sur les deux dépôts (valeur lue dans `.env.secrets`, jamais affichée).
 5. Si `scan-sonarqube` est ajouté au `ci.yml` : secrets `SONAR_TOKEN` et `SONAR_PROJECT_KEY`, saisis par l'humain.
 
-### 6. Debug automatisé (optionnel)
+### 6. Debug automatisé (optionnel, **toujours proposé**)
 
-> Veux-tu configurer le debug automatisé des services internes (scripts `scripts/cpin-debug/`) ?
-> Cela permet de vérifier ArgoCD, Harbor, GitLab et la console par API au lieu de l'UI.
+La question est posée avec les autres (§3). Ne jamais la sauter : si l'humain n'a pas répondu, la poser avant
+de quitter la phase 1, avec cette explication :
 
-- **Oui** → vérifier que `scripts/cpin-debug/.env.secrets` existe (0600) et **demander** à l'humain d'y
-  ajouter `DSO_TOKEN` (console) et `GITLAB_PAT` (GitLab). L'agent ne lit jamais le contenu. Le token OIDC
-  (`ARGOCD_TOKEN`) sera ajouté plus tard par `login.mjs` (phase 5).
+> Le debug automatisé vérifie par API l'état d'ArgoCD, Harbor, GitLab et de la console (statuts HTTP,
+> jamais de jetons) au lieu de te demander ce que tu vois dans l'UI. Il demande une fois une connexion SSO
+> dans un navigateur, et un jeton GitLab en lecture seule. Tu veux l'activer ?
+
+- **Oui** → noter « debug : oui » dans la FICHE ; `GITLAB_PAT` est à coller dans le même
+  `.cpin/.env.secrets` (`init` le liste comme optionnel). L'agent ne lit jamais le contenu. `ARGOCD_TOKEN`
+  sera écrit plus tard par le login (phase 5).
 - **Non** → debug manuel via l'UI uniquement. Rien n'est installé.
+
+Les scripts sont dans `<kit>/scripts/cpin-debug/` et se lancent **depuis le dossier du projet**, comme
+`console.mjs` : ils lisent `.cpin/.env.secrets` du dossier courant.
 
 **Porte** : `gh secret list` et `gh variable list` montrent, sur chaque dépôt (`-R <org>/<dépôt>`),
 `GITLAB_TRIGGER_TOKEN`, `GITLAB_URL`, `GITLAB_MIRROR_ID`, `GITLAB_PROJECT_NAME` (et `GH_PAT`, ou les secrets
@@ -233,27 +241,30 @@ Auto-sync désactivé ⇒ *SYNC* manuel dans ArgoCD (instance **ArgoCD DSO**).
 4. **Clôture de mise en service** : révoquer tout secret/token exposé ou d'essai (ex. `github_pat_…` commité,
    token mirror `glptt-…`, jetons jetables de test). Rappeler à l'humain la **Rotation** de ce qui a fuité ;
    l'agent ne manipule jamais ces valeurs, il vérifie seulement que la révocation est demandée/faite.
-5. **Debug automatisé (optionnel)** — **demander** à l'humain :
+5. **Debug automatisé** : reprendre la réponse donnée en phase 1 (§6). Si elle n'a pas été donnée, la
+   **demander maintenant** ; ne jamais passer cette étape sous silence.
 
-> Veux-tu te logger (login Playwright) pour activer le debug automatisé des services ? Une fenêtre
-> navigateur s'ouvrira pour te connecter via le SSO Keycloak. Sinon, on vérifie via l'UI ArgoCD DSO.
-
-- **Ramification A — Login accepté** :
-  1. Lancer `npm run login` (dans `scripts/cpin-debug/`). Le navigateur s'ouvre, l'humain se connecte via
-     SSO Keycloak (2FA possible). Le token OIDC est écrit dans `.env.secrets` (0600), **jamais affiché**.
-  2. Lancer les checks : `check:argocd`, `check:harbor`, `check:gitlab`, `check:console`.
-  3. Lire les **statuts HTTP** (jamais les tokens) et les rapporter à l'humain.
+- **Ramification A — « oui »** :
+  0. **Une fois** : installer Playwright et Firefox, au prix d'un téléchargement d'environ 100 Mo, avec
+     l'accord de l'humain : `npm install --prefix <kit>/scripts/cpin-debug` puis
+     `npx --prefix <kit>/scripts/cpin-debug playwright install firefox`.
+  1. `node <kit>/scripts/cpin-debug/login.mjs` (depuis le dossier du projet). Le navigateur s'ouvre,
+     l'humain se connecte via le SSO Keycloak (2FA possible). Le token OIDC est écrit dans
+     `.cpin/.env.secrets` (0600), **jamais affiché**.
+  2. Lancer les checks : `node <kit>/scripts/cpin-debug/check-argocd.mjs`, `check-harbor.mjs`,
+     `check-gitlab.mjs`, `check-console.mjs`.
+  3. Lire les **statuts HTTP** (jamais les tokens) et les rapporter à l'humain, avec ce que chacun prouve.
   4. **A1 — un check échoue** (ex. ArgoCD 401, Harbor 500) → consulter `references/depannage.md` et
      proposer un correctif, ou demander à l'humain ce qu'il voit dans l'UI.
-- **Ramification B — Login refusé** : debug manuel via l'UI ArgoCD DSO (comportement actuel, inchangé).
-  Demander à l'humain ce qu'il voit (statut pod, événements, image attendue).
-- **Ramification C — Login accepté mais token manquant pour un service** :
+- **Ramification B — « non » ou login refusé** : debug manuel via l'UI ArgoCD DSO. Demander à l'humain ce
+  qu'il voit (statut pod, événements, image attendue).
+- **Ramification C — login accepté mais jeton manquant pour un service** :
   - `ARGOCD_TOKEN` absent → relancer `login.mjs`.
-  - `DSO_TOKEN` ou `GITLAB_PAT` absent → **demander** à l'humain de les ajouter dans `.env.secrets`, ou
-    sauter le check de ce service en le signalant.
+  - `DSO_TOKEN` ou `GITLAB_PAT` vide → `init` le dit ; demander à l'humain de le coller, ou sauter le
+    check de ce service en le signalant.
 
 **Règle absolue** : ne jamais lire, écrire, afficher ni demander la **valeur** d'un token. Vérifier
-seulement la **présence** des variables dans `.env.secrets` (ex. `grep -c '^ARGOCD_TOKEN='`).
+seulement la **présence** des variables avec `console.mjs init` (« renseigné » / « vide »).
 
 **Porte** : les quatre points sont OK (la révocation de la clôture est répertoriée). Sinon : [`references/depannage.md`](references/depannage.md) (symptôme → phase → correctif).
 

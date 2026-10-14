@@ -1,7 +1,9 @@
-import { readFile, writeFile, chmod } from 'node:fs/promises'
-import { resolve } from 'node:path'
+import { readFile, writeFile, chmod, mkdir } from 'node:fs/promises'
+import { dirname, resolve } from 'node:path'
 
-export const SECRETS_FILE = resolve(import.meta.dirname, '.env.secrets')
+// Même fichier que scripts/cpin-console : <dossier courant>/.cpin/.env.secrets. Lancer ces scripts depuis le
+// dossier du projet, jamais depuis le dossier du kit (cache du plugin, vidable).
+export const SECRETS_FILE = resolve(process.env.CPIN_SECRETS_FILE ?? resolve(process.cwd(), '.cpin/.env.secrets'))
 
 export async function loadSecrets() {
   try {
@@ -23,13 +25,14 @@ export async function saveSecret(key, value) {
   const content = `${Object.entries(secrets)
     .map(([k, v]) => `${k}=${v}`)
     .join('\n')}\n`
+  await mkdir(dirname(SECRETS_FILE), { recursive: true })
   await writeFile(SECRETS_FILE, content, { encoding: 'utf8', flag: 'w' })
   await chmod(SECRETS_FILE, 0o600)
 }
 
 export function redact(value) {
   if (!value) return '<absent>'
-  return `${value.slice(0, 8)}…${value.slice(-4)} (${value.length} chars)`
+  return `<${value.length} caractères, masqué>`
 }
 
 export async function checkService(name, url, path, token, { header = 'Authorization', prefix = 'Bearer ' } = {}) {
