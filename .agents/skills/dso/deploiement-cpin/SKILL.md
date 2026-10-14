@@ -192,8 +192,15 @@ Les scripts sont dans `<kit>/scripts/cpin-debug/` et se lancent **depuis le doss
 
 **Vault** : `vault-login.mjs` capture `VAULT_TOKEN` en réutilisant les cookies SSO Keycloak stockés par
 `login.mjs` (auto-login, sans ressaisie). `vault-secret.mjs` gère les secrets via l'API (kv-v2) :
-`list <mount>`, `read <mount>/<path>`, `write <mount>/<path> KEY...` (valeurs lues dans les variables
-d'environnement, jamais affichées), `delete <mount>/<path>`.
+`list <mount>`, `read <mount>/<path>` (métadonnées, **aucune valeur lue**), `write <mount>/<path> KEY...`
+(valeurs lues dans les variables d'environnement, jamais affichées ; PATCH merge-patch, ne remplace que
+les clés fournies), `delete <mount>/<path>`. `write`/`delete` exigent `--dry-run` (simulation) puis
+`--yes` (exécution).
+
+> **Modèle de menace** : `KEYCLOAK_IDENTITY`/`KEYCLOAK_SESSION` valent un **accès SSO complet** à tout ce
+> que l'humain peut atteindre, pas seulement à Vault. Purger après usage : `node vault-login.mjs purge`
+> (supprime cookies SSO + `VAULT_TOKEN`). `.cpin/` est auto-ignoré par git et exclu du contexte Docker
+> (`console.mjs init`), à vérifier sur chaque projet.
 
 **Porte** : `gh secret list` et `gh variable list` montrent, sur chaque dépôt (`-R <org>/<dépôt>`),
 `GITLAB_TRIGGER_TOKEN`, `GITLAB_URL`, `GITLAB_MIRROR_ID`, `GITLAB_PROJECT_NAME` (et `GH_PAT`, ou les secrets
@@ -263,7 +270,8 @@ Auto-sync désactivé ⇒ *SYNC* manuel dans ArgoCD (instance **ArgoCD DSO**).
      l'humain se connecte via le SSO Keycloak (2FA possible). Le token OIDC est écrit dans
      `.cpin/.env.secrets` (0600), **jamais affiché**.
   1bis. Vault (si besoin) : `node <kit>/scripts/cpin-debug/vault-login.mjs` capture `VAULT_TOKEN` sans
-     ressaisie (cookies SSO déjà stockés), puis `vault-secret.mjs` liste/lit/écrit les secrets.
+     ressaisie (cookies SSO déjà stockés), puis `vault-secret.mjs` liste/lit/écrit les secrets. Après
+     usage, purger les cookies SSO : `node <kit>/scripts/cpin-debug/vault-login.mjs purge`.
   2. Lancer les checks : `node <kit>/scripts/cpin-debug/check-argocd.mjs`, `check-harbor.mjs`,
      `check-gitlab.mjs`, `check-console.mjs`.
   3. Lire les **statuts HTTP** (jamais les tokens) et les rapporter à l'humain, avec ce que chacun prouve.

@@ -1,5 +1,5 @@
 import { firefox } from 'playwright'
-import { saveSecret, redact } from './lib.mjs'
+import { saveSecret, redact, KEYCLOAK_COOKIE_NAMES } from './lib.mjs'
 
 const ARGOCD_URL = process.env.ARGOCD_URL ?? 'https://argocd.sdid.cpin.numerique-interieur.com'
 const LOGIN_TIMEOUT_MS = 5 * 60 * 1000
@@ -34,7 +34,7 @@ async function waitForToken(page) {
 async function saveKeycloakCookies(context) {
   const cookies = await context.cookies()
   const kc = cookies.filter(
-    (c) => c.domain.includes('keycloak') && /^[A-Z_]+$/.test(c.name),
+    (c) => c.domain.includes('keycloak') && KEYCLOAK_COOKIE_NAMES.includes(c.name),
   )
   for (const c of kc) {
     await saveSecret(c.name, c.value)

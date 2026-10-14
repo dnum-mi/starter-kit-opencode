@@ -1,25 +1,30 @@
 import { firefox } from 'playwright'
-import { loadSecrets, saveSecret, redact } from './lib.mjs'
+import { loadSecrets, saveSecret, purgeSecrets, redact, KEYCLOAK_COOKIE_NAMES } from './lib.mjs'
+
+// Capture VAULT_TOKEN par auto-login SSO (cookies Keycloak stockés par login.mjs).
+// Usage (depuis le dossier du projet) :
+//   node vault-login.mjs            capture VAULT_TOKEN (auto-login, sans ressaisie)
+//   node vault-login.mjs purge      supprime cookies SSO Keycloak + VAULT_TOKEN de .cpin/.env.secrets
+//
+// Modèle de menace : KEYCLOAK_IDENTITY/KEYCLOAK_SESSION valent un accès SSO complet à tout ce que
+// l'humain peut atteindre, pas seulement à Vault. Purger après usage (vault-login.mjs purge).
 
 const VAULT_URL = process.env.VAULT_URL ?? 'https://vault.sdid.cpin.numerique-interieur.com'
 const KEYCLOAK_DOMAIN = process.env.KEYCLOAK_DOMAIN ?? 'keycloak.sdid.cpin.numerique-interieur.com'
 const LOGIN_TIMEOUT_MS = 5 * 60 * 1000
 const POLL_INTERVAL_MS = 1000
+const RENEW_THRESHOLD_S = 3600 // renouveler seulement si le token expire dans moins d'une heure
 
-// Cookies SSO Keycloak écrits par login.mjs (domaine keycloak).
-const KC_COOKIE_NAMES = [
-  'KEYCLOAK_IDENTITY',
-  'KEYCLOAK_SESSION',
-  'KEYCLOAK_REMEMBER_ME',
-  'KEYCLOAK_LOCALE',
-  'KC_AUTH_SESSION_HASH',
-  'KC_AUTH_SESSION_ID',
-]
+if (process.argv[2] === 'purge') {
+  await purgeSecrets([...KEYCLOAK_COOKIE_NAMES, 'VAULT_TOKEN'])
+  console.log('Cookies SSO Keycloak et VAULT_TOKEN purgés de .cpin/.env.secrets.')
+  process.exit(0)
+}
 
 async function injectKeycloakCookies(context) {
   const secrets = await loadSecrets()
   const cookies = []
-  for (const name of KC_COOKIE_NAMES) {
+  for (const name of KEYCLOAK_COOKIE_NAMES) {
     if (secrets[name]) {
       cookies.push({
         name,
@@ -42,8 +47,8 @@ async function readVaultToken(page) {
       if (!key.includes('vault-token')) continue
       try {
         const parsed = JSON.parse(localStorage.getItem(key))
-        if (parsed && typeof parsed.token === 'string' && /^(?:hvs|hvb|hvr|s|v)\.[A-Za-z0-9+/=._-]{20,}$/.test(parsed.token)) {
-          return parsed.token
+        if (parsed && typeof parsed.token === 'string' && /^(?:hvs|hvb|hvr)\.[A-Za-z0-9+/=._-]{20,}$/.test(parsed.token)) {
+          return { token: parsed.token, ttl: parsed.ttl }
         }
       } catch {
         // valeur non JSON : on ignore
@@ -62,7 +67,11 @@ async function waitForDashboard(page) {
   return false
 }
 
-async function clickRenewToken(page) {
+async function clickRenewToken(page, ttl) {
+  if (ttl && ttl > RENEW_THRESHOLD_S) {
+    console.log(`Token Vault valide (TTL ${Math.round(ttl / 3600)} h) — pas de renouvellement.`)
+    return false
+  }
   const userMenu = page.locator('[data-test-icon="user"], button:has-text("User menu")').first()
   if (await userMenu.count() > 0) {
     await userMenu.click()
@@ -94,25 +103,28 @@ try {
   }
   const onDashboard = await waitForDashboard(page)
   console.log(`Dashboard Vault : ${onDashboard ? 'oui' : 'non'}`)
-  if (onDashboard) {
-    await clickRenewToken(page)
-    await page.waitForTimeout(2000)
-  }
   const deadline = Date.now() + LOGIN_TIMEOUT_MS
   let token = null
+  let ttl = null
   while (Date.now() < deadline) {
     try {
-      token = await readVaultToken(page)
-      if (token) break
+      const found = await readVaultToken(page)
+      if (found) {
+        token = found.token
+        ttl = found.ttl
+        break
+      }
     } catch {
       // page en cours de navigation : on réessaie
     }
     await page.waitForTimeout(POLL_INTERVAL_MS)
   }
   if (!token) throw new Error(`Aucun token Vault détecté après ${LOGIN_TIMEOUT_MS / 1000}s.`)
+  if (onDashboard) await clickRenewToken(page, ttl)
   console.log(`Token Vault capturé : ${redact(token)}`)
   await saveSecret('VAULT_TOKEN', token)
   console.log('VAULT_TOKEN écrit dans .cpin/.env.secrets (0600) — jamais affiché.')
+  console.log('Pense à purger les cookies SSO après usage : node vault-login.mjs purge')
 } catch (error) {
   console.error(`Erreur : ${error.message}`)
   process.exitCode = 1
