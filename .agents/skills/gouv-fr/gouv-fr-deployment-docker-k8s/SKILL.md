@@ -1,6 +1,6 @@
 ---
 name: gouv-fr-deployment-docker-k8s
-description: "Docker rootless, K8s securityContext, multi-stage, tags, local K8s dev. Pour Helm : gouv-fr-helm-chart. Pour CPiN console/ArgoCD : gouv-fr-deployment-cloud-pi-native."
+description: "Docker rootless, K8s securityContext, multi-stage, tags, local K8s dev. Pour Helm : helm-chart-cpin. Pour CPiN console/ArgoCD : gouv-fr-deployment-cloud-pi-native."
 category: devops
 version: 0.2.0
 license: MIT
@@ -9,7 +9,7 @@ platforms: [linux, macos]
 metadata:
   hermes:
     tags: [gouv-fr, deployment, docker, kubernetes, helm, rootless, securitycontext, cpin, cloud-pi-native]
-    related_skills: [gouv-fr-deployment-docker-k8s, gouv-fr-helm-chart, gouv-fr-outils-developpement, gouv-fr-stack-technique]
+    related_skills: [gouv-fr-deployment-docker-k8s, helm-chart-cpin, gouv-fr-outils-developpement, gouv-fr-stack-technique]
 ---
 
 # Gouv-fr — Déploiement Docker & Kubernetes
@@ -20,7 +20,7 @@ Règles pour construire des images prêtes pour Cloud Pi Native (K8s/OpenShift) 
 - Créer un Dockerfile pour un projet Fabrique Numérique
 - Déployer sur Kubernetes ou OpenShift
 
-Pour le **chart Helm**, utiliser **`gouv-fr-helm-chart`** ; pour la **console, le mirror, le pipeline DSO et ArgoCD**,
+Pour le **chart Helm**, utiliser **`helm-chart-cpin`** ; pour la **console, le mirror, le pipeline DSO et ArgoCD**,
 utiliser **`gouv-fr-deployment-cloud-pi-native`** (groupe `dso`).
 
 ## Prérequis
@@ -31,7 +31,7 @@ utiliser **`gouv-fr-deployment-cloud-pi-native`** (groupe `dso`).
 ## Comment lancer
 - Build : `docker build -t ghcr.io/org/app:tag .`
 - Test local : `kind create cluster` ou `k3d cluster create`
-- Déploiement : voir `gouv-fr-helm-chart` (chart) et `gouv-fr-deployment-cloud-pi-native` (console, ArgoCD)
+- Déploiement : voir `helm-chart-cpin` (chart) et `gouv-fr-deployment-cloud-pi-native` (console, ArgoCD)
 
 ## Plateforme cible
 
@@ -111,7 +111,7 @@ securityContext:
 
 **Ne pas figer `runAsUser`, `runAsGroup` ni `fsGroup` sur OpenShift/CPiN** : le SCC alloue l'UID par namespace et
 rejette un UID hors plage. Sur un Kubernetes simple (Kind, k3d), on peut les fixer.
-Détail et surcharge du chart : `gouv-fr-helm-chart`.
+Détail et surcharge du chart : `helm-chart-cpin`.
 
 ## Procedure — Créer un Dockerfile multi-stage
 

@@ -9,7 +9,7 @@ platforms: [linux, macos]
 metadata:
   hermes:
     tags: [gouv-fr, deployment, cloud-pi-native, argocd, gitops, harbor, vault, kyverno, dso]
-    related_skills: [gouv-fr-helm-chart, gouv-fr-deployment-docker-k8s, gouv-fr-repo-cicd]
+    related_skills: [helm-chart-cpin, gouv-fr-deployment-docker-k8s, gouv-fr-repo-cicd]
 ---
 # Gouv-fr — Déploiement Cloud Pi Native
 
@@ -19,7 +19,7 @@ Faire passer une application de son dépôt GitHub à un namespace CPiN, et diag
 
 Deux chaînes : la **primaire** (vos outils : GitHub, CI, releases) contrôle et publie ; la **secondaire** (GitLab DSO)
 reconstruit, analyse, signe et pousse dans Harbor ; **ArgoCD** déploie le dépôt d'infra.
-Le pont est la **synchronisation** : un déclencheur (`sync-cpin`, skill `gouv-fr-github-actions-ci`) lance le pipeline `mirror` du
+Le pont est la **synchronisation** : un déclencheur (`sync-cpin`, skill `ci-cd`) lance le pipeline `mirror` du
 GitLab interne, qui tire votre dépôt. Le flux part toujours du GitLab interne.
 La **console** est la source de vérité (projets, dépôts, environnements, ArgoCD) : ce qui est modifié ailleurs est
 ignoré ou écrasé.
@@ -74,7 +74,7 @@ dans le dépôt `infra-observability` (branche `main`) |
 
 ## Vérifier avant de livrer
 
-- Rendre le chart et contrôler les règles Kyverno : `helm template … | uv run --with pyyaml scripts/check-cpin-rules.py` (skill `gouv-fr-helm-chart`). Les règles sont en **audit en dev/preprod et bloquantes en prod**.
+- Rendre le chart et contrôler les règles Kyverno : `helm template … | uv run --with pyyaml scripts/check-cpin-rules.py` (skill `helm-chart-cpin`). Les règles sont en **audit en dev/preprod et bloquantes en prod**.
 - Somme des `limits` ≤ quota de l'environnement ; NetworkPolicy pour tout flux hors règles injectées.
 
 ## Si ça ne marche pas
@@ -91,4 +91,4 @@ Voir [`references/depannage.md`](references/depannage.md) (symptôme → cause �
 
 - Doc interne : `docs/okf/cloud-pi-native/` (plateforme, dépôts et mirror, GitOps, environnements, secrets, contraintes et Kyverno), `docs/okf/cycle-de-vie/de-commit-a-environnement.md`.
 - Source : [documentation officielle](https://cloud-pi-native.fr) ; exemple `IA-Generative/ocr-api`.
-- Skills liés (groupe `dso`) : `gouv-fr-github-actions-ci` (CI/CD GitHub, `sync-cpin`), `gouv-fr-helm-chart` (chart et vérification Kyverno).
+- Skills liés (groupe `dso`) : `ci-cd` (CI/CD GitHub, `sync-cpin`), `helm-chart-cpin` (chart et vérification Kyverno).

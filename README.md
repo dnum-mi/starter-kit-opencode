@@ -38,7 +38,7 @@ Le dépôt est découpé en un **socle** commun et des **groupes** à installer 
 │   ├── helm-chart-cpin/            chart tobi + surcharge CPiN, check-cpin-rules.py
 │   └── deploiement-cpin/           runbook en phases avec portes, dépannage
 └── gouv-fr/                        instructions.md + index.json
-    └── gouv-fr-*/                   43 skills gouv-fr (architecture, front Vue/React + DSFR,
+    └── gouv-fr-*/                   37 skills gouv-fr (architecture, front Vue/React + DSFR,
                                      back, qualité/RGAA/RGPD, sécurité/audit, CI/CD CPiN, données)
 ```
 
@@ -214,7 +214,7 @@ Skills tirés de la documentation de la [Fabrique Numérique](https://docs.fabri
 d'expérience du déploiement de `IA-Generative/dso-demo`.
 
 Le groupe `gouv-fr` provient du dépôt [`ynotopec/gouv-fr-skills`](https://github.com/ynotopec/gouv-fr-skills)
-(43 skills préfixés `gouv-fr-`, eux-mêmes dérivés de `starter-kit-opencode`, de `etalab-ia/skills` et de
+(37 skills préfixés `gouv-fr-`, eux-mêmes dérivés de `starter-kit-opencode`, de `etalab-ia/skills` et de
 `ynotopec/gouv-fr-code-package-mi`) ; la correspondance des noms avec `dev`/`dso` y est documentée dans son
 `UPSTREAM.md`.
 

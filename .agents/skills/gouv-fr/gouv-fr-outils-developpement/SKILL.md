@@ -9,7 +9,7 @@ platforms: [linux, macos]
 metadata:
   hermes:
     tags: [gouv-fr, dev-tools, git, docker, pnpm, proto, vscode, github-cli, uv, shell]
-    related_skills: [gouv-fr-stack-technique, gouv-fr-deployment-docker-k8s, gouv-fr-conventions-nommage]
+    related_skills: [gouv-fr-stack-technique, gouv-fr-deployment-docker-k8s, conventions-cofabnum]
 ---
 
 # Gouv-fr — Outils de développement

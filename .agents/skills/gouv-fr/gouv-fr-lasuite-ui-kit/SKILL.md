@@ -9,7 +9,7 @@ platforms: [linux, macos]
 metadata:
   hermes:
     tags: [lasuite, react, ui-kit, cunningham, frontend, etat, gouv-fr, design-system]
-    related_skills: [gouv-fr-react-dsfr, gouv-fr-design-system, gouv-fr-frontend-vue3, gouv-fr-compliance-rgaa]
+    related_skills: [gouv-fr-react-dsfr, gouv-fr-design-system, recettes-client, gouv-fr-compliance-rgaa]
 ---
 
 # Gouv-fr — LaSuite UI Kit (@gouvfr-lasuite)

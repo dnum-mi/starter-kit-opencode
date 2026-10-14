@@ -54,15 +54,6 @@
       ]
     },
     {
-      "name": "gouv-fr-backend-fastify",
-      "files": [
-        "SKILL.md",
-        "scripts/scaffold-fastapi.sh",
-        "scripts/scaffold-fastify.sh",
-        "scripts/scaffold-nestjs.sh"
-      ]
-    },
-    {
       "name": "gouv-fr-bug-investigation",
       "files": [
         "SKILL.md"
@@ -95,14 +86,6 @@
       "name": "gouv-fr-composants-vue",
       "files": [
         "SKILL.md"
-      ]
-    },
-    {
-      "name": "gouv-fr-conventions-nommage",
-      "files": [
-        "SKILL.md",
-        "scripts/check-folders.sh",
-        "scripts/validate-branch.sh"
       ]
     },
     {
@@ -167,39 +150,9 @@
       ]
     },
     {
-      "name": "gouv-fr-frontend-vue3",
-      "files": [
-        "SKILL.md"
-      ]
-    },
-    {
-      "name": "gouv-fr-github-actions-ci",
-      "files": [
-        "SKILL.md"
-      ]
-    },
-    {
-      "name": "gouv-fr-github-actions-reusable",
-      "files": [
-        "SKILL.md",
-        "references/cd.yml",
-        "references/ci.yml",
-        "references/workflows.md"
-      ]
-    },
-    {
       "name": "gouv-fr-graphiques-dsfr",
       "files": [
         "SKILL.md"
-      ]
-    },
-    {
-      "name": "gouv-fr-helm-chart",
-      "files": [
-        "SKILL.md",
-        "references/values-cpin.yaml",
-        "references/vault-secret.yaml",
-        "scripts/check-cpin-rules.py"
       ]
     },
     {

@@ -9,7 +9,7 @@ platforms: [linux, macos]
 metadata:
   hermes:
     tags: [gouv-fr, ci, cd, cloud-pi-native, fabnum-cicd, github]
-    related_skills: [gouv-fr-github-actions-reusable, gouv-fr-github-actions-ci, gouv-fr-deployment-cloud-pi-native]
+    related_skills: [cicd-fabnum, ci-cd, gouv-fr-deployment-cloud-pi-native]
 ---
 
 

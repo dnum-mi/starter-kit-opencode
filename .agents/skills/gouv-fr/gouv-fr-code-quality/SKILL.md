@@ -9,7 +9,7 @@ platforms: [linux, macos]
 metadata:
   hermes:
     tags: [gouv-fr, quality, code-review, ia, dette-technique, lint, tests, standards]
-    related_skills: [gouv-fr-lint-eslint, gouv-fr-conventions-nommage, gouv-fr-projet-structure]
+    related_skills: [gouv-fr-lint-eslint, conventions-cofabnum, gouv-fr-projet-structure]
 ---
 
 # Gouv-fr — Qualité de code et revue

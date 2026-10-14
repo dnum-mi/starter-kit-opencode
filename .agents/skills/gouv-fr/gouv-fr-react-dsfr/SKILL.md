@@ -9,7 +9,7 @@ platforms: [linux, macos]
 metadata:
   hermes:
     tags: [dsfr, react, design-system, frontend, nextjs, etat, gouv-fr, ui]
-    related_skills: [gouv-fr-design-system, gouv-fr-frontend-vue3, gouv-fr-compliance-rgaa, gouv-fr-composants-vue]
+    related_skills: [gouv-fr-design-system, recettes-client, gouv-fr-compliance-rgaa, gouv-fr-composants-vue]
 ---
 
 # Gouv-fr — React DSFR (@codegouvfr/react-dsfr)
