@@ -21,6 +21,8 @@ permission:
     "node */scripts/cpin-console/console.mjs *--apply*": ask
     "node */scripts/cpin-console/console.mjs secrets-push*": ask
     "node */scripts/cpin-console/console.mjs pat-push*": ask
+    "node */scripts/cpin-console/vault.mjs *": allow
+    "node */scripts/cpin-console/vault.mjs *--apply*": ask
     "node */scripts/cpin-debug/*.mjs": allow
     "node */scripts/cpin-debug/login.mjs": ask
     "npm install --prefix */scripts/cpin-debug": ask
