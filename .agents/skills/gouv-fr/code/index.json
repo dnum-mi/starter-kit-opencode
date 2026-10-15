@@ -1,0 +1,117 @@
+{
+  "skills": [
+    {
+      "name": "adr",
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "api-rest",
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "bug-investigation",
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "ci-cd",
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "code-quality",
+      "files": [
+        "SKILL.md",
+        "UPSTREAM.md",
+        "references/checklist.md",
+        "references/evaluation-scenarios.md",
+        "references/hygiene-log-format.md",
+        "references/pr-template.md",
+        "references/source-gouv-fr-code-quality.md",
+        "references/source-gouv-fr-lint-eslint.md"
+      ]
+    },
+    {
+      "name": "conventions-cofabnum",
+      "files": [
+        "SKILL.md",
+        "scripts/check-folders.sh",
+        "scripts/validate-branch.sh"
+      ]
+    },
+    {
+      "name": "deploiement",
+      "files": [
+        "SKILL.md",
+        "references/depannage.md",
+        "references/gitlab-ci-dso.yml",
+        "references/source-dev-deploiement.md",
+        "references/source-gouv-fr-deployment-cloud-pi-native.md",
+        "references/source-gouv-fr-deployment-docker-k8s.md"
+      ]
+    },
+    {
+      "name": "environnement-installation",
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "monorepo-pnpm",
+      "files": [
+        "SKILL.md",
+        "references/source-dev-monorepo.md"
+      ]
+    },
+    {
+      "name": "outils-developpement",
+      "files": [
+        "SKILL.md",
+        "references/source-dev-outils-dev.md",
+        "scripts/check-environment.sh"
+      ]
+    },
+    {
+      "name": "projet-structure",
+      "files": [
+        "SKILL.md",
+        "references/source-gouv-fr-projet-structure.md",
+        "references/source-gouv-fr-repo-init.md"
+      ]
+    },
+    {
+      "name": "recettes-client",
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "recettes-serveur",
+      "files": [
+        "SKILL.md",
+        "scripts/scaffold-fastapi.sh",
+        "scripts/scaffold-fastify.sh",
+        "scripts/scaffold-nestjs.sh"
+      ]
+    },
+    {
+      "name": "stack-technique",
+      "files": [
+        "SKILL.md",
+        "references/source-dev-stack-technique.md"
+      ]
+    },
+    {
+      "name": "workflow-dev",
+      "files": [
+        "SKILL.md"
+      ]
+    }
+  ]
+}

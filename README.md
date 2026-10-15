@@ -14,28 +14,42 @@ Le dépôt est découpé en un **socle** commun et des **groupes** à installer 
 | Partie | Contenu | Sert à |
 |--------|---------|--------|
 | Socle | `AGENTS.md` | conventions communes : git, commits, TS, Python, lint, REST, Docker |
-| Groupe `dev` | `.agents/skills/dev/` | développer une application : front Vue/Nuxt + DSFR, back NestJS/Fastify/FastAPI, monorepo, poste dev |
-| | `agents/dev/`, `commands/dev/` | `/livrer` : implémenter un plan, vérifié avant et après |
-| Groupe `dso` | `.agents/skills/dso/` | CI/CD fabnum-cicd, chart Helm, déploiement Cloud Pi Native |
-| | `agents/dso/`, `commands/dso/` | `/deployer-cpin` : déployer en suivant le runbook, avec des portes |
+| Groupe `gouv-fr/code` | `.agents/skills/gouv-fr/code/` | développer une application : front Vue/Nuxt + DSFR, back NestJS/Fastify/FastAPI, monorepo, poste dev |
+| | `agents/gouv-fr/code/`, `commands/…` | `/livrer` : implémenter un plan, vérifié avant et après |
+| Groupe `gouv-fr/dso` | `.agents/skills/gouv-fr/dso/` | CI/CD fabnum-cicd, chart Helm, déploiement Cloud Pi Native |
+| | `agents/gouv-fr/dso/`, `commands/…` | `/deployer-cpin` : déployer en suivant le runbook, avec des portes |
+| Groupes `gouv-fr/…` | `.agents/skills/gouv-fr/` | catalogue Fabrique Numérique : **7 groupes**, 31 skills, sans doublon |
 | Plugin | `plugin/starter-kit.js` | installe le socle et les groupes choisis dans OpenCode |
 
 ```
 .agents/skills/
-├── dev/                            instructions.md + index.json
-│   ├── conventions-cofabnum/       nommage, architecture, TypeScript, API, lint, POC→prod
-│   ├── recettes-serveur/           NestJS, Fastify, FastAPI
-│   ├── recettes-client/            Vue 3, Nuxt 3, DSFR, toaster
-│   ├── stack-technique/            ESLint, Prisma, REST Client
-│   ├── monorepo/                   pnpm workspaces, Turborepo
-│   ├── ci-cd/                      principes CI/CD, gabarit de base
-│   ├── deploiement/                Dockerfiles de prod, durcissement, K8s local
-│   ├── environnement-installation/ Windows/WSL, macOS, Ubuntu
-│   └── outils-dev/                 Git, Docker, pnpm, proto, VS Code, GitHub CLI, zsh
-└── dso/                            instructions.md + index.json
-    ├── cicd-fabnum/                workflows fabnum-cicd, releases, synchro sync-cpin
-    ├── helm-chart-cpin/            chart tobi + surcharge CPiN, check-cpin-rules.py
-    └── deploiement-cpin/           runbook en phases avec portes, dépannage
+└── gouv-fr/                        catalogue Fabrique Numérique — 7 groupes, 31 skills
+    ├── code/                       instructions.md + index.json — développement et qualité (15 skills)
+    │   ├── conventions-cofabnum/       nommage, architecture, TypeScript, API, lint, POC→prod
+    │   ├── projet-structure/           structure projet, config OpenCode, init de dépôt
+    │   ├── code-quality/               standards + revue 3 niveaux, lint ESLint/Ruff
+    │   ├── stack-technique/            stack recommandée, ESLint, Prisma, REST Client
+    │   ├── monorepo-pnpm/              pnpm workspaces, Turborepo
+    │   ├── outils-developpement/       Git, Docker, pnpm, proto, VS Code, zsh
+    │   ├── environnement-installation/ Windows/WSL, macOS, Ubuntu
+    │   ├── recettes-client/            Vue 3, Nuxt 3, DSFR, toaster
+    │   ├── recettes-serveur/           NestJS, Fastify, FastAPI
+    │   ├── api-rest/                   conventions RESTful, OpenAPI, tests d'API
+    │   ├── deploiement/                Dockerfiles de prod, securityContext, K8s local
+    │   ├── ci-cd/                      pipeline de base, workflows réutilisables
+    │   ├── adr/                        Architecture Decision Record
+    │   ├── bug-investigation/          hypothèses de cause avant tout fix
+    │   └── workflow-dev/               plan mode, tâches, leçons, bug fixing
+    ├── dso/                        instructions.md + index.json — CI/CD, Helm, Cloud Pi Native (4 skills)
+    │   ├── deploiement-cpin/           runbook en phases avec portes, dépannage
+    │   ├── helm-chart-cpin/            chart tobi + surcharge CPiN, check-cpin-rules.py
+    │   ├── cicd-fabnum/                workflows fabnum-cicd, releases, sync-cpin
+    │   └── repo-cicd/                  brancher un dépôt existant sur la CI/CD CPiN
+    ├── anssi/                      instructions.md + index.json — securite, audit-pentest, audit-llm, anssi-guides
+    ├── conformite/                 instructions.md + index.json — conformite-rgaa, audit-conformite
+    ├── data/                       instructions.md + index.json — datagouv-apis, donnees-ouvertes
+    ├── dsfr/                       instructions.md + index.json — dsfr, composants-vue, react-dsfr
+    └── lasuite/                    instructions.md + index.json — lasuite-ui-kit
 ```
 
 ## Prérequis
@@ -44,8 +58,8 @@ Le dépôt est découpé en un **socle** commun et des **groupes** à installer 
 |------|---------|
 | Le plugin | OpenCode **≥ 1.18** (testé en 1.18.33), `git`, accès à github.com au démarrage d'OpenCode |
 | Le modèle | un modèle qui sait appeler des outils. Testé avec DeepSeek V4 Flash (Albert) : agents et prompts sont écrits pour qu'un modèle modeste les suive à la lettre |
-| `/livrer` (dev) | Node et le gestionnaire de paquets du projet (npm, pnpm), ou `uv` pour Python. Des scripts `build`/`typecheck`/`lint`/`test` **dans le projet** : la review ne lance que ceux qui existent |
-| `/deployer-cpin` (dso) | `helm`, `uv` (lance `check-cpin-rules.py`), `gh` authentifié sur le dépôt. Côté humain : un accès à la **console CPiN** (projet, dépôts, environnement, quota, tokens) |
+| `/livrer` (groupe code) | Node et le gestionnaire de paquets du projet (npm, pnpm), ou `uv` pour Python. Des scripts `build`/`typecheck`/`lint`/`test` **dans le projet** : la review ne lance que ceux qui existent |
+| `/deployer-cpin` (groupe dso) | `helm`, `uv` (lance `check-cpin-rules.py`), `gh` authentifié sur le dépôt. Côté humain : un accès à la **console CPiN** (projet, dépôts, environnement, quota, tokens) |
 
 ## Installer
 
@@ -68,12 +82,15 @@ Dans le `opencode.json` du projet, ou dans `~/.config/opencode/opencode.json` :
 {
   "$schema": "https://opencode.ai/config.json",
   "plugin": [
-    ["starter-kit-opencode@git+https://github.com/dnum-mi/starter-kit-opencode.git", { "groups": ["dev", "dso"] }]
+    ["starter-kit-opencode@git+https://github.com/dnum-mi/starter-kit-opencode.git", { "groups": ["gouv-fr/code", "gouv-fr/dso"] }]
   ]
 }
 ```
 
-- `groups` vaut `["dev"]` par défaut. Un groupe non listé n'est pas chargé du tout : ni instructions, ni skills, ni agents.
+- Groupes disponibles : les 7 groupes imbriqués `gouv-fr/code`, `gouv-fr/dso`,
+  `gouv-fr/anssi`, `gouv-fr/conformite`, `gouv-fr/data`, `gouv-fr/dsfr`, `gouv-fr/lasuite`.
+  `groups` vaut `["gouv-fr/code"]` par défaut. Un groupe non listé n'est pas chargé du tout : ni
+  instructions, ni skills, ni agents.
 - Le plugin suit `main`. Pour figer une version : `…starter-kit-opencode.git#<sha>`.
 - OpenCode garde le paquet en cache. Pour récupérer une mise à jour de `main`, supprimer le dossier
   `starter-kit-opencode@…` dans `~/.cache/opencode/packages/`, puis relancer OpenCode.
@@ -84,24 +101,24 @@ Dans le `opencode.json` du projet, ou dans `~/.config/opencode/opencode.json` :
 {
   "instructions": [
     "https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/AGENTS.md",
-    "https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/.agents/skills/dev/instructions.md"
+    "https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/.agents/skills/gouv-fr/code/instructions.md"
   ],
   "skills": {
-    "urls": ["https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/.agents/skills/dev/"]
+    "urls": ["https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/.agents/skills/gouv-fr/code/"]
   }
 }
 ```
 
-Remplacer `dev` par `dso`, ou ajouter les deux.
+Remplacer `gouv-fr/code` par `gouv-fr/dso` ou par l'un des autres groupes `gouv-fr/…`, ou ajouter ceux voulus.
 
-> Le groupe `dso` automatise la console CPiN via `scripts/cpin-console` et `scripts/cpin-debug`, qui ne sont
+> Le groupe `gouv-fr/dso` automatise la console CPiN via `scripts/cpin-console` et `scripts/cpin-debug`, qui ne sont
 > **pas** distribués par cette installation (instructions et skills seulement). Pour les utiliser, passer par
 > l'installation plugin (§1) ou cloner le kit.
 
 ### 3. Copie (Claude Code, Codex, autres)
 
 ```bash
-cp -r .agents/skills/dev/* ~/.agents/skills/     # et/ou .agents/skills/dso/*
+cp -r .agents/skills/gouv-fr/code/* ~/.agents/skills/   # et/ou .agents/skills/gouv-fr/<groupe>/*
 ```
 
 Seuls les skills sont installés. Les invariants des `instructions.md` (ex. « l'agent ne manipule jamais un
@@ -109,7 +126,7 @@ secret ») ne sont pas chargés : les recopier si besoin dans le `AGENTS.md` ou 
 
 ## Utiliser
 
-### `/livrer <plan>` (groupe `dev`)
+### `/livrer <plan>` (groupe `gouv-fr/code`)
 
 Pour implémenter un plan (texte, ou chemin d'un fichier) qui touche des bibliothèques externes.
 
@@ -125,7 +142,7 @@ Ce que `/livrer` ne fait pas :
   avertissement, mais ne peut rien vérifier ;
 - pas d'orchestrateur ni de portes humaines : pour une tâche sans plan, utiliser `build` directement.
 
-### `/deployer-cpin [contexte]` (groupe `dso`)
+### `/deployer-cpin [contexte]` (groupe `gouv-fr/dso`)
 
 Pour préparer le déploiement du dépôt courant sur Cloud Pi Native. L'agent **`cpin-orchestrateur`** (aussi
 accessible avec Tab) suit le runbook `deploiement-cpin` :
@@ -136,7 +153,7 @@ accessible avec Tab) suit le runbook `deploiement-cpin` :
 | 3 : chart et CI | agents | `cpin-plan` → `cpin-build` → `cpin-review`, jusqu'à ce que `check-cpin-rules.py` sorte en 0 (3 essais au plus) |
 | 4 et 5 : livraison, vérification après synchro | **vous** | l'orchestrateur vous remet la marche à suivre et la table de dépannage |
 
-Ce que les agents `dso` ne font **jamais** :
+Ce que les agents de `gouv-fr/dso` ne font **jamais** :
 - demander, lire, écrire ou afficher la valeur d'un token ou d'un secret : c'est vous qui les saisissez, dans la console,
   dans GitHub ou dans Vault ;
 - agir sur la console CPiN, ArgoCD, Vault ou le GitLab interne ;
@@ -164,7 +181,7 @@ Une valeur déclarée dans votre `opencode.json` l'emporte sur celle du plugin :
   Chaque groupe a ses propres instructions, chargées seulement s'il est installé.
 - **Plugin plutôt qu'URL** : agents et commandes ne se déclarent pas par URL. Le plugin injecte tout
   dans la configuration au démarrage, sans rien écrire dans le projet.
-- **Orchestrateur pour `dso`, pas pour `dev`** : un déploiement suit toujours les mêmes phases et a besoin de
+- **Orchestrateur pour `gouv-fr/dso`, pas pour `gouv-fr/code`** : un déploiement suit toujours les mêmes phases et a besoin de
   portes humaines. Une tâche de dev n'a pas de forme fixe, et l'agent `build` d'OpenCode suffit à la piloter.
 - **Review en session neuve** : le relecteur n'hérite pas du raisonnement de celui qui a écrit le code. Il
   juge sur le résultat de commandes (`check-cpin-rules.py`, build, typecheck), pas sur sa lecture.
@@ -175,14 +192,14 @@ Une valeur déclarée dans votre `opencode.json` l'emporte sur celle du plugin :
 ## Limites connues
 
 - Agents, commandes et plugin fonctionnent **uniquement dans OpenCode**.
-- `dso` : plusieurs points restent à confirmer avec la Service Team CPiN : droits minimum du token GitHub,
+- Groupe `gouv-fr/dso` : plusieurs points restent à confirmer avec la Service Team CPiN : droits minimum du token GitHub,
   domaine Harbor accepté par Kyverno en prod, déploiement d'un changement de chart sans nouvelle image. Ils
   sont listés dans `deploiement-cpin` (« Limites connues ») ; les agents ne tranchent pas à votre place.
 - `opencode debug skill` ne liste pas les skills chargés par le plugin. Ils sont pourtant bien disponibles en session.
 
 ## Contribuer
 
-Le `opencode.json` de ce dépôt charge le plugin par son chemin local (`["./", { "groups": ["dev", "dso"] }]`) :
+Le `opencode.jsonc` de ce dépôt charge le plugin par son chemin local (`["./", { "groups": ["gouv-fr/code", "gouv-fr/dso", "gouv-fr/anssi", "gouv-fr/conformite", "gouv-fr/data", "gouv-fr/dsfr", "gouv-fr/lasuite"] }]`) :
 OpenCode lancé dans le dépôt utilise les instructions, skills, agents et commandes de la copie de travail, sans
 passer par GitHub ni par le cache. Relancer OpenCode suffit pour tester une modification.
 
@@ -199,7 +216,7 @@ Les règles de rangement (où mettre une instruction, comment nommer les agents)
 
 | Script | Skill | Usage |
 |--------|-------|-------|
-| `check-environment.sh` | outils-dev | Vérifie les outils installés |
+| `check-environment.sh` | outils-developpement | Vérifie les outils installés |
 | `validate-branch.sh` | conventions-cofabnum | Valide le format `<type>/<kebab>#<ticket>` |
 | `check-folders.sh` | conventions-cofabnum | Vérifie kebab-case et PascalCase |
 | `scaffold-nestjs.sh` | recettes-serveur | Crée un projet NestJS complet |
@@ -212,6 +229,44 @@ Les règles de rangement (où mettre une instruction, comment nommer les agents)
 Skills tirés de la documentation de la [Fabrique Numérique](https://docs.fabrique-numerique.fr/)
 (`dnum-mi/transversal-doc`) et de celle de [Cloud Pi Native](https://cloud-pi-native.fr), ainsi que du retour
 d'expérience d'un premier déploiement.
+
+Le catalogue `gouv-fr/…` provient du dépôt [`ynotopec/gouv-fr-skills`](https://github.com/ynotopec/gouv-fr-skills)
+(37 skills préfixés `gouv-fr-`, eux-mêmes dérivés de `starter-kit-opencode`, de `etalab-ia/skills` et de
+`ynotopec/gouv-fr-code-package-mi`) ; la correspondance des noms y est documentée dans son `UPSTREAM.md`.
+
+En arrivant ici, ces 37 skills ont été **compactés en 26** (fusions par thème, contenu d'origine conservé dans
+`references/source-*.md`), puis réunis avec les anciens groupes `dev` et `dso` sous un seul arbre
+`.agents/skills/gouv-fr/`. Sur les 4 sujets présents des deux côtés (`stack-technique`, `monorepo`,
+`outils-dev`, `deploiement`), le contenu a été fusionné en **un seul skill par sujet** ; les skills
+complémentaires (`ci-cd`, `cicd-fabnum` et `repo-cicd`) sont conservés séparément et se citent entre eux.
+
+Le catalogue est **générique** : aucune dépendance à un projet interne. Les skills qui ne valaient que pour un
+projet précis (document d'homologation, smoke-test d'un pipeline interne, garde de rebranding) ont été
+**retirés**, et les mentions de projets internes réécrites.
+
+Résultat : **31 skills**, sans doublon de nom, répartis en 7 groupes.
+
+### Migration depuis `dev`/`dso`
+
+Les groupes plats `dev` et `dso` n'existent plus. Les anciens noms restent **acceptés** par le plugin, qui
+les résout vers le groupe actuel en affichant un avertissement : une configuration existante continue de
+fonctionner. Mettre à jour `groups` :
+
+| Ancien nom | Groupe actuel |
+|---|---|
+| `dev` | `gouv-fr/code` |
+| `dso` | `gouv-fr/dso` |
+| `gouv-fr/interieur/code` | `gouv-fr/code` |
+| `gouv-fr/interieur/dso` | `gouv-fr/dso` |
+
+Les URL brutes des catalogues (raw.githubusercontent…/index.json) changent, elles, sans redirection : les
+liens figés dans un `AGENTS.md` de projet doivent être mis à jour.
+
+Un nom de groupe réellement inconnu produit un message sur `stderr` qui liste les catalogues disponibles —
+OpenCode n'affiche pas les exceptions levées par un plugin, d'où ce message explicite.
+
+Trois skills ont par ailleurs été retirés du kit, faute de portée générique : `dat` (document
+d'homologation), `smoke-test` et `service-names`.
 
 ## Références
 

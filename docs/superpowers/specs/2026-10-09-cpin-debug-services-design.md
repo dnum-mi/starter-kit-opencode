@@ -79,7 +79,7 @@ Un script par service, chacun lit son token depuis `.env.secrets` :
   (l'humain seul y accède). Le token n'est jamais demandé, lu, écrit ni affiché par l'agent (règle skill
   `deploiement-cpin`).
 
-### 5. Runbook — `.agents/skills/dso/deploiement-cpin/SKILL.md`
+### 5. Runbook — `.agents/skills/gouv-fr/dso/deploiement-cpin/SKILL.md`
 
 Le runbook intègre le debug automatisé avec des **ramifications explicites** et des **demandes de
 saisie utilisateur**. L'agent ne lance jamais le login ni les checks sans avoir demandé à l'humain.
@@ -155,4 +155,4 @@ Il vérifie seulement la **présence** des variables dans `.env.secrets` (ex. `g
 | `scripts/cpin-debug/check-gitlab.mjs` | créer |
 | `scripts/cpin-debug/check-console.mjs` | créer |
 | `opencode.jsonc` | modifier (règle permission `.env.secrets`) |
-| `.agents/skills/dso/deploiement-cpin/SKILL.md` | modifier (étape phase 5) |
+| `.agents/skills/gouv-fr/dso/deploiement-cpin/SKILL.md` | modifier (étape phase 5) |

@@ -1,0 +1,18 @@
+{
+  "skills": [
+    {
+      "name": "audit-conformite",
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "conformite-rgaa",
+      "files": [
+        "SKILL.md",
+        "references/source-gouv-fr-compliance-rgaa.md",
+        "references/source-gouv-fr-cookies-rgpd.md"
+      ]
+    }
+  ]
+}

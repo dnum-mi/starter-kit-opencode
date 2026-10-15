@@ -11,7 +11,7 @@ import pytest
 import yaml
 
 HERE = Path(__file__).parent
-SCRIPT = HERE.parents[1] / ".agents/skills/dso/helm-chart-cpin/scripts/check-cpin-rules.py"
+SCRIPT = HERE.parents[1] / ".agents/skills/gouv-fr/dso/helm-chart-cpin/scripts/check-cpin-rules.py"
 QUOTA = ["--quota-cpu", "200m", "--quota-memory", "0.2Gi"]
 BASE = [doc for doc in yaml.safe_load_all((HERE / "ok.yaml").read_text()) if doc]
 

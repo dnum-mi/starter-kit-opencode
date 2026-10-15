@@ -5,9 +5,11 @@
  * ses agents (agents/<groupe>/*.md) et ses commandes (commands/<groupe>/*.md) :
  *
  *   "plugin": [["starter-kit-opencode@git+https://github.com/dnum-mi/starter-kit-opencode.git",
- *               { "groups": ["dso"] }]]
+ *               { "groups": ["gouv-fr/dso"] }]]
  *
- * Ce que l'utilisateur déclare lui-même dans opencode.json (agent ou commande du même nom) l'emporte.
+ * Un groupe est identifié par son chemin sous .agents/skills/ : il peut être imbriqué
+ * (ex. gouv-fr/dso). Ce que l'utilisateur déclare lui-même dans opencode.json
+ * (agent ou commande du même nom) l'emporte.
  */
 import fs from 'node:fs'
 import path from 'node:path'
@@ -15,8 +17,27 @@ import { fileURLToPath } from 'node:url'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const GROUPS_DIR = path.join(ROOT, '.agents/skills')
-const DEFAULT_GROUPS = ['dev']
+const DEFAULT_GROUPS = ['gouv-fr/code']
 const FRONTMATTER = /^---\n([\s\S]*?)\n---\n?([\s\S]*)$/
+
+// Anciens noms de groupes, tels qu'ils étaient déclarés avant le regroupement de tout le kit
+// sous .agents/skills/gouv-fr/. Résolus vers le groupe actuel : une configuration existante
+// continue de fonctionner, avec un avertissement qui donne le nom à jour.
+const LEGACY_GROUPS = {
+  'dev': 'gouv-fr/code',
+  'dso': 'gouv-fr/dso',
+  'gouv-fr/interieur/code': 'gouv-fr/code',
+  'gouv-fr/interieur/dso': 'gouv-fr/dso',
+}
+
+function resolveGroup(group) {
+  const current = LEGACY_GROUPS[group]
+  if (!current)
+    return group
+  console.warn(`starter-kit : le groupe '${group}' a été renommé '${current}'`
+    + ` — mettre à jour "groups" dans opencode.json`)
+  return current
+}
 
 function readMarkdown(file) {
   const match = fs.readFileSync(file, 'utf8').match(FRONTMATTER)
@@ -45,10 +66,29 @@ function register(target, dir, bodyKey) {
   }
 }
 
+// Un catalogue est un dossier qui porte un index.json (les groupes peuvent être
+// imbriqués : gouv-fr/anssi, gouv-fr/code…). Sert au message d'erreur.
+function listCatalogs(dir = GROUPS_DIR) {
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    if (!entry.isDirectory())
+      return []
+    const sub = path.join(dir, entry.name)
+    return fs.existsSync(path.join(sub, 'index.json'))
+      ? [path.relative(GROUPS_DIR, sub)]
+      : listCatalogs(sub)
+  })
+}
+
 function installGroup(config, group) {
   const skills = path.join(GROUPS_DIR, group)
-  if (!fs.existsSync(path.join(skills, 'index.json')))
-    throw new Error(`starter-kit : groupe inconnu '${group}' (attendu : ${fs.readdirSync(GROUPS_DIR).join(', ')})`)
+  if (!fs.existsSync(path.join(skills, 'index.json'))) {
+    const message = `starter-kit : groupe inconnu '${group}' (attendus : ${listCatalogs().join(', ')})`
+    // OpenCode ne remonte pas une exception levée dans le hook config() : sans ce console.warn,
+    // l'utilisateur n'aurait ni kit ni explication (ni stderr, ni journal). Le throw est conservé
+    // pour être testable (tests/plugin/check-config.sh).
+    console.warn(message)
+    throw new Error(message)
+  }
   addUnique(config.instructions, path.join(skills, 'instructions.md'))
   addUnique(config.skills.paths, skills)
   register(config.agent, path.join(ROOT, 'agents', group), 'prompt')
@@ -64,6 +104,6 @@ export const StarterKitPlugin = async (_input, options = {}) => ({
     config.command ??= {}
     addUnique(config.instructions, path.join(ROOT, 'AGENTS.md'))
     for (const group of options.groups ?? DEFAULT_GROUPS)
-      installGroup(config, group)
+      installGroup(config, resolveGroup(group))
   },
 })

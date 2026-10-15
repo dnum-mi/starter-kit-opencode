@@ -28,7 +28,7 @@
 | Créer | `scripts/cpin-debug/check-gitlab.mjs` |
 | Créer | `scripts/cpin-debug/check-console.mjs` |
 | Modifier | `opencode.jsonc` |
-| Modifier | `.agents/skills/dso/deploiement-cpin/SKILL.md` |
+| Modifier | `.agents/skills/gouv-fr/dso/deploiement-cpin/SKILL.md` |
 
 > Note : `lib.mjs` est un ajout au fichier listé dans la spec — helper partagé (chargement des secrets, masquage, check HTTP) pour éviter la duplication entre les 5 scripts. Le reste suit la spec à la lettre.
 
@@ -502,7 +502,7 @@ git commit -m "chore(opencode): bloquer lecture/écriture de .env.secrets par l'
 ### Task 9 : Mettre à jour le runbook `deploiement-cpin`
 
 **Files:**
-- Modify: `.agents/skills/dso/deploiement-cpin/SKILL.md`
+- Modify: `.agents/skills/gouv-fr/dso/deploiement-cpin/SKILL.md`
 
 - [ ] **Step 1 : Ajouter la proposition de mise en place en Phase 1**
 
@@ -551,7 +551,7 @@ seulement la **présence** des variables dans `.env.secrets` (ex. `grep -c '^ARG
 - [ ] **Step 3 : Vérifier la structure du runbook**
 
 ```bash
-grep -n "^## Phase\|^## Limites\|^## Pour aller" .agents/skills/dso/deploiement-cpin/SKILL.md
+grep -n "^## Phase\|^## Limites\|^## Pour aller" .agents/skills/gouv-fr/dso/deploiement-cpin/SKILL.md
 ```
 
 Résultat attendu : les phases 0 à 5 et les sections finales sont intactes ; les ajouts sont dans les phases 1 et 5.
@@ -559,7 +559,7 @@ Résultat attendu : les phases 0 à 5 et les sections finales sont intactes ; le
 - [ ] **Step 4 : Vérifier qu'aucun token n'est mentionné en clair**
 
 ```bash
-grep -n "ARGOCD_TOKEN\|DSO_TOKEN\|GITLAB_PAT" .agents/skills/dso/deploiement-cpin/SKILL.md
+grep -n "ARGOCD_TOKEN\|DSO_TOKEN\|GITLAB_PAT" .agents/skills/gouv-fr/dso/deploiement-cpin/SKILL.md
 ```
 
 Résultat attendu : seuls les **noms** de variables apparaissent (jamais de valeur).
@@ -567,7 +567,7 @@ Résultat attendu : seuls les **noms** de variables apparaissent (jamais de vale
 - [ ] **Step 5 : Commit**
 
 ```bash
-git add .agents/skills/dso/deploiement-cpin/SKILL.md
+git add .agents/skills/gouv-fr/dso/deploiement-cpin/SKILL.md
 git commit -m "docs(skill): debug automatisé des services CPiN dans le runbook deploiement-cpin"
 ```
 

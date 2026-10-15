@@ -1,0 +1,37 @@
+{
+  "skills": [
+    {
+      "name": "anssi-guides",
+      "files": [
+        "SKILL.md",
+        "references/catalogue.md",
+        "scripts/generate-catalogue.sh",
+        "scripts/included-english-guide-ids.json",
+        "scripts/test-generate-catalogue.sh",
+        "scripts/tracked-guide-ids.json"
+      ]
+    },
+    {
+      "name": "audit-llm",
+      "files": [
+        "SKILL.md",
+        "references/source-gouv-fr-audit-openwebui.md",
+        "references/source-gouv-fr-audit-redteam.md"
+      ]
+    },
+    {
+      "name": "audit-pentest",
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "securite",
+      "files": [
+        "SKILL.md",
+        "references/source-gouv-fr-audit-safety.md",
+        "references/source-gouv-fr-securite.md"
+      ]
+    }
+  ]
+}
