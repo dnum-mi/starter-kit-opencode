@@ -29,3 +29,8 @@ test('parseEnv : commentaires, export, guillemets, valeurs vides', () => {
   const env = parseEnv('# c\nA=1\nexport B="deux words"\nC=\n\nD=\'x=y\'\nbad line\n')
   assert.deepEqual(env, { A: '1', B: 'deux words', C: '', D: 'x=y' })
 })
+
+test('parseEnv : commentaires après valeur, guillemets, # dans un jeton', () => {
+  const env = parseEnv('API_KEY="example-key" # note\nEMPTY= # fill later\nTOK=abc#def\nSP=\'a b\'   # c\nPLAIN=v  # c\n')
+  assert.deepEqual(env, { API_KEY: 'example-key', EMPTY: '', TOK: 'abc#def', SP: 'a b', PLAIN: 'v' })
+})

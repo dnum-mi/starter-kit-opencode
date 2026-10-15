@@ -101,16 +101,19 @@ function splitMount(value) {
 }
 
 // --- .env -------------------------------------------------------------------------------------
+// Sémantique dotenv usuelle : guillemets retirés, commentaire après une valeur entre guillemets ignoré,
+// commentaire non quoté seulement s'il est précédé d'un blanc (« a#b » reste « a#b », un jeton peut contenir #).
+// L'analyseur de Node (util.parseEnv) coupe à tout « # » et tronquerait de tels secrets.
 export function parseEnv(content) {
   const env = {}
   for (const raw of content.split('\n')) {
     const line = raw.trim()
     if (!line || line.startsWith('#')) continue
-    const match = line.match(/^(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)=(.*)$/)
+    const match = line.match(/^(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=(.*)$/)
     if (!match) continue
-    let value = match[2].trim()
-    if (/^(['"]).*\1$/.test(value) && value.length >= 2) value = value.slice(1, -1)
-    env[match[1]] = value
+    const rest = match[2].trimStart()
+    const quoted = rest.match(/^(["'])(.*?)\1(?:\s.*)?$/)
+    env[match[1]] = quoted ? quoted[2] : rest.replace(/(^|\s)#.*$/, '').trim()
   }
   return env
 }
@@ -196,7 +199,8 @@ const commands = {
     let res = await request('PATCH', `${mount}/data/${secret}`, {
       body: { data }, contentType: 'application/merge-patch+json',
     })
-    if (res.status === 404) res = await request('POST', `${mount}/data/${secret}`, { body: { data } })
+    // cas: 0 : création seulement. Si un autre écrivain a créé le secret entre-temps, Vault refuse au lieu d'écraser.
+    if (res.status === 404) res = await request('POST', `${mount}/data/${secret}`, { body: { options: { cas: 0 }, data } })
     if (res.status !== 200 && res.status !== 204) explain(res, 'écriture')
     say(`écrit : ${Object.keys(data).length} clé(s), version ${res.json?.data?.version ?? '?'}`)
   },

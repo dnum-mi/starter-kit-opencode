@@ -3,6 +3,11 @@ description: Déploie une application sur Cloud Pi Native en suivant le runbook 
 mode: primary
 temperature: 0.1
 permission:
+  read:
+    "*": allow
+    "**/.env.secrets": deny
+    "**/.token": deny
+    "**/.env": deny
   edit: deny
   todowrite: allow
   webfetch: deny
