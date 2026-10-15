@@ -49,3 +49,31 @@ opencode debug config | jq -e --arg root "$ROOT" '
   and (.agent["dev-review"] == null)
 ' > /dev/null
 echo "OK   plugin starter-kit (groupe imbriqué gouv-fr/anssi)"
+
+# Nom de groupe obsolète : résolu vers le groupe actuel, pour ne pas casser une configuration
+# existante (`groups: ["dso"]` continue de charger le groupe).
+mkdir -p "$WORK/legacy"
+cat > "$WORK/legacy/opencode.json" <<JSON
+{ "plugin": [["$ROOT", { "groups": ["dso"] }]] }
+JSON
+cd "$WORK/legacy"
+opencode debug config 2> "$WORK/legacy.err" | jq -e --arg root "$ROOT" '
+  (.instructions | index($root + "/.agents/skills/gouv-fr/dso/instructions.md"))
+  and (.skills.paths | index($root + "/.agents/skills/gouv-fr/dso"))
+  and (.agent["cpin-orchestrateur"].mode == "primary")
+  and (.agent["dev-review"] == null)
+' > /dev/null
+grep -q "renommé 'gouv-fr/dso'" "$WORK/legacy.err"
+echo "OK   plugin starter-kit (ancien nom 'dso' résolu vers gouv-fr/dso)"
+
+# Nom de groupe inconnu : OpenCode ne remonte pas l'exception du plugin (exit 0, rien dans le
+# journal), donc le message doit partir sur stderr — sinon l'utilisateur n'a ni kit ni explication.
+mkdir -p "$WORK/inconnu"
+cat > "$WORK/inconnu/opencode.json" <<JSON
+{ "plugin": [["$ROOT", { "groups": ["gouv-fr/inconnu"] }]] }
+JSON
+cd "$WORK/inconnu"
+opencode debug config > /dev/null 2> "$WORK/inconnu.err" || true
+grep -q "groupe inconnu 'gouv-fr/inconnu'" "$WORK/inconnu.err"
+grep -q "gouv-fr/code" "$WORK/inconnu.err"
+echo "OK   plugin starter-kit (groupe inconnu signalé, catalogues listés)"

@@ -246,15 +246,24 @@ projet précis (document d'homologation, smoke-test d'un pipeline interne, garde
 
 Résultat : **31 skills**, sans doublon de nom, répartis en 7 groupes.
 
-### Migration (rupture assumée)
+### Migration depuis `dev`/`dso`
 
-Les groupes plats `dev` et `dso` n'existent plus ; un `groups: ["dev"]` ou `["dso"]` existant est rejeté au
-démarrage avec la liste des catalogues valides. Remplacer :
+Les groupes plats `dev` et `dso` n'existent plus. Les anciens noms restent **acceptés** par le plugin, qui
+les résout vers le groupe actuel en affichant un avertissement : une configuration existante continue de
+fonctionner. Mettre à jour `groups` :
 
-| Ancien groupe | Nouveau groupe |
+| Ancien nom | Groupe actuel |
 |---|---|
 | `dev` | `gouv-fr/code` |
 | `dso` | `gouv-fr/dso` |
+| `gouv-fr/interieur/code` | `gouv-fr/code` |
+| `gouv-fr/interieur/dso` | `gouv-fr/dso` |
+
+Les URL brutes des catalogues (raw.githubusercontent…/index.json) changent, elles, sans redirection : les
+liens figés dans un `AGENTS.md` de projet doivent être mis à jour.
+
+Un nom de groupe réellement inconnu produit un message sur `stderr` qui liste les catalogues disponibles —
+OpenCode n'affiche pas les exceptions levées par un plugin, d'où ce message explicite.
 
 Trois skills ont par ailleurs été retirés du kit, faute de portée générique : `dat` (document
 d'homologation), `smoke-test` et `service-names`.
