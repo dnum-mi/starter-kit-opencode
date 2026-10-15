@@ -1,6 +1,6 @@
-# Groupe `dso` : CI/CD, Helm, Cloud Pi Native
+# Groupe `gouv-fr/interieur/dso` : CI/CD, Helm, Cloud Pi Native
 
-> Chargé en plus du socle `AGENTS.md`, par le plugin (`"groups": ["dso"]`) ou par URL : voir le README.
+> Chargé en plus du socle `AGENTS.md`, par le plugin (`"groups": ["gouv-fr/interieur/dso"]`) ou par URL : voir le README.
 
 ## Invariants
 
@@ -17,6 +17,8 @@
 | `deploiement-cpin` | **Point d'entrée** pour déployer sur Cloud Pi Native : runbook par phases (prérequis, values, vérification, livraison) et dépannage (quota, mauvaise image, 404, 503, synchro) |
 | `helm-chart-cpin` | Créer ou adapter un chart Helm pour CPiN : template tobi, checklist pré-PR, `check-cpin-rules.py` |
 | `cicd-fabnum` | Écrire ou relire un `ci.yml`/`cd.yml` avec fabnum-cicd, releases, `sync-cpin` et ses secrets |
+
+CI de base (lint, tests, build) et Dockerfiles de production : groupe `gouv-fr/interieur/code` (skills `ci-cd` et `deploiement`).
 
 ## Documentation interne (OKF)
 

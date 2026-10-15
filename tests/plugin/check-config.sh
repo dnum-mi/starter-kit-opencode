@@ -6,30 +6,32 @@ ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
 cat > "$WORK/opencode.json" <<JSON
-{ "plugin": [["$ROOT", { "groups": ["dso"] }]], "agent": { "cpin-review": { "temperature": 0.5 } } }
+{ "plugin": [["$ROOT", { "groups": ["gouv-fr/interieur/dso"] }]], "agent": { "cpin-review": { "temperature": 0.5 } } }
 JSON
-mkdir "$WORK/dev"
-cat > "$WORK/dev/opencode.json" <<JSON
-{ "plugin": [["$ROOT", { "groups": ["dev"] }]] }
+mkdir -p "$WORK/code"
+cat > "$WORK/code/opencode.json" <<JSON
+{ "plugin": [["$ROOT", { "groups": ["gouv-fr/interieur/code"] }]] }
 JSON
 cd "$WORK"
 # Seuls les champs vérifiés sont extraits : la config globale peut contenir des secrets.
 opencode debug config | jq -e --arg root "$ROOT" '
-  (.instructions | index($root + "/AGENTS.md") and index($root + "/.agents/skills/dso/instructions.md"))
-  and (.instructions | index($root + "/.agents/skills/dev/instructions.md") | not)
-  and (.skills.paths | index($root + "/.agents/skills/dso"))
+  (.instructions | index($root + "/AGENTS.md") and index($root + "/.agents/skills/gouv-fr/interieur/dso/instructions.md"))
+  and (.instructions | index($root + "/.agents/skills/gouv-fr/interieur/code/instructions.md") | not)
+  and (.skills.paths | index($root + "/.agents/skills/gouv-fr/interieur/dso"))
   and (.agent["cpin-orchestrateur"].mode == "primary")
   and ([.agent["cpin-plan", "cpin-build", "cpin-review"].mode] | all(. == "subagent"))
   and (.agent["cpin-review"].temperature == 0.5)
   and (.command["deployer-cpin"].agent == "cpin-orchestrateur")
-' > /dev/null && echo "OK   plugin starter-kit (groupe dso)"
+' > /dev/null
+echo "OK   plugin starter-kit (groupe gouv-fr/interieur/dso)"
 
-cd "$WORK/dev"
+cd "$WORK/code"
 opencode debug config | jq -e --arg root "$ROOT" '
-  (.instructions | index($root + "/.agents/skills/dev/instructions.md"))
-  and (.instructions | index($root + "/.agents/skills/dso/instructions.md") | not)
+  (.instructions | index($root + "/.agents/skills/gouv-fr/interieur/code/instructions.md"))
+  and (.instructions | index($root + "/.agents/skills/gouv-fr/interieur/dso/instructions.md") | not)
   and ([.agent["dev-verif-plan", "dev-review"].mode] | all(. == "subagent"))
   and (.agent["cpin-orchestrateur"] == null)
   and (.command.livrer.agent == "build")
   and (.command["deployer-cpin"] == null)
-' > /dev/null && echo "OK   plugin starter-kit (groupe dev)"
+' > /dev/null
+echo "OK   plugin starter-kit (groupe gouv-fr/interieur/code)"

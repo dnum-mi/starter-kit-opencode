@@ -7,7 +7,7 @@ allowed-tools: Bash Read Write
 # Déploiement Cloud Pi Native : images et conteneurs
 
 Règles pour construire des images prêtes pour Cloud Pi Native (K8s/OpenShift) et développer en local.
-Pour le **chart Helm**, utiliser **`helm-chart-cpin`** ; pour la **console, le mirror, le pipeline DSO et ArgoCD**, utiliser **`deploiement-cpin`** (groupe `dso`).
+Pour le **chart Helm**, utiliser **`helm-chart-cpin`** ; pour la **console, le mirror, le pipeline DSO et ArgoCD**, utiliser **`deploiement-cpin`** (groupe `gouv-fr/interieur/dso`).
 
 ## Plateforme cible
 

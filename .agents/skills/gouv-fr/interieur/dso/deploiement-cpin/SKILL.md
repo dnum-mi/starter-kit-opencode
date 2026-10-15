@@ -314,4 +314,4 @@ seulement la **présence** des variables avec `console.mjs init` (« renseigné 
 - Doc interne : `docs/okf/cloud-pi-native/` (plateforme, dépôts et mirror, GitOps, environnements, secrets, Kyverno).
 - Source : [documentation officielle](https://cloud-pi-native.fr) ; exemple `IA-Generative/ocr-api`.
 - Exemple capitalisé en conditions réelles : RETEX d'un premier déploiement complet — `IA-Generative/ice-breaker-demo-infra`, `docs/RETEX-deploiement.md` (blocages, leçons chemin Harbor, schéma dépôt d'infra + fine-grained PAT, opérations auto/manuel, clôture = révocation des secrets).
-- Skills liés (groupe `dso`) : `cicd-fabnum` (CI/CD GitHub, `sync-cpin`), `helm-chart-cpin` (chart et vérification).
+- Skills liés (groupe `gouv-fr/interieur/dso`) : `cicd-fabnum` (CI/CD GitHub, `sync-cpin`), `helm-chart-cpin` (chart et vérification).

@@ -67,4 +67,4 @@ Ajouter aussi au `ci.yml` le job bloquant `check-cpin-rules` (rendu `helm templa
 - Dépôt applicatif + dépôt d'infra séparé (dispatch, CI et CD du dépôt d'infra, App sur les deux dépôts) : [`references/depot-infra.md`](references/depot-infra.md).
 - Doc interne : `docs/okf/cicd/` (contrat des workflows, release et charts, pièges), `docs/okf/decisions/github-app-vs-pat.md`, `docs/okf/cycle-de-vie/`.
 - Sources : `dnum-mi/fabnum-cicd/docs/workflows/`, exemple complet `IA-Generative/ocr-api` (`ci.yml`, `cd.yml`).
-- Déploiement du chart et contraintes CPiN : skills `helm-chart-cpin` et `deploiement-cpin` (groupe `dso`).
+- Déploiement du chart et contraintes CPiN : skills `helm-chart-cpin` et `deploiement-cpin` (groupe `gouv-fr/interieur/dso`).
