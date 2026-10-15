@@ -3,7 +3,7 @@
   "lsp": true,
   "plugin": [
     // "superpowers@git+https://github.com/obra/superpowers.git",
-    ["./", { "groups": ["dev", "dso"] }]
+    ["./", { "groups": ["gouv-fr/interieur/code", "gouv-fr/interieur/dso"] }]
   ],
   "permission": {
     "read": { "*": "allow", "**/.env.secrets": "deny", "**/.token": "deny", "**/.env": "deny" },

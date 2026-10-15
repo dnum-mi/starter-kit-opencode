@@ -14,10 +14,10 @@ Le dépôt est découpé en un **socle** commun et des **groupes** à installer 
 | Partie | Contenu | Sert à |
 |--------|---------|--------|
 | Socle | `AGENTS.md` | conventions communes : git, commits, TS, Python, lint, REST, Docker |
-| Groupe `dev` | `.agents/skills/dev/` | développer une application : front Vue/Nuxt + DSFR, back NestJS/Fastify/FastAPI, monorepo, poste dev |
-| | `agents/dev/`, `commands/dev/` | `/livrer` : implémenter un plan, vérifié avant et après |
-| Groupe `dso` | `.agents/skills/dso/` | CI/CD fabnum-cicd, chart Helm, déploiement Cloud Pi Native |
-| | `agents/dso/`, `commands/dso/` | `/deployer-cpin` : déployer en suivant le runbook, avec des portes |
+| Groupe `gouv-fr/interieur/code` | `.agents/skills/gouv-fr/interieur/code/` | développer une application : front Vue/Nuxt + DSFR, back NestJS/Fastify/FastAPI, monorepo, poste dev |
+| | `agents/gouv-fr/interieur/code/`, `commands/gouv-fr/interieur/code/` | `/livrer` : implémenter un plan, vérifié avant et après |
+| Groupe `gouv-fr/interieur/dso` | `.agents/skills/gouv-fr/interieur/dso/` | CI/CD fabnum-cicd, chart Helm, déploiement Cloud Pi Native |
+| | `agents/gouv-fr/interieur/dso/`, `commands/gouv-fr/interieur/dso/` | `/deployer-cpin` : déployer en suivant le runbook, avec des portes |
 | Plugin | `plugin/starter-kit.js` | installe le socle et les groupes choisis dans OpenCode |
 
 ```
@@ -68,7 +68,7 @@ Dans le `opencode.json` du projet, ou dans `~/.config/opencode/opencode.json` :
 {
   "$schema": "https://opencode.ai/config.json",
   "plugin": [
-    ["starter-kit-opencode@git+https://github.com/dnum-mi/starter-kit-opencode.git", { "groups": ["dev", "dso"] }]
+    ["starter-kit-opencode@git+https://github.com/dnum-mi/starter-kit-opencode.git", { "groups": ["gouv-fr/interieur/code", "gouv-fr/interieur/dso"] }]
   ]
 }
 ```
@@ -84,24 +84,24 @@ Dans le `opencode.json` du projet, ou dans `~/.config/opencode/opencode.json` :
 {
   "instructions": [
     "https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/AGENTS.md",
-    "https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/.agents/skills/dev/instructions.md"
+    "https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/.agents/skills/gouv-fr/interieur/code/instructions.md"
   ],
   "skills": {
-    "urls": ["https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/.agents/skills/dev/"]
+    "urls": ["https://raw.githubusercontent.com/dnum-mi/starter-kit-opencode/main/.agents/skills/gouv-fr/interieur/code/"]
   }
 }
 ```
 
 Remplacer `dev` par `dso`, ou ajouter les deux.
 
-> Le groupe `dso` automatise la console CPiN via `scripts/cpin-console` et `scripts/cpin-debug`, qui ne sont
+> Le groupe `gouv-fr/interieur/dso` automatise la console CPiN via `scripts/cpin-console` et `scripts/cpin-debug`, qui ne sont
 > **pas** distribués par cette installation (instructions et skills seulement). Pour les utiliser, passer par
 > l'installation plugin (§1) ou cloner le kit.
 
 ### 3. Copie (Claude Code, Codex, autres)
 
 ```bash
-cp -r .agents/skills/dev/* ~/.agents/skills/     # et/ou .agents/skills/dso/*
+cp -r .agents/skills/gouv-fr/interieur/code/* ~/.agents/skills/     # et/ou .agents/skills/gouv-fr/interieur/dso/*
 ```
 
 Seuls les skills sont installés. Les invariants des `instructions.md` (ex. « l'agent ne manipule jamais un
@@ -109,7 +109,7 @@ secret ») ne sont pas chargés : les recopier si besoin dans le `AGENTS.md` ou 
 
 ## Utiliser
 
-### `/livrer <plan>` (groupe `dev`)
+### `/livrer <plan>` (groupe `gouv-fr/interieur/code`)
 
 Pour implémenter un plan (texte, ou chemin d'un fichier) qui touche des bibliothèques externes.
 
@@ -125,7 +125,7 @@ Ce que `/livrer` ne fait pas :
   avertissement, mais ne peut rien vérifier ;
 - pas d'orchestrateur ni de portes humaines : pour une tâche sans plan, utiliser `build` directement.
 
-### `/deployer-cpin [contexte]` (groupe `dso`)
+### `/deployer-cpin [contexte]` (groupe `gouv-fr/interieur/dso`)
 
 Pour préparer le déploiement du dépôt courant sur Cloud Pi Native. L'agent **`cpin-orchestrateur`** (aussi
 accessible avec Tab) suit le runbook `deploiement-cpin` :
@@ -182,7 +182,7 @@ Une valeur déclarée dans votre `opencode.json` l'emporte sur celle du plugin :
 
 ## Contribuer
 
-Le `opencode.json` de ce dépôt charge le plugin par son chemin local (`["./", { "groups": ["dev", "dso"] }]`) :
+Le `opencode.json` de ce dépôt charge le plugin par son chemin local (`["./", { "groups": ["gouv-fr/interieur/code", "gouv-fr/interieur/dso"] }]`) :
 OpenCode lancé dans le dépôt utilise les instructions, skills, agents et commandes de la copie de travail, sans
 passer par GitHub ni par le cache. Relancer OpenCode suffit pour tester une modification.
 

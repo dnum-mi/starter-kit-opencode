@@ -5,9 +5,11 @@
  * ses agents (agents/<groupe>/*.md) et ses commandes (commands/<groupe>/*.md) :
  *
  *   "plugin": [["starter-kit-opencode@git+https://github.com/dnum-mi/starter-kit-opencode.git",
- *               { "groups": ["dso"] }]]
+ *               { "groups": ["gouv-fr/interieur/dso"] }]]
  *
- * Ce que l'utilisateur déclare lui-même dans opencode.json (agent ou commande du même nom) l'emporte.
+ * Un groupe est identifié par son chemin sous .agents/skills/ : il peut être imbriqué
+ * (ex. gouv-fr/interieur/dso). Ce que l'utilisateur déclare lui-même dans opencode.json
+ * (agent ou commande du même nom) l'emporte.
  */
 import fs from 'node:fs'
 import path from 'node:path'
@@ -15,7 +17,7 @@ import { fileURLToPath } from 'node:url'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const GROUPS_DIR = path.join(ROOT, '.agents/skills')
-const DEFAULT_GROUPS = ['dev']
+const DEFAULT_GROUPS = ['gouv-fr/interieur/code']
 const FRONTMATTER = /^---\n([\s\S]*?)\n---\n?([\s\S]*)$/
 
 function readMarkdown(file) {
@@ -45,10 +47,23 @@ function register(target, dir, bodyKey) {
   }
 }
 
+// Un catalogue est un dossier qui porte un index.json (les groupes peuvent être
+// imbriqués : gouv-fr/anssi, gouv-fr/interieur/code…). Sert au message d'erreur.
+function listCatalogs(dir = GROUPS_DIR) {
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    if (!entry.isDirectory())
+      return []
+    const sub = path.join(dir, entry.name)
+    return fs.existsSync(path.join(sub, 'index.json'))
+      ? [path.relative(GROUPS_DIR, sub)]
+      : listCatalogs(sub)
+  })
+}
+
 function installGroup(config, group) {
   const skills = path.join(GROUPS_DIR, group)
   if (!fs.existsSync(path.join(skills, 'index.json')))
-    throw new Error(`starter-kit : groupe inconnu '${group}' (attendu : ${fs.readdirSync(GROUPS_DIR).join(', ')})`)
+    throw new Error(`starter-kit : groupe inconnu '${group}' (attendus : ${listCatalogs().join(', ')})`)
   addUnique(config.instructions, path.join(skills, 'instructions.md'))
   addUnique(config.skills.paths, skills)
   register(config.agent, path.join(ROOT, 'agents', group), 'prompt')

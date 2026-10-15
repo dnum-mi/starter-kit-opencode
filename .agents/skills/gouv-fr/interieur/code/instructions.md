@@ -1,10 +1,10 @@
-# Groupe `dev` : développer une application
+# Groupe `gouv-fr/interieur/code` : développer une application
 
-> Chargé en plus du socle `AGENTS.md`, par le plugin (`"groups": ["dev"]`) ou par URL : voir le README.
+> Chargé en plus du socle `AGENTS.md`, par le plugin (`"groups": ["gouv-fr/interieur/code"]`) ou par URL : voir le README.
 
 ## Skills
 
-Skills dans `.agents/skills/dev/` :
+Skills dans `.agents/skills/gouv-fr/interieur/code/` :
 
 | Skill | Quand l'utiliser |
 |-------|-----------------|
@@ -13,8 +13,8 @@ Skills dans `.agents/skills/dev/` :
 | `recettes-serveur` | Backend NestJS / Fastify / FastAPI — scaffolding, logging, OpenAPI |
 | `stack-technique` | Configurer les outils recommandés — ESLint antfu, Prisma, date-fns… |
 | `monorepo` | Monorepo pnpm workspaces + Turborepo |
-| `ci-cd` | Principes CI/CD et gabarit CI de base — pour fabnum-cicd, releases et Cloud Pi Native voir `cicd-fabnum` (groupe `dso`) |
-| `deploiement` | Dockerfiles de production, durcissement des conteneurs (rootless, lecture seule, tags), dev local K8s — pour Helm et Cloud Pi Native voir le groupe `dso` |
+| `ci-cd` | Principes CI/CD et gabarit CI de base — pour fabnum-cicd, releases et Cloud Pi Native voir `cicd-fabnum` (groupe `gouv-fr/interieur/dso`) |
+| `deploiement` | Dockerfiles de production, durcissement des conteneurs (rootless, lecture seule, tags), dev local K8s — pour Helm et Cloud Pi Native voir le groupe `gouv-fr/interieur/dso` |
 | `environnement-installation` | Setup poste dev — Windows/WSL, macOS, Ubuntu |
 | `outils-dev` | Git, Docker Compose, VS Code, GitHub CLI, pnpm, proto, zsh, uv |
 

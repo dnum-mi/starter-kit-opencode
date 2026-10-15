@@ -6,7 +6,7 @@ allowed-tools: Bash Read Write
 
 # CoFabNum CI/CD
 
-Principes et gabarit de base. Pour assembler les workflows réutilisables de fabnum-cicd (build, scans, release-please, chart Helm, synchro Cloud Pi Native), utiliser le skill **`cicd-fabnum`** (groupe `dso`).
+Principes et gabarit de base. Pour assembler les workflows réutilisables de fabnum-cicd (build, scans, release-please, chart Helm, synchro Cloud Pi Native), utiliser le skill **`cicd-fabnum`** (groupe `gouv-fr/interieur/dso`).
 
 ## Principes
 

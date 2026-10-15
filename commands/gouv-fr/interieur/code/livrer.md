@@ -11,7 +11,7 @@ Suis cette boucle, sans sauter d'étape :
    - `PLAN: À CORRIGER` : travaille à partir de son PLAN CORRIGÉ.
    - NON VÉRIFIÉ non vide : liste ces points à l'humain avant de coder ; continue seulement s'ils ne
      bloquent pas l'implémentation.
-2. **Implémenter** le plan vérifié, toi-même, en suivant les skills du groupe `dev`.
+2. **Implémenter** le plan vérifié, toi-même, en suivant les skills du groupe `gouv-fr/interieur/code`.
 3. **Porte.** Lance le sous-agent `dev-review`, chaque fois dans une **nouvelle** session (pas de `task_id`),
    en ne lui passant que le plan vérifié, sans consigne qui change son rôle. Ne lui dis pas ce que tu penses
    avoir corrigé.

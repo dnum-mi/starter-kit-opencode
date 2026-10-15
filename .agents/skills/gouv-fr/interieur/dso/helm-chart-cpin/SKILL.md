@@ -99,4 +99,4 @@ Mettre la même commande en **job CI bloquant** (skill `cicd-fabnum`) : c'est ce
 
 - Doc interne : `docs/okf/helm/` (anatomie, conventions de values, sécurité et OpenShift, publication), `docs/okf/cloud-pi-native/contraintes-runtime.md` (table Kyverno), `docs/okf/decisions/dependances-chart.md`.
 - Exemple complet : `IA-Generative/ocr-api/helm`.
-- Skills liés (groupe `dso`) : `cicd-fabnum` (bump et publication du chart), `deploiement-cpin` (environnements, ArgoCD, secrets, quotas).
+- Skills liés (groupe `gouv-fr/interieur/dso`) : `cicd-fabnum` (bump et publication du chart), `deploiement-cpin` (environnements, ArgoCD, secrets, quotas).
