@@ -1,0 +1,57 @@
+{
+  "skills": [
+    {
+      "name": "cicd-fabnum",
+      "files": [
+        "SKILL.md",
+        "references/cd.yml",
+        "references/ci.yml",
+        "references/depot-infra.md",
+        "references/workflows.md"
+      ]
+    },
+    {
+      "name": "deploiement-cpin",
+      "files": [
+        "SKILL.md",
+        "references/depannage.md",
+        "references/gitlab-ci-dso.yml"
+      ]
+    },
+    {
+      "name": "helm-chart-cpin",
+      "files": [
+        "SKILL.md",
+        "references/values-cpin.yaml",
+        "references/vault-secret.yaml",
+        "scripts/check-cpin-rules.py"
+      ]
+    },
+    {
+      "name": "repo-cicd",
+      "files": [
+        "SKILL.md",
+        "agents/openai.yaml",
+        "references/composition.md",
+        "references/garde-fous.md",
+        "references/lecture-fabnum-cicd.md",
+        "references/prerequis-cpin.md",
+        "references/renovate.md",
+        "scripts/verif-appels.py"
+      ]
+    },
+    {
+      "name": "service-names",
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "smoke-test",
+      "files": [
+        "SKILL.md",
+        "agents/openai.yaml"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "skills": [
+    {
+      "name": "datagouv-apis",
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "donnees-ouvertes",
+      "files": [
+        "SKILL.md"
+      ]
+    }
+  ]
+}

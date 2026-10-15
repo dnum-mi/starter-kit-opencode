@@ -106,9 +106,16 @@ installé n'est jamais chargé.
 
 | Groupe | Pour qui | Agents et commandes |
 |--------|----------|---------------------|
-| `dev` | développer une application (front, back, monorepo, poste dev) | `dev-verif-plan`, `dev-review` (sous-agents) ; `/livrer` |
-| `dso` | CI/CD fabnum-cicd, Helm, déploiement Cloud Pi Native | `cpin-orchestrateur` (primaire), `cpin-plan`, `cpin-build`, `cpin-review` ; `/deployer-cpin` |
-| `fr-gouv/…` (7 groupes imbriqués) | catalogue Fabrique Numérique : `anssi`, `conformite`, `data`, `dsfr`, `lasuite`, `interieur/code`, `interieur/devsecops` — 26 skills `gouv-fr-*` | aucun (skills seuls) |
+| `gouv-fr/interieur/code` | développer une application (front, back, monorepo, poste dev) | `dev-verif-plan`, `dev-review` (sous-agents) ; `/livrer` |
+| `gouv-fr/interieur/dso` | CI/CD fabnum-cicd, Helm, déploiement Cloud Pi Native | `cpin-orchestrateur` (primaire), `cpin-plan`, `cpin-build`, `cpin-review` ; `/deployer-cpin` |
+| `gouv-fr/anssi` | sécurité, sûreté d'ouverture, pen-test, audits | aucun (skills seuls) |
+| `gouv-fr/conformite` | RGAA/RGPD/cookies, audit de conformité, homologation DAT | aucun (skills seuls) |
+| `gouv-fr/data` | APIs data.gouv.fr, données ouvertes | aucun (skills seuls) |
+| `gouv-fr/dsfr` | DSFR, VueDsfr, React-DSFR | aucun (skills seuls) |
+| `gouv-fr/lasuite` | interfaces LaSuite | aucun (skills seuls) |
+
+Tout est rangé sous `.agents/skills/gouv-fr/` : 7 groupes imbriqués, 34 skills, et le groupe par défaut du
+plugin est `gouv-fr/interieur/code`.
 
 Installation (plugin, URL ou copie des skills), prérequis et ce que font les agents : voir le
 [README](https://github.com/dnum-mi/starter-kit-opencode#readme). Ne pas combiner plugin et URL : le contenu
@@ -118,7 +125,7 @@ Règles pour les mainteneurs :
 
 - Le regroupement est propre à ce repo : le standard Agent Skills ne le définit pas. OpenCode charge chaque URL comme un catalogue indépendant.
 - Noms de skills **uniques entre groupes** : OpenCode les télécharge tous dans `~/.cache/opencode/skills/`.
-- Une instruction propre à un groupe va dans son `instructions.md`, **jamais ici** ; un groupe ne renvoie vers un autre qu'en le nommant (« voir le groupe `dso` »), sans supposer qu'il est installé.
+- Une instruction propre à un groupe va dans son `instructions.md`, **jamais ici** ; un groupe ne renvoie vers un autre qu'en le nommant (« voir le groupe `gouv-fr/interieur/dso` »), sans supposer qu'il est installé.
 - Un agent ou une commande d'un groupe : `agents/<groupe>/<nom>.md` ou `commands/<groupe>/<nom>.md`, au format markdown natif d'OpenCode (frontmatter + prompt), préfixé par le groupe ou son domaine (`cpin-`) pour ne pas écraser `build`/`plan`. Vérifier : `make test-plugin`.
 - Après avoir ajouté ou retiré un fichier de skill : `node scripts/skills-index.mjs` (génère), `node scripts/skills-index.mjs --check` (vérifie).
 

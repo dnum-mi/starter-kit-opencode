@@ -1,0 +1,34 @@
+{
+  "skills": [
+    {
+      "name": "audit-conformite",
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "conformite-rgaa",
+      "files": [
+        "SKILL.md",
+        "references/source-gouv-fr-compliance-rgaa.md",
+        "references/source-gouv-fr-cookies-rgpd.md"
+      ]
+    },
+    {
+      "name": "dat",
+      "files": [
+        "SKILL.md",
+        "CHANGELOG.md",
+        "assets/logo_minint_2020.png",
+        "assets/logo_minint_2020.svg",
+        "dat/MODELE_DAT_MirAI.docx",
+        "dat/PROMPT_coding_assistant_DAT.md",
+        "references/source-gouv-fr-dat-homologation.md",
+        "references/source-gouv-fr-dat-word-CHANGELOG.md",
+        "references/source-gouv-fr-dat-word.md",
+        "render_docx.py",
+        "tests/test_render_docx.py"
+      ]
+    }
+  ]
+}

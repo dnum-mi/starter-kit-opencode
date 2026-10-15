@@ -1,0 +1,31 @@
+{
+  "skills": [
+    {
+      "name": "composants-vue",
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "dsfr",
+      "files": [
+        "SKILL.md",
+        "references/cdn-integration.md",
+        "references/source-gouv-fr-design-system.md",
+        "references/source-gouv-fr-graphiques-dsfr.md",
+        "references/source-gouv-fr-pictogrammes-dsfr.md",
+        "references/source-gouv-fr-templates-email.md",
+        "references/verify-no-browser.md",
+        "scripts/verify_dsfr.py"
+      ]
+    },
+    {
+      "name": "react-dsfr",
+      "files": [
+        "SKILL.md",
+        "references/components.md",
+        "references/setup.md"
+      ]
+    }
+  ]
+}
