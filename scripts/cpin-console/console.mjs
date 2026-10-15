@@ -13,7 +13,7 @@
 // DSO_TOKEN (jeton API console) est lu dans <dossier courant>/.cpin/.env.secrets (0600).
 // GH_USER / GH_PAT (un seul PAT GitHub fine-grained) y sont lus : GH_PAT sert à la console pour un dépôt privé
 // et est posé en secret GitHub par pat-push. Aucune valeur n'est jamais affichée.
-import { readFile } from 'node:fs/promises'
+import { readFile, appendFile } from 'node:fs/promises'
 import { SECRETS_FILE, ensureExcluded, writeSecretsFile } from './secrets-file.mjs'
 import { spawnSync } from 'node:child_process'
 
@@ -180,8 +180,8 @@ function describe(plan, environments) {
 
 // --- commandes --------------------------------------------------------------------------------
 
-const SECRET_NAMES = ['DSO_TOKEN', 'GH_USER', 'GH_PAT', 'GITLAB_PAT', 'ARGOCD_TOKEN']
-const OPTIONAL = new Set(['GITLAB_PAT', 'ARGOCD_TOKEN']) // debug automatisé : GITLAB_PAT saisi, ARGOCD_TOKEN écrit par login.mjs
+const SECRET_NAMES = ['DSO_TOKEN', 'GH_USER', 'GH_PAT', 'GITLAB_PAT', 'ARGOCD_TOKEN', 'VAULT_TOKEN']
+const OPTIONAL = new Set(['GITLAB_PAT', 'ARGOCD_TOKEN', 'VAULT_TOKEN']) // debug automatisé : GITLAB_PAT saisi, ARGOCD_TOKEN écrit par login.mjs
 
 const commands = {
   // Crée le fichier (jamais écrasé) avec des valeurs vides ; l'humain y colle ses valeurs.
@@ -197,6 +197,16 @@ const commands = {
       if (error.code !== 'ENOENT') throw error
       await writeSecretsFile(`${SECRET_NAMES.map(name => `${name}=`).join('\n')}\n`)
       created = true
+    }
+    if (!created) {
+      // fichier créé par une version antérieure : on y ajoute les noms qui manquent (valeurs vides), sans toucher au reste
+      const present = new Set((await readFile(SECRETS_FILE, 'utf8')).split('\n').map(line => line.split('=')[0]))
+      const absent = SECRET_NAMES.filter(name => !present.has(name))
+      if (absent.length) {
+        const text = await readFile(SECRETS_FILE, 'utf8')
+        await appendFile(SECRETS_FILE, `${text.endsWith('\n') ? '' : '\n'}${absent.map(name => `${name}=`).join('\n')}\n`)
+        console.log(`noms ajoutés : ${absent.join(', ')}`)
+      }
     }
     console.log(`${created ? 'créé' : 'existant'} : ${SECRETS_FILE} (0600)`)
     console.log(`.dockerignore : ${dockerAdded.length ? `${dockerAdded.join(', ')} ajouté` : 'déjà à jour'}`)
