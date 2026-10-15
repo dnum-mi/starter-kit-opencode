@@ -29,6 +29,27 @@ export async function saveSecret(key, value) {
   await writeSecretsFile(content)
 }
 
+export async function purgeSecrets(names) {
+  const secrets = await loadSecrets()
+  for (const name of names) delete secrets[name]
+  const content = `${Object.entries(secrets)
+    .map(([k, v]) => `${k}=${v}`)
+    .join('\n')}\n`
+  await writeFile(SECRETS_FILE, content, { encoding: 'utf8', flag: 'w' })
+  await chmod(SECRETS_FILE, 0o600)
+}
+
+// Cookies SSO Keycloak (domaine keycloak) : valent un accès SSO complet à tout ce que l'humain peut
+// atteindre, pas seulement à Vault. À purger après usage (vault-login.mjs purge).
+export const KEYCLOAK_COOKIE_NAMES = [
+  'KEYCLOAK_IDENTITY',
+  'KEYCLOAK_SESSION',
+  'KEYCLOAK_REMEMBER_ME',
+  'KEYCLOAK_LOCALE',
+  'KC_AUTH_SESSION_HASH',
+  'KC_AUTH_SESSION_ID',
+]
+
 export function redact(value) {
   if (!value) return '<absent>'
   return `<${value.length} caractères, masqué>`

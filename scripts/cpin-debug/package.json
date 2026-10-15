@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "login": "node login.mjs",
+    "vault-login": "node vault-login.mjs",
+    "vault-secret": "node vault-secret.mjs",
     "check:argocd": "node check-argocd.mjs",
     "check:harbor": "node check-harbor.mjs",
     "check:gitlab": "node check-gitlab.mjs",
