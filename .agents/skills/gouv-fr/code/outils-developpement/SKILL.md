@@ -1,10 +1,6 @@
 ---
 name: outils-developpement
 description: Installation et configuration des outils dev (Git, Docker, pnpm, proto, VS Code, GitHub CLI, uv, zsh). Vérification d'environnement, branches, commits, Docker Compose, conventions de nommage et hygiène de dépôt.
-category: workflow
-version: 0.2.0
-license: MIT
-platforms: [linux, macos]
 allowed-tools: Bash Read
 ---
 

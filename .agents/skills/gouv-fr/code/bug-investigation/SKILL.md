@@ -1,10 +1,6 @@
 ---
 name: bug-investigation
 description: Force 2-3 hypothèses de cause + plan B avant tout fix de bug. Utiliser sur tout bug signalé, régression, comportement inattendu, ou avant de toucher au code "pour corriger". Inspiré du guide Karpathy §1.
-category: workflow
-version: 1.0.0
-license: MIT
-platforms: [linux, macos]
 ---
 
 

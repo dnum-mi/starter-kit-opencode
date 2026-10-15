@@ -1,10 +1,6 @@
 ---
 name: conformite-rgaa
 description: Vérifie la conformité d'un service de l'État — RGAA (accessibilité), DSFR (design system), RGPD (données et cookies) — et met en place un gestionnaire de cookies conforme.
-category: conformite
-version: 0.3.0
-license: MIT
-platforms: [linux, macos]
 ---
 
 # Gouv-fr — Conformité (RGAA, DSFR, RGPD, cookies)

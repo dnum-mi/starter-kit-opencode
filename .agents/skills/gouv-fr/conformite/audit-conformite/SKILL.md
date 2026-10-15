@@ -1,10 +1,6 @@
 ---
 name: audit-conformite
 description: "Audit de conformité d'une application : fuites de secrets, SQL, TLS, RGAA/DSFR, RGPD, git et tests."
-category: qualite
-version: 0.1.0
-license: MIT
-platforms: [linux, macos]
 ---
 
 # Gouv-fr — Audit de conformité d'une application

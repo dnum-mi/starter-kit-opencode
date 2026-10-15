@@ -1,10 +1,6 @@
 ---
 name: workflow-dev
 description: "Workflow : plan mode, tâches, leçons, bug fixing."
-category: workflow
-version: 0.1.1
-license: MIT
-platforms: [linux, macos]
 ---
 
 # Gouv-fr — Workflow de développement

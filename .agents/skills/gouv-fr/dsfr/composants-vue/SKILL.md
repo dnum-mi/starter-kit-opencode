@@ -1,10 +1,6 @@
 ---
 name: composants-vue
 description: "Installer et utiliser VueDsfr (composants Vue 3 DSFR)."
-category: frontend
-version: 1.0.0
-license: MIT
-platforms: [linux, macos]
 ---
 
 # Gouv-fr — Composants Vue (VueDsfr)

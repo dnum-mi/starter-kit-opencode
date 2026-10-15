@@ -1,10 +1,6 @@
 ---
 name: anssi-guides
 description: "Trouver et consulter le bon guide ANSSI via l'API MesServicesCyber : catalogue des guides français et des publications anglaises sans équivalent, aiguillage et citation de la source. Sécurité hors développement (réseau, pare-feu, Active Directory, Wi-Fi, virtualisation, gestion de crise, EBIOS, cryptographie post-quantique)."
-category: security
-version: 0.1.0
-license: MIT
-platforms: [linux, macos]
 ---
 
 # Gouv-fr — Guides ANSSI (catalogue et consultation)

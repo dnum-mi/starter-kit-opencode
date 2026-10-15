@@ -1,10 +1,6 @@
 ---
 name: react-dsfr
 description: "Créer des interfaces React conformes au Design System de l'État avec @codegouvfr/react-dsfr. Setup Next.js App Router (anti-flash thème), routing, icônes, couleurs, composants natifs (pas MUI), patterns de mise en page et de formulaire."
-category: frontend
-version: 0.1.0
-license: MIT
-platforms: [linux, macos]
 ---
 
 # Gouv-fr — React DSFR (@codegouvfr/react-dsfr)

@@ -1,10 +1,6 @@
 ---
 name: adr
 description: Rédige une nouvelle ADR (Architecture Decision Record). Utiliser quand une décision d'archi a été prise et doit être tracée (choix de backend, refonte, breaking change, trade-off entre options).
-category: workflow
-version: 1.0.0
-license: MIT
-platforms: [linux, macos]
 ---
 
 

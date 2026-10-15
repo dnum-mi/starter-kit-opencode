@@ -1,10 +1,6 @@
 ---
 name: code-quality
 description: Applique les standards de code au quotidien (structure, fonctions, erreurs, async, tests) et décide, via une grille de revue en 3 niveaux, de ce qui entre dans une base maintenue.
-category: code
-version: 0.3.0
-license: MIT
-platforms: [linux, macos]
 ---
 
 # Gouv-fr — Qualité de code et revue

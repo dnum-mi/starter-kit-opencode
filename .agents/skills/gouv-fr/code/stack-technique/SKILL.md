@@ -1,10 +1,6 @@
 ---
 name: stack-technique
 description: "Stack technique recommandée pour les projets Fabrique Numérique : Front (Vue 3, DSFR), Back (Fastify, NestJS, FastAPI), TS strict, Prisma, ESLint, ruff, PostgreSQL, monorepo. Outils de dev, réglages VS Code et versions."
-category: architecture
-version: 0.3.0
-license: MIT
-platforms: [linux, macos]
 ---
 
 # Gouv-fr — Stack technique

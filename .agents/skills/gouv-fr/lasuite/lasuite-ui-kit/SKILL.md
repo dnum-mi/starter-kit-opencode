@@ -1,10 +1,6 @@
 ---
 name: lasuite-ui-kit
 description: "Créer des interfaces React pour les applications LaSuite (Docs, Drive, People, Webinaire, Messagerie) avec @gouvfr-lasuite/ui-kit et @gouvfr-lasuite/cunningham-react. Layout applicatif, navigation, recherche rapide, badges, icônes Material, menus contextuels, partage et invitations."
-category: frontend
-version: 0.1.0
-license: MIT
-platforms: [linux, macos]
 ---
 
 # Gouv-fr — LaSuite UI Kit (@gouvfr-lasuite)

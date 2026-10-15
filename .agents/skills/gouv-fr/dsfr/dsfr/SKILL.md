@@ -1,10 +1,6 @@
 ---
 name: dsfr
 description: Installe et vérifie le design system de l'État (DSFR) — CSS/JS officiels, composants, pictogrammes, graphiques et templates email — sans jamais inventer de classe.
-category: design
-version: 0.3.0
-license: MIT
-platforms: [linux, macos]
 ---
 
 # Gouv-fr — Design System de l'État (DSFR)

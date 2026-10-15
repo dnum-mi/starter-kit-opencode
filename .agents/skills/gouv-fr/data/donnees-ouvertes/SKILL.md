@@ -1,10 +1,6 @@
 ---
 name: donnees-ouvertes
 description: "Données ouvertes publiques du SIG (schémas, JSONL)."
-category: data
-version: 0.1.1
-license: MIT
-platforms: [linux, macos]
 ---
 
 # Gouv-fr — Données ouvertes du SIG

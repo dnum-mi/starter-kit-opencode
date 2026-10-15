@@ -1,10 +1,6 @@
 ---
 name: deploiement
 description: Déploie une application — Dockerfiles de prod durcis (multi-stage, rootless, lecture seule), securityContext Kubernetes et développement local (Docker Compose, Kind/k3d/Minikube), puis onboarding et livraison sur Cloud Pi Native (console DSO, pipeline, Harbor, ArgoCD).
-category: devsecops
-version: 0.3.0
-license: MIT
-platforms: [linux, macos]
 ---
 
 # Gouv-fr — Déploiement (Docker/K8s et Cloud Pi Native)

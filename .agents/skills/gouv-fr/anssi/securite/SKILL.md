@@ -1,10 +1,6 @@
 ---
 name: securite
 description: Applique les règles de sécurité non négociables (secrets, SQL, TLS, isolation VM, prompt injection) et audite la sûreté d'une base de code avant de l'ouvrir ou de l'exécuter.
-category: securite
-version: 0.3.0
-license: MIT
-platforms: [linux, macos]
 ---
 
 # Gouv-fr — Sécurité & sûreté des bases de code

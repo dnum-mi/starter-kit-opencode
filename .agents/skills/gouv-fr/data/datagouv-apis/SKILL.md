@@ -1,10 +1,6 @@
 ---
 name: datagouv-apis
 description: "Consommer les APIs de la plateforme data.gouv.fr : catalogue, métadonnées de datasets, organisations, téléchargement de fichiers, requêtes de lignes CSV (Tabular API), métriques d'usage (Metrics API) et dataservices (APIs externes). Exploration via MCP ou HTTP."
-category: data
-version: 0.1.0
-license: MIT
-platforms: [linux, macos]
 ---
 
 # Gouv-fr — API data.gouv.fr (Main, Metrics, Tabular)

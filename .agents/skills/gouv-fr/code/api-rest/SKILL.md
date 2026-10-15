@@ -1,10 +1,6 @@
 ---
 name: api-rest
 description: Conventions API RESTful, OpenAPI, Swagger et tests d'API pour Fabrique Numérique.
-category: backend
-version: 0.1.0
-license: MIT
-platforms: [linux, macos]
 ---
 
 # Gouv-fr — API RESTful

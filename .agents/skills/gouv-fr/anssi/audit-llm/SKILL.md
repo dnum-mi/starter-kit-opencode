@@ -1,10 +1,6 @@
 ---
 name: audit-llm
 description: Audite un service LLM ou un agent — prompt-injection / red-team (OWASP LLM01) et continuité de l'identité SSO des outils derrière une passerelle (sub Keycloak de bout en bout).
-category: securite
-version: 0.3.0
-license: MIT
-platforms: [linux, macos]
 ---
 
 # Gouv-fr — Audit LLM & agents (red-team + identité SSO)

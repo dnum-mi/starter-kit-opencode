@@ -1,10 +1,6 @@
 ---
 name: projet-structure
 description: Structure un projet (layout, config OpenCode) et l'initialise proprement, sans fuite ni écrasement.
-category: code
-version: 0.3.0
-license: MIT
-platforms: [linux, macos]
 ---
 
 # Gouv-fr — Structure de projet et initialisation de dépôt
