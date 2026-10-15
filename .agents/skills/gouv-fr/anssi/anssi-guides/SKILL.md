@@ -9,7 +9,7 @@ platforms: [linux, macos]
 metadata:
   hermes:
     tags: [anssi, securite, guides, catalogue, etat, gouv-fr, conformite, homologation]
-    related_skills: [securite, audit-pentest, dat, securite]
+    related_skills: [securite, audit-pentest, audit-llm]
 ---
 
 # Gouv-fr — Guides ANSSI (catalogue et consultation)

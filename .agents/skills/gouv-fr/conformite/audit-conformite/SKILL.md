@@ -1,6 +1,6 @@
 ---
 name: audit-conformite
-description: "Audit de conformité d'une app gouv-fr-code-index."
+description: "Audit de conformité d'une application : fuites de secrets, SQL, TLS, RGAA/DSFR, RGPD, git et tests."
 category: qualite
 version: 0.1.0
 author: Hermes Agent
@@ -16,10 +16,9 @@ metadata:
 
 ## Quand utiliser
 
-Quand un utilisateur demande « vérifier conformité avec gouv fr skills » sur une application. C'est une tâche récurrente
-dans les échanges. Les règles documentaires vivent dans les skills user-owned suivants : `securite`,
-`conformite-rgaa`, `projet-structure`, `projet-structure`, `workflow-dev`. Ce skill porte la
-procédure de vérification et les pièges concrets. Ne pas éditer ces skills user-owned; les consulter seulement.
+Quand un utilisateur demande de vérifier la conformité d'une application. Les règles documentaires vivent
+dans les skills `securite`, `conformite-rgaa`, `projet-structure` et `workflow-dev` : les consulter, ne pas
+les modifier. Ce skill porte la procédure de vérification et les pièges concrets.
 
 ## Ordre de l'audit
 
@@ -31,7 +30,7 @@ Pour chaque check, si échec, corriger avant de passer au suivant.
 4. **TLS** — https, ssl-redirect, runAsNonRoot.
 5. **RGAA / DSFR** — structure sémantique, classes vérifiées contre le CSS officiel.
 6. **RGPD** — minimisation plus droit à l'oubli.
-7. **Git** — commits Conventional, trailer porté par chaque commit, arbre de travail propre, `.gitignore` complet.
+7. **Git** — commits Conventional, trailer exigé porté par chaque commit, arbre de travail propre, `.gitignore` complet.
 8. **Tests** — suite pytest verte.
 
 ## Commandes par check
@@ -84,12 +83,13 @@ Pas de champ personnel (exemple `author`) dans la persistance. Une route de supp
 
 ### 7. Git — trailer sur chaque commit
 
-Piège le plus courant : un commit de correction rapide fait en cours de session est délivré sans trailer, et un auditqui
-vérifie seulement le dernier commit ne le voit pas. Vérifier commit par commit, ne pas s'arrêter au HEAD :
+Très souvent, la vérification d'un trailer se limite au dernier commit — et un commit de correction rapide,
+dépourvu de trailer, passe alors inaperçu. Déterminer d'abord le trailer exigé par les conventions du projet
+audité, puis vérifier commit par commit, pas seulement le HEAD :
 
 ```bash
 cd <repo> && for h in $(git rev-list --reverse HEAD); do
-  git show -s --format='%B' "$h" | grep -q 'Co-Authored-By: gouv-fr-code' || echo "MISSING TRAILER: $h"
+  git show -s --format='%B' "$h" | grep -q 'Co-Authored-By: <trailer attendu>' || echo "MISSING TRAILER: $h"
 done
 ```
 
@@ -107,10 +107,9 @@ doit être propre à la fin de l'audit.
 ### 8. Tests
 
 `. .venv/bin/activate && python -m pytest -q` : vert. Le décompte doit être cohérent avec celui documenté dans
-`AGENTS.md``. Signaler toute dérive de documentation.
+`AGENTS.md`. Signaler toute dérive de documentation.
 
 ## À la fin
 
-Quand un écart est corrigé, re-exécuter **toute** la suite : la vérification est de bout en bout. Puis committer la
-correction en Conventional plus trailer. Les skills du catalogue `gouv-fr/…` sont user-owned : ne pas les patcher, recommander
-`hermes curator adopt` si la curation est souhaitée.
+Quand un écart est corrigé, re-exécuter **toute** la suite : la vérification est de bout en bout. Puis committer
+la correction en Conventional avec le trailer du projet.

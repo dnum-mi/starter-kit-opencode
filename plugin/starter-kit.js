@@ -5,10 +5,10 @@
  * ses agents (agents/<groupe>/*.md) et ses commandes (commands/<groupe>/*.md) :
  *
  *   "plugin": [["starter-kit-opencode@git+https://github.com/dnum-mi/starter-kit-opencode.git",
- *               { "groups": ["gouv-fr/interieur/dso"] }]]
+ *               { "groups": ["gouv-fr/dso"] }]]
  *
  * Un groupe est identifié par son chemin sous .agents/skills/ : il peut être imbriqué
- * (ex. gouv-fr/interieur/dso). Ce que l'utilisateur déclare lui-même dans opencode.json
+ * (ex. gouv-fr/dso). Ce que l'utilisateur déclare lui-même dans opencode.json
  * (agent ou commande du même nom) l'emporte.
  */
 import fs from 'node:fs'
@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const GROUPS_DIR = path.join(ROOT, '.agents/skills')
-const DEFAULT_GROUPS = ['gouv-fr/interieur/code']
+const DEFAULT_GROUPS = ['gouv-fr/code']
 const FRONTMATTER = /^---\n([\s\S]*?)\n---\n?([\s\S]*)$/
 
 function readMarkdown(file) {
@@ -48,7 +48,7 @@ function register(target, dir, bodyKey) {
 }
 
 // Un catalogue est un dossier qui porte un index.json (les groupes peuvent être
-// imbriqués : gouv-fr/anssi, gouv-fr/interieur/code…). Sert au message d'erreur.
+// imbriqués : gouv-fr/anssi, gouv-fr/code…). Sert au message d'erreur.
 function listCatalogs(dir = GROUPS_DIR) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     if (!entry.isDirectory())

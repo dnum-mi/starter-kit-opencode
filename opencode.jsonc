@@ -3,7 +3,7 @@
   "lsp": true,
   "plugin": [
     // "superpowers@git+https://github.com/obra/superpowers.git",
-    ["./", { "groups": ["gouv-fr/interieur/code", "gouv-fr/interieur/dso", "gouv-fr/anssi", "gouv-fr/conformite", "gouv-fr/data", "gouv-fr/dsfr", "gouv-fr/lasuite"] }]
+    ["./", { "groups": ["gouv-fr/code", "gouv-fr/dso", "gouv-fr/anssi", "gouv-fr/conformite", "gouv-fr/data", "gouv-fr/dsfr", "gouv-fr/lasuite"] }]
   ],
   "permission": {
     "read": { "*": "allow", "**/.env.secrets": "deny", "**/.token": "deny" },

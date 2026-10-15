@@ -9,7 +9,7 @@ platforms: [linux, macos]
 metadata:
   hermes:
     tags: [gouv-fr, rgaa, accessibilite, dsfr, rgpd, cookies, tarteaucitron, conformite]
-    related_skills: [dsfr, audit-conformite, dat, securite]
+    related_skills: [dsfr, audit-conformite, securite]
 ---
 
 # Gouv-fr — Conformité (RGAA, DSFR, RGPD, cookies)

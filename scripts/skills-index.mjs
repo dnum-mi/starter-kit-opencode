@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Génère ou vérifie le index.json de chaque catalogue de skills servi via `skills.urls`.
 // Catalogues : un groupe par dossier de .agents/skills/ qui porte un index.json — les
-// groupes peuvent être imbriqués (ex. gouv-fr/anssi, gouv-fr/interieur/code), chacun avec son index.json.
+// groupes peuvent être imbriqués (ex. gouv-fr/anssi, gouv-fr/code), chacun avec son index.json.
 // Usage : node scripts/skills-index.mjs [--check] [<catalogue>...]
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
@@ -36,7 +36,7 @@ function hasSkills(dir) {
 }
 
 function defaultCatalogs() {
-  // Un catalogue peut être imbriqué (ex. gouv-fr/interieur/code) : on parcourt
+  // Un catalogue peut être imbriqué (ex. gouv-fr/code) : on parcourt
   // l'arbre et on retient tout dossier qui contient directement des skills.
   const catalogs = []
   const walk = (dir) => {
