@@ -18,7 +18,7 @@ Le dépôt est découpé en un **socle** commun et des **groupes** à installer 
 | | `agents/dev/`, `commands/dev/` | `/livrer` : implémenter un plan, vérifié avant et après |
 | Groupe `dso` | `.agents/skills/dso/` | CI/CD fabnum-cicd, chart Helm, déploiement Cloud Pi Native |
 | | `agents/dso/`, `commands/dso/` | `/deployer-cpin` : déployer en suivant le runbook, avec des portes |
-| Groupe `gouv-fr` | `.agents/skills/gouv-fr/` | catalogue Fabrique Numérique : architecture, front Vue/React + DSFR, back, qualité et conformité (RGAA/RGPD), sécurité et audit, CI/CD CPiN, données ouvertes — recouvre partiellement `dev`/`dso` |
+| Groupe `fr-gouv/…` | `.agents/skills/fr-gouv/` | catalogue Fabrique Numérique, en **7 groupes imbriqués** (`anssi`, `conformite`, `data`, `dsfr`, `lasuite`, `interieur/code`, `interieur/devsecops`) — 26 skills, sans doublon avec `dev`/`dso` |
 | Plugin | `plugin/starter-kit.js` | installe le socle et les groupes choisis dans OpenCode |
 
 ```
@@ -37,9 +37,15 @@ Le dépôt est découpé en un **socle** commun et des **groupes** à installer 
 │   ├── cicd-fabnum/                workflows fabnum-cicd, releases, synchro sync-cpin
 │   ├── helm-chart-cpin/            chart tobi + surcharge CPiN, check-cpin-rules.py
 │   └── deploiement-cpin/           runbook en phases avec portes, dépannage
-└── gouv-fr/                        instructions.md + index.json
-    └── gouv-fr-*/                   37 skills gouv-fr (architecture, front Vue/React + DSFR,
-                                     back, qualité/RGAA/RGPD, sécurité/audit, CI/CD CPiN, données)
+└── fr-gouv/                        7 groupes imbriqués — 26 skills préfixés `gouv-fr-`
+    ├── anssi/                      instructions.md + index.json — sécurité, sûreté d'ouverture, pen-test, audit LLM
+    ├── conformite/                 instructions.md + index.json — RGAA/RGPD/cookies, audit conformité, homologation DAT
+    ├── data/                       instructions.md + index.json — APIs data.gouv.fr, données ouvertes SIG
+    ├── dsfr/                       instructions.md + index.json — DSFR (composants, pictogrammes, graphiques, email), VueDsfr, React
+    ├── lasuite/                    instructions.md + index.json — interfaces LaSuite (ui-kit)
+    └── interieur/
+        ├── code/                   instructions.md + index.json — structure, qualité/revue, stack, monorepo, API REST, ADR, outils
+        └── devsecops/              instructions.md + index.json — CI/CD, Docker/K8s, Cloud Pi Native, smoke-test
 ```
 
 ## Prérequis
@@ -77,7 +83,9 @@ Dans le `opencode.json` du projet, ou dans `~/.config/opencode/opencode.json` :
 }
 ```
 
-- Groupes disponibles : `dev`, `dso`, `gouv-fr`. `groups` vaut `["dev"]` par défaut. Un groupe non listé n'est pas chargé du tout : ni instructions, ni skills, ni agents.
+- Groupes disponibles : `dev`, `dso`, puis les 7 groupes imbriqués `fr-gouv/anssi`, `fr-gouv/conformite`,
+  `fr-gouv/data`, `fr-gouv/dsfr`, `fr-gouv/lasuite`, `fr-gouv/interieur/code`, `fr-gouv/interieur/devsecops`.
+  `groups` vaut `["dev"]` par défaut. Un groupe non listé n'est pas chargé du tout : ni instructions, ni skills, ni agents.
 - Le plugin suit `main`. Pour figer une version : `…starter-kit-opencode.git#<sha>`.
 - OpenCode garde le paquet en cache. Pour récupérer une mise à jour de `main`, supprimer le dossier
   `starter-kit-opencode@…` dans `~/.cache/opencode/packages/`, puis relancer OpenCode.
@@ -96,12 +104,12 @@ Dans le `opencode.json` du projet, ou dans `~/.config/opencode/opencode.json` :
 }
 ```
 
-Remplacer `dev` par `dso` ou `gouv-fr`, ou ajouter les groupes voulus.
+Remplacer `dev` par `dso` ou par l'un des groupes `fr-gouv/…`, ou ajouter ceux voulus.
 
 ### 3. Copie (Claude Code, Codex, autres)
 
 ```bash
-cp -r .agents/skills/dev/* ~/.agents/skills/     # et/ou .agents/skills/dso/*, .agents/skills/gouv-fr/*
+cp -r .agents/skills/dev/* ~/.agents/skills/     # et/ou .agents/skills/dso/*, .agents/skills/fr-gouv/<groupe>/*
 ```
 
 Seuls les skills sont installés. Les invariants des `instructions.md` (ex. « l'agent ne manipule jamais un
@@ -182,7 +190,7 @@ Une valeur déclarée dans votre `opencode.json` l'emporte sur celle du plugin :
 
 ## Contribuer
 
-Le `opencode.json` de ce dépôt charge le plugin par son chemin local (`["./", { "groups": ["dev", "dso", "gouv-fr"] }]`) :
+Le `opencode.json` de ce dépôt charge le plugin par son chemin local (`["./", { "groups": ["dev", "dso", "fr-gouv/anssi", "fr-gouv/conformite", "fr-gouv/data", "fr-gouv/dsfr", "fr-gouv/lasuite", "fr-gouv/interieur/code", "fr-gouv/interieur/devsecops"] }]`) :
 OpenCode lancé dans le dépôt utilise les instructions, skills, agents et commandes de la copie de travail, sans
 passer par GitHub ni par le cache. Relancer OpenCode suffit pour tester une modification.
 
@@ -213,10 +221,12 @@ Skills tirés de la documentation de la [Fabrique Numérique](https://docs.fabri
 (`dnum-mi/transversal-doc`) et de celle de [Cloud Pi Native](https://cloud-pi-native.fr), ainsi que du retour
 d'expérience du déploiement de `IA-Generative/dso-demo`.
 
-Le groupe `gouv-fr` provient du dépôt [`ynotopec/gouv-fr-skills`](https://github.com/ynotopec/gouv-fr-skills)
+Le catalogue `fr-gouv/…` provient du dépôt [`ynotopec/gouv-fr-skills`](https://github.com/ynotopec/gouv-fr-skills)
 (37 skills préfixés `gouv-fr-`, eux-mêmes dérivés de `starter-kit-opencode`, de `etalab-ia/skills` et de
 `ynotopec/gouv-fr-code-package-mi`) ; la correspondance des noms avec `dev`/`dso` y est documentée dans son
-`UPSTREAM.md`.
+`UPSTREAM.md`. En arrivant ici, les 37 skills ont été **compacts en 26** (fusions par thème, contenu d'origine
+conservé dans `references/source-*.md`) et répartis en 7 groupes imbriqués. Aucun doublon avec `dev`/`dso` :
+les skills identiques n'ont pas été importés, la table de correspondance est dans chaque `instructions.md`.
 
 ## Références
 

@@ -1,0 +1,68 @@
+{
+  "skills": [
+    {
+      "name": "gouv-fr-adr",
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "gouv-fr-api-rest",
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "gouv-fr-bug-investigation",
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "gouv-fr-code-quality",
+      "files": [
+        "SKILL.md",
+        "UPSTREAM.md",
+        "references/checklist.md",
+        "references/evaluation-scenarios.md",
+        "references/hygiene-log-format.md",
+        "references/pr-template.md",
+        "references/source-gouv-fr-code-quality.md",
+        "references/source-gouv-fr-lint-eslint.md"
+      ]
+    },
+    {
+      "name": "gouv-fr-monorepo-pnpm",
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "gouv-fr-outils-developpement",
+      "files": [
+        "SKILL.md",
+        "scripts/check-environment.sh"
+      ]
+    },
+    {
+      "name": "gouv-fr-projet-structure",
+      "files": [
+        "SKILL.md",
+        "references/source-gouv-fr-projet-structure.md",
+        "references/source-gouv-fr-repo-init.md"
+      ]
+    },
+    {
+      "name": "gouv-fr-stack-technique",
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "gouv-fr-workflow-dev",
+      "files": [
+        "SKILL.md"
+      ]
+    }
+  ]
+}

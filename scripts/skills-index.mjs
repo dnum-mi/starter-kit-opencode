@@ -35,10 +35,21 @@ function hasSkills(dir) {
 }
 
 function defaultCatalogs() {
-  return readdirSync(GROUPS_DIR, { withFileTypes: true })
-    .filter(entry => entry.isDirectory())
-    .map(entry => join(GROUPS_DIR, entry.name))
-    .filter(hasSkills)
+  // Un catalogue peut être imbriqué (ex. fr-gouv/interieur/code) : on parcourt
+  // l'arbre et on retient tout dossier qui contient directement des skills.
+  const catalogs = []
+  const walk = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (!entry.isDirectory())
+        continue
+      const path = join(dir, entry.name)
+      if (hasSkills(path))
+        catalogs.push(path)
+      walk(path)
+    }
+  }
+  walk(GROUPS_DIR)
+  return catalogs.sort()
 }
 
 function normalize(index) {

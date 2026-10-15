@@ -1,0 +1,13 @@
+{
+  "skills": [
+    {
+      "name": "gouv-fr-lasuite-ui-kit",
+      "files": [
+        "SKILL.md",
+        "references/components.md",
+        "references/cunningham.md",
+        "references/setup.md"
+      ]
+    }
+  ]
+}

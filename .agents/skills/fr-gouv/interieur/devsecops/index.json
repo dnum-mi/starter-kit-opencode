@@ -1,0 +1,40 @@
+{
+  "skills": [
+    {
+      "name": "gouv-fr-deployment",
+      "files": [
+        "SKILL.md",
+        "references/depannage.md",
+        "references/gitlab-ci-dso.yml",
+        "references/source-gouv-fr-deployment-cloud-pi-native.md",
+        "references/source-gouv-fr-deployment-docker-k8s.md"
+      ]
+    },
+    {
+      "name": "gouv-fr-repo-cicd",
+      "files": [
+        "SKILL.md",
+        "agents/openai.yaml",
+        "references/composition.md",
+        "references/garde-fous.md",
+        "references/lecture-fabnum-cicd.md",
+        "references/prerequis-cpin.md",
+        "references/renovate.md",
+        "scripts/verif-appels.py"
+      ]
+    },
+    {
+      "name": "gouv-fr-service-names",
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "gouv-fr-smoke-test",
+      "files": [
+        "SKILL.md",
+        "agents/openai.yaml"
+      ]
+    }
+  ]
+}
