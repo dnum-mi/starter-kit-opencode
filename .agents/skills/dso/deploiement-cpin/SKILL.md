@@ -69,6 +69,12 @@ jamais supposer un dépôt `starter-kit-opencode` local : l'utilisateur n'en a p
 chemin **absolu**, **depuis le dossier du projet** (c'est là que vit `.cpin/.env.secrets`). Ne jamais le
 copier dans le projet : la copie ne suivrait pas les mises à jour.
 
+**Prérequis** : ces scripts (`scripts/cpin-console`, `scripts/cpin-debug`) ne sont fournis que par
+l'installation **plugin** (README §1) ou un clone complet du kit. Les installations par URL ou par copie du
+seul skill ne les contiennent pas. Avant `init`, vérifier que `<kit>/scripts/cpin-console/console.mjs`
+existe ; sinon **s'arrêter** et dire à l'humain d'installer le plugin (ou de cloner le kit et d'indiquer son
+chemin), au lieu d'improviser une procédure manuelle.
+
 - Le **jeton API de la console** : l'agent lance `node <kit>/scripts/cpin-console/console.mjs init`, qui **crée**
   `.cpin/.env.secrets` **dans le dossier du projet** (0600, valeurs vides, dossier auto-ignoré par git) et affiche son chemin réel. L'humain y colle
   `DSO_TOKEN=…` (console > profil > jetons). L'agent relance `init` pour vérifier « renseigné » / « vide » :
@@ -92,7 +98,7 @@ celui **affiché par `init`**, jamais un chemin reconstruit.
 |-------|----------------|-------------|-----------------|----------|-------|
 | `DSO_TOKEN` | Le script appelle l'API de la console **à ta place** : créer projet, environnements, dépôts ; lire les secrets du miroir | console > profil > jetons (ou `POST /api/v1/user/tokens`) : un nom, **une date d'expiration** (obligatoire) | Il a **tes droits** sur la console. Envoyé dans l'en-tête `x-dso-token`. La valeur n'est affichée **qu'une fois** à la création | `<projet>/.cpin/.env.secrets` | **maintenant**. Choisir une expiration courte (quelques jours), révoquer à la clôture (phase 5) |
 | `GH_USER` | Compte GitHub qui possède le PAT ; transmis à la console avec lui pour un dépôt privé | — (ton identifiant GitHub) | Pas un secret | `.env.secrets` | maintenant |
-| `GH_PAT` | **Un seul jeton GitHub pour tout** : (1) la console clone ton dépôt privé vers son miroir GitLab (`externalToken`) ; (2) secret des workflows : CI sur PR de release/bump, automerge, `dispatch-helm-chart` | github.com > Settings > Developer settings > **Fine-grained** personal access tokens | Resource owner = l'organisation ; **les deux dépôts** sélectionnés ; Contents, Pull requests, Actions : Read and write ; Metadata : Read ; expiration choisie. Un PAT classique ne suffit pas (pas de droits par dépôt) | `.env.secrets`, puis secret GitHub `GH_PAT` posé par `pat-push` sur les deux dépôts | maintenant. Révoquer à la clôture |
+| `GH_PAT` | **Un seul jeton GitHub pour tout** : (1) la console clone ton dépôt privé vers son miroir GitLab (`externalToken`) ; (2) secret des workflows : CI sur PR de release/bump, automerge, `dispatch-helm-chart` | github.com > Settings > Developer settings > **Fine-grained** personal access tokens | Resource owner = l'organisation ; **les deux dépôts** sélectionnés ; Contents, Pull requests, Actions : Read and write ; Metadata : Read ; expiration choisie. Un PAT classique ne suffit pas (pas de droits par dépôt) | `.env.secrets`, puis secret GitHub `GH_PAT` posé par `pat-push` sur les deux dépôts | maintenant. **Pas** révoqué à la clôture : il sert aux workflows ensuite (voir phase 5, rotation) |
 | `GITLAB_TRIGGER_TOKEN` (`glptt-…`) | Le job `sync-cpin` de GitHub déclenche la synchro vers le miroir. **Pipeline trigger token**, pas un PAT `glpat-` | Récupéré **par le script** dans les secrets du projet (`secrets-push`) | — | secret GitHub, posé par `gh secret set` ; **tu ne le vois ni ne le tapes** | après `apply` |
 | `ARGOCD_TOKEN`, `GITLAB_PAT` | **Optionnels** : debug automatisé (voir §6 et phase 5) | `ARGOCD_TOKEN` : écrit par le login Playwright ; `GITLAB_PAT` : GitLab > profil > jetons d'accès, scope `read_api` | `GITLAB_PAT` : lecture seule | `.cpin/.env.secrets` (le même fichier que les autres) | seulement si tu acceptes le debug automatisé |
 
@@ -247,6 +253,10 @@ Auto-sync désactivé ⇒ *SYNC* manuel dans ArgoCD (instance **ArgoCD DSO**).
 4. **Clôture de mise en service** : révoquer tout secret/token exposé ou d'essai (ex. `github_pat_…` commité,
    token mirror `glptt-…`, jetons jetables de test). Rappeler à l'humain la **Rotation** de ce qui a fuité ;
    l'agent ne manipule jamais ces valeurs, il vérifie seulement que la révocation est demandée/faite.
+   **Exception : `GH_PAT`** reste utilisé après la mise en service (miroir d'un dépôt privé, release, chart).
+   Ne le révoquer que **remplacé** : nouveau PAT collé dans `.env.secrets`, `pat-push` relancé sur les deux
+   dépôts, valeur mise à jour dans la console, puis seulement l'ancien est révoqué. `DSO_TOKEN` et les jetons
+   jetables, eux, se révoquent à la clôture.
 5. **Debug automatisé** : reprendre la réponse donnée en phase 1 (§6). Si elle n'a pas été donnée, la
    **demander maintenant** ; ne jamais passer cette étape sous silence.
 

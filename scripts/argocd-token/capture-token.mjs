@@ -11,7 +11,7 @@ const POLL_INTERVAL_MS = 1000
 
 function redact(value) {
   if (!value) return '<absent>'
-  return `${value.slice(0, 8)}…${value.slice(-4)} (${value.length} chars)`
+  return `<${value.length} caractères, masqué>`
 }
 
 async function waitForToken(page) {
@@ -41,7 +41,7 @@ async function waitForToken(page) {
 }
 
 async function saveToken(token) {
-  await writeFile(TOKEN_FILE, token, { encoding: 'utf8', flag: 'w' })
+  await writeFile(TOKEN_FILE, token, { encoding: 'utf8', mode: 0o600 })
   await chmod(TOKEN_FILE, 0o600)
   console.log(`Token sauvegardé (0600) : ${TOKEN_FILE}`)
 }
@@ -56,8 +56,20 @@ async function testService(name, url, path, headers = {}) {
       headers: { Authorization: `Bearer ${await readToken()}`, ...headers },
     })
     console.log(`${name} : GET ${path} → ${response.status}`)
+    if (response.ok && name === 'ArgoCD') await printApplications(response)
   } catch (error) {
     console.log(`${name} : erreur réseau → ${error.message}`)
+  }
+}
+
+// Noms, santé et synchro seulement : jamais le corps complet de la réponse.
+async function printApplications(response) {
+  const { items } = await response.json()
+  if (!items?.length) return console.log('  aucune application visible')
+  for (const app of items) {
+    const health = app.status?.health?.status ?? '?'
+    const sync = app.status?.sync?.status ?? '?'
+    console.log(`  ${app.metadata?.name} — santé ${health}, synchro ${sync}`)
   }
 }
 

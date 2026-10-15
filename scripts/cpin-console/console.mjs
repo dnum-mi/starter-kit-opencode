@@ -13,14 +13,13 @@
 // DSO_TOKEN (jeton API console) est lu dans <dossier courant>/.cpin/.env.secrets (0600).
 // GH_USER / GH_PAT (un seul PAT GitHub fine-grained) y sont lus : GH_PAT sert à la console pour un dépôt privé
 // et est posé en secret GitHub par pat-push. Aucune valeur n'est jamais affichée.
-import { readFile, writeFile, chmod, mkdir } from 'node:fs/promises'
-import { dirname, resolve } from 'node:path'
+import { readFile } from 'node:fs/promises'
+import { SECRETS_FILE, ensureExcluded, writeSecretsFile } from './secrets-file.mjs'
 import { spawnSync } from 'node:child_process'
 
 const CONSOLE_URL = process.env.CONSOLE_URL ?? 'https://console.sdid.cpin.numerique-interieur.com'
 // Les jetons vivent dans le PROJET de l'humain (dossier courant), pas dans le dossier du plugin, qui est un
-// cache que OpenCode peut vider. Le dossier .cpin/ s'ignore lui-même (.gitignore interne).
-const SECRETS_FILE = resolve(process.env.CPIN_SECRETS_FILE ?? resolve(process.cwd(), '.cpin/.env.secrets'))
+// cache que OpenCode peut vider. Exclusions Git et Docker : voir secrets-file.mjs.
 // anciens noms, avant le PAT unique
 const LEGACY = { INFRA_REPO_USER: 'GH_USER', INFRA_REPO_TOKEN: 'GH_PAT' }
 
@@ -179,23 +178,7 @@ function describe(plan, environments) {
 
 // --- commandes --------------------------------------------------------------------------------
 
-// .cpin/ ne doit jamais entrer dans un contexte de build (COPY . .) : ajouté au .dockerignore s'il existe,
-// ou créé si un Dockerfile est présent à la racine. Sans .dockerignore ni Dockerfile, on ne touche à rien.
-async function ignoreInDockerContext() {
-  const file = resolve(process.cwd(), '.dockerignore')
-  let current = null
-  try { current = await readFile(file, 'utf8') } catch {}
-  if (current === null) {
-    try { await readFile(resolve(process.cwd(), 'Dockerfile'), 'utf8') } catch { return }
-    current = ''
-  }
-  if (current.split('\n').some(line => /^\/?\.cpin\/?$/.test(line.trim()))) {
-    console.log('.dockerignore : .cpin/ déjà exclu')
-    return
-  }
-  await writeFile(file, `${current}${current && !current.endsWith('\n') ? '\n' : ''}.cpin/\n`)
-  console.log('.dockerignore : .cpin/ ajouté')
-}
+// --- commandes --------------------------------------------------------------------------------
 
 const SECRET_NAMES = ['DSO_TOKEN', 'GH_USER', 'GH_PAT', 'GITLAB_PAT', 'ARGOCD_TOKEN']
 const OPTIONAL = new Set(['GITLAB_PAT', 'ARGOCD_TOKEN']) // debug automatisé : GITLAB_PAT saisi, ARGOCD_TOKEN écrit par login.mjs
@@ -205,18 +188,18 @@ const commands = {
   // Ne rapporte que « renseigné » / « vide » : la valeur n'est jamais lue vers la sortie.
   async init() {
     const current = await loadSecrets()
+    // Exclusions Git/Docker établies (ou réparées) à chaque init, même si le fichier existe déjà.
+    const { dockerAdded } = await ensureExcluded()
     let created = false
     try {
       await readFile(SECRETS_FILE, 'utf8')
-    } catch {
-      await mkdir(dirname(SECRETS_FILE), { recursive: true })
-      await writeFile(resolve(dirname(SECRETS_FILE), '.gitignore'), '*\n', { flag: 'wx' }).catch(() => {})
-      await writeFile(SECRETS_FILE, `${SECRET_NAMES.map(name => `${name}=`).join('\n')}\n`, { mode: 0o600 })
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw error
+      await writeSecretsFile(`${SECRET_NAMES.map(name => `${name}=`).join('\n')}\n`)
       created = true
     }
-    await chmod(SECRETS_FILE, 0o600)
     console.log(`${created ? 'créé' : 'existant'} : ${SECRETS_FILE} (0600)`)
-    await ignoreInDockerContext()
+    console.log(`.dockerignore : ${dockerAdded.length ? `${dockerAdded.join(', ')} ajouté` : 'déjà à jour'}`)
     for (const name of SECRET_NAMES) console.log(`  ${name} : ${current[name] ? 'renseigné' : 'vide'}${OPTIONAL.has(name) ? ' (optionnel, debug)' : ''}`)
   },
 

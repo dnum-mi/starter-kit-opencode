@@ -6,8 +6,8 @@
     ["./", { "groups": ["dev", "dso"] }]
   ],
   "permission": {
-    "read": { "*": "allow", "**/.env.secrets": "deny" },
-    "edit": { "*": "allow", "**/.env.secrets": "deny" },
+    "read": { "*": "allow", "**/.env.secrets": "deny", "**/.token": "deny" },
+    "edit": { "*": "allow", "**/.env.secrets": "deny", "**/.token": "deny" },
     "skill": { "*": "allow" }
   }
 }

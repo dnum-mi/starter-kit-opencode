@@ -10,6 +10,7 @@ permission:
     "*": deny
     "gh secret list*": allow
     "gh variable list*": allow
+    "gh variable set GITLAB_PROJECT_NAME *": ask
     "git status*": allow
     "git log*": allow
     "git remote get-url*": allow
@@ -17,7 +18,7 @@ permission:
     "git diff*": allow
     "ls*": allow
     "node */scripts/cpin-console/console.mjs *": allow
-    "node */scripts/cpin-console/console.mjs * --apply*": ask
+    "node */scripts/cpin-console/console.mjs *--apply*": ask
     "node */scripts/cpin-console/console.mjs secrets-push*": ask
     "node */scripts/cpin-console/console.mjs pat-push*": ask
     "node */scripts/cpin-debug/*.mjs": allow

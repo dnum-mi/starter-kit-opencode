@@ -94,6 +94,10 @@ Dans le `opencode.json` du projet, ou dans `~/.config/opencode/opencode.json` :
 
 Remplacer `dev` par `dso`, ou ajouter les deux.
 
+> Le groupe `dso` automatise la console CPiN via `scripts/cpin-console` et `scripts/cpin-debug`, qui ne sont
+> **pas** distribués par cette installation (instructions et skills seulement). Pour les utiliser, passer par
+> l'installation plugin (§1) ou cloner le kit.
+
 ### 3. Copie (Claude Code, Codex, autres)
 
 ```bash
