@@ -2,12 +2,12 @@
   "$schema": "https://opencode.ai/config.json",
   "lsp": true,
   "plugin": [
-    "superpowers@git+https://github.com/obra/superpowers.git",
+    // "superpowers@git+https://github.com/obra/superpowers.git",
     ["./", { "groups": ["dev", "dso", "fr-gouv/anssi", "fr-gouv/conformite", "fr-gouv/data", "fr-gouv/dsfr", "fr-gouv/lasuite", "fr-gouv/interieur/code", "fr-gouv/interieur/devsecops"] }]
   ],
   "permission": {
-    "skill": {
-      "*": "allow"
-    }
+    "read": { "*": "allow", "**/.env.secrets": "deny", "**/.token": "deny" },
+    "edit": { "*": "allow", "**/.env.secrets": "deny", "**/.token": "deny" },
+    "skill": { "*": "allow" }
   }
 }

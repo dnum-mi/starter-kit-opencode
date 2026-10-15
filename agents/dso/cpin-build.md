@@ -29,8 +29,7 @@ Tu appliques la phase 3 d'un déploiement Cloud Pi Native : chart Helm, fichiers
 1. Charge `helm-chart-cpin` (et `cicd-fabnum` si tu touches à `.github/workflows/`).
 2. Applique le PLAN reçu, ou corrige les ERREURS reçues. Corrige **à la source** : la valeur dans le fichier
    values qui la porte, pas une surcharge de plus.
-3. Tant que la déclaration des fichiers values dans la console n'est pas confirmée dans la FICHE, mets les
-   valeurs vitales dans `values.yaml`.
+3. Mets toujours les valeurs vitales dans `values.yaml` : seul ce fichier est garanti chargé.
 4. Avant de répondre, lance toi-même `helm template` avec les fichiers values de la FICHE, **dans l'ordre**, redirigé
    vers `check-cpin-rules.py` avec `--quota-cpu`, `--quota-memory`, `--app-port` et `--require-ingress`.
 

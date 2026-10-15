@@ -6,6 +6,7 @@
 
 - **Vérifier au PR, pas au déploiement** : chart rendu (`helm template`) et contrôlé par `check-cpin-rules.py` en CI avant toute merge.
 - **Suivre le runbook `deploiement-cpin` phase par phase**, sans sauter de porte.
+- **Rendre le suivi visible** (quel que soit l'agent) : dès qu'un déploiement CPiN commence, créer avec `todowrite` une todo par phase (`Phase 0 — Éligibilité` … `Phase 5 — Vérifier`), la tenir à jour, et commencer chaque message par `▶ Phase N/5 — <nom> · étape : <étape>` suivi de ce qui est fait, pourquoi, et ce que ça change. Détail : skill `deploiement-cpin`.
 - **Ne jamais demander, lire ni écrire la valeur d'un token ou d'un secret** : l'humain la saisit (console CPiN, GitHub, Vault) ; l'agent vérifie seulement que le nom existe.
 - La **console CPiN** est la source de vérité ; l'UI ArgoCD et le GitLab interne ne se modifient pas à la main.
 

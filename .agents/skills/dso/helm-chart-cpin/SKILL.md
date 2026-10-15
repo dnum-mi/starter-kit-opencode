@@ -43,7 +43,7 @@ Copier [`references/values-cpin.yaml`](references/values-cpin.yaml) (testée sur
 | Secrets | jamais dans `values.yaml` ni en ConfigMap ; `VaultStaticSecret` via `extraObjects` ([`references/vault-secret.yaml`](references/vault-secret.yaml)), `vaultAuthRef: vault-auth` |
 
 Ordre de chargement par ArgoCD : `values.yaml` → `values-cpin.yaml` → `values-<env>.yaml` (le dernier gagne ; la console remplace `<env>` par le nom de l'environnement).
-**Un fichier non déclaré dans la console est ignoré sans erreur** : tant que la déclaration n'est pas confirmée (skill `deploiement-cpin`, phase 2), les valeurs vitales vont dans `values.yaml`.
+**Seul `values.yaml` est garanti chargé** (une console 9.9.0 n'expose aucun réglage de fichiers values, skill `deploiement-cpin`, phase 2) : les valeurs vitales vont dans `values.yaml`.
 
 ## Checklist pré-PR
 

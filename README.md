@@ -106,6 +106,10 @@ Dans le `opencode.json` du projet, ou dans `~/.config/opencode/opencode.json` :
 
 Remplacer `dev` par `dso` ou par l'un des groupes `fr-gouv/…`, ou ajouter ceux voulus.
 
+> Le groupe `dso` automatise la console CPiN via `scripts/cpin-console` et `scripts/cpin-debug`, qui ne sont
+> **pas** distribués par cette installation (instructions et skills seulement). Pour les utiliser, passer par
+> l'installation plugin (§1) ou cloner le kit.
+
 ### 3. Copie (Claude Code, Codex, autres)
 
 ```bash
@@ -140,7 +144,7 @@ accessible avec Tab) suit le runbook `deploiement-cpin` :
 
 | Phases | Qui | Ce qui se passe |
 |--------|-----|-----------------|
-| 0 à 2 : éligibilité, prérequis console, fichiers values | **vous** | une phase à la fois : l'orchestrateur pose les questions de la phase en une seule liste et attend votre réponse avant de passer à la suivante ; il ne vérifie que les **noms** des secrets et variables GitHub (`gh secret list`) |
+| 0 à 2 : éligibilité, prérequis console, valeurs vitales | **vous** | une phase à la fois : l'orchestrateur pose les questions de la phase en une seule liste et attend votre réponse avant de passer à la suivante ; il ne vérifie que les **noms** des secrets et variables GitHub (`gh secret list`) |
 | 3 : chart et CI | agents | `cpin-plan` → `cpin-build` → `cpin-review`, jusqu'à ce que `check-cpin-rules.py` sorte en 0 (3 essais au plus) |
 | 4 et 5 : livraison, vérification après synchro | **vous** | l'orchestrateur vous remet la marche à suivre et la table de dépannage |
 
@@ -190,7 +194,7 @@ Une valeur déclarée dans votre `opencode.json` l'emporte sur celle du plugin :
 
 ## Contribuer
 
-Le `opencode.json` de ce dépôt charge le plugin par son chemin local (`["./", { "groups": ["dev", "dso", "fr-gouv/anssi", "fr-gouv/conformite", "fr-gouv/data", "fr-gouv/dsfr", "fr-gouv/lasuite", "fr-gouv/interieur/code", "fr-gouv/interieur/devsecops"] }]`) :
+Le `opencode.jsonc` de ce dépôt charge le plugin par son chemin local (`["./", { "groups": ["dev", "dso", "fr-gouv/anssi", "fr-gouv/conformite", "fr-gouv/data", "fr-gouv/dsfr", "fr-gouv/lasuite", "fr-gouv/interieur/code", "fr-gouv/interieur/devsecops"] }]`) :
 OpenCode lancé dans le dépôt utilise les instructions, skills, agents et commandes de la copie de travail, sans
 passer par GitHub ni par le cache. Relancer OpenCode suffit pour tester une modification.
 
@@ -198,7 +202,7 @@ passer par GitHub ni par le cache. Relancer OpenCode suffit pour tester une modi
 |----------|---------|
 | `make skills-index` / `make skills-index-check` | régénère / vérifie les `index.json` des groupes |
 | `make test-plugin` | le plugin installe ce qu'il faut pour chaque groupe, et rien des autres (sans appel au modèle) |
-| `make test-cpin-rules` | `check-cpin-rules.py` détecte chaque friction réelle du déploiement de dso-demo |
+| `make test-cpin-rules` | `check-cpin-rules.py` détecte chaque friction réelle d'un premier déploiement |
 
 Les règles de rangement (où mettre une instruction, comment nommer les agents) sont dans la section « Groupes » de
 `AGENTS.md`.
@@ -219,7 +223,7 @@ Les règles de rangement (où mettre une instruction, comment nommer les agents)
 
 Skills tirés de la documentation de la [Fabrique Numérique](https://docs.fabrique-numerique.fr/)
 (`dnum-mi/transversal-doc`) et de celle de [Cloud Pi Native](https://cloud-pi-native.fr), ainsi que du retour
-d'expérience du déploiement de `IA-Generative/dso-demo`.
+d'expérience d'un premier déploiement.
 
 Le catalogue `fr-gouv/…` provient du dépôt [`ynotopec/gouv-fr-skills`](https://github.com/ynotopec/gouv-fr-skills)
 (37 skills préfixés `gouv-fr-`, eux-mêmes dérivés de `starter-kit-opencode`, de `etalab-ia/skills` et de
