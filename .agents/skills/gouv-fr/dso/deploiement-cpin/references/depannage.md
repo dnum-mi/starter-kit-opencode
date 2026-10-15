@@ -17,6 +17,9 @@ Les checks (`node <kit>/scripts/cpin-debug/check-*.mjs`, voir `SKILL.md`, phase 
 | Application absente ou `OutOfSync`, rien ne se déploie | `check-argocd` | 200 : ArgoCD joignable et l'API répond ; 401 : session SSO expirée |
 | Projet, environnement ou dépôt qui ne se crée pas, quota | `check-console` | 200 : `DSO_TOKEN` valide ; 401 : jeton expiré ou révoqué |
 
+Routes d'API utiles par service, y compris Vault (pod en erreur au démarrage faute d'un secret) :
+[`api-debug.md`](api-debug.md).
+
 Un statut 200 ne dit **pas** que la cause est ailleurs : il restreint seulement les hypothèses. Le message
 exact des événements ArgoCD reste la preuve.
 

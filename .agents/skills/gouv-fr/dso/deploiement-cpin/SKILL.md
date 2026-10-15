@@ -100,7 +100,16 @@ celui **affiché par `init`**, jamais un chemin reconstruit.
 | `GH_USER` | Compte GitHub qui possède le PAT ; transmis à la console avec lui pour un dépôt privé | — (ton identifiant GitHub) | Pas un secret | `.env.secrets` | maintenant |
 | `GH_PAT` | **Un seul jeton GitHub pour tout** : (1) la console clone ton dépôt privé vers son miroir GitLab (`externalToken`) ; (2) secret des workflows : CI sur PR de release/bump, automerge, `dispatch-helm-chart` | github.com > Settings > Developer settings > **Fine-grained** personal access tokens | Resource owner = l'organisation ; **les deux dépôts** sélectionnés ; Contents, Pull requests, Actions : Read and write ; Metadata : Read ; expiration choisie. Un PAT classique ne suffit pas (pas de droits par dépôt) | `.env.secrets`, puis secret GitHub `GH_PAT` posé par `pat-push` sur les deux dépôts | maintenant. **Pas** révoqué à la clôture : il sert aux workflows ensuite (voir phase 5, rotation) |
 | `GITLAB_TRIGGER_TOKEN` (`glptt-…`) | Le job `sync-cpin` de GitHub déclenche la synchro vers le miroir. **Pipeline trigger token**, pas un PAT `glpat-` | Récupéré **par le script** dans les secrets du projet (`secrets-push`) | — | secret GitHub, posé par `gh secret set` ; **tu ne le vois ni ne le tapes** | après `apply` |
-| `ARGOCD_TOKEN`, `GITLAB_PAT` | **Optionnels** : debug automatisé (voir §6 et phase 5) | `ARGOCD_TOKEN` : écrit par le login Playwright ; `GITLAB_PAT` : GitLab > profil > jetons d'accès, scope `read_api` | `GITLAB_PAT` : lecture seule | `.cpin/.env.secrets` (le même fichier que les autres) | seulement si tu acceptes le debug automatisé |
+| `ARGOCD_TOKEN`, `GITLAB_PAT`, `VAULT_TOKEN` | **Optionnels** : debug automatisé et alimentation du Vault (voir §6 et `references/api-debug.md`) | `ARGOCD_TOKEN` : écrit par le login Playwright ; `GITLAB_PAT` : GitLab > profil > jetons d'accès, scope `read_api` ; `VAULT_TOKEN` : service Vault > icône 👤 (en haut à droite) > **Copy token** | `GITLAB_PAT` : lecture seule ; `VAULT_TOKEN` : **tes** droits Vault, durée limitée (voir l'encadré ci-dessous) | `.cpin/.env.secrets` (le même fichier que les autres) | seulement si tu acceptes le debug automatisé |
+
+**`VAULT_TOKEN` : ce que l'agent peut et ne peut pas faire.** Ce jeton porte tes droits dans Vault, donc il
+pourrait techniquement lire tes secrets. Le kit l'empêche **dans le script**, pas par politesse :
+`scripts/cpin-console/vault.mjs` n'appelle qu'une **liste fermée de routes** (qui est le jeton, mes droits,
+noms des secrets, versions et dates, écriture). Il **n'existe aucune route de lecture du contenu** d'un
+secret, et le garde-fou refuse tout le reste (testé : `vault.test.mjs`). L'agent ne peut pas non plus lire
+`.cpin/.env.secrets` ni ton `.env` (refus dans `opencode.jsonc`), et ne lance que ce script. Une écriture
+affiche seulement un numéro de version. Le jeton expire : à la clôture, ne rien révoquer, il suffit de ne
+plus le recopier. Tu peux contrôler à tout moment : `vault.mjs whoami` (politiques, expiration).
 
 L'agent **ne lit, n'affiche et ne demande jamais** une valeur : tu les colles toi-même dans le fichier,
 il vérifie seulement « renseigné » / « vide » avec `init`. Aucun de ces jetons ne doit finir dans Git, dans
@@ -186,6 +195,10 @@ de quitter la phase 1, avec cette explication :
   `.cpin/.env.secrets` (`init` le liste comme optionnel). L'agent ne lit jamais le contenu. `ARGOCD_TOKEN`
   sera écrit plus tard par le login (phase 5).
 - **Non** → debug manuel via l'UI uniquement. Rien n'est installé.
+
+**Vault** : `VAULT_TOKEN` est optionnel et sert à deux choses, décrites dans
+[`references/api-debug.md`](references/api-debug.md) : constater qu'un secret applicatif existe (nom, version,
+date : jamais sa valeur) et l'alimenter depuis le `.env` de l'humain, après simulation et confirmation.
 
 **À tout moment** : dès qu'une difficulté touche un service externe (synchro, image, ArgoCD, Harbor,
 GitLab, console, jeton refusé, ressource introuvable) et que le debug n'est pas actif, le **proposer à ce

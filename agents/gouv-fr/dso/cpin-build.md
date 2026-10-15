@@ -4,7 +4,16 @@ mode: subagent
 temperature: 0.1
 steps: 40
 permission:
-  edit: allow
+  read:
+    "*": allow
+    "**/.env.secrets": deny
+    "**/.token": deny
+    "**/.env": deny
+  edit:
+    "*": allow
+    "**/.env.secrets": deny
+    "**/.token": deny
+    "**/.env": deny
   webfetch: deny
   task: deny
   bash:

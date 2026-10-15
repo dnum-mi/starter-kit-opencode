@@ -6,8 +6,8 @@
     ["./", { "groups": ["gouv-fr/code", "gouv-fr/dso", "gouv-fr/anssi", "gouv-fr/conformite", "gouv-fr/data", "gouv-fr/dsfr", "gouv-fr/lasuite"] }]
   ],
   "permission": {
-    "read": { "*": "allow", "**/.env.secrets": "deny", "**/.token": "deny" },
-    "edit": { "*": "allow", "**/.env.secrets": "deny", "**/.token": "deny" },
+    "read": { "*": "allow", "**/.env.secrets": "deny", "**/.token": "deny", "**/.env": "deny" },
+    "edit": { "*": "allow", "**/.env.secrets": "deny", "**/.token": "deny", "**/.env": "deny" },
     "skill": { "*": "allow" }
   }
 }
