@@ -3,13 +3,8 @@ name: lasuite-ui-kit
 description: "Créer des interfaces React pour les applications LaSuite (Docs, Drive, People, Webinaire, Messagerie) avec @gouvfr-lasuite/ui-kit et @gouvfr-lasuite/cunningham-react. Layout applicatif, navigation, recherche rapide, badges, icônes Material, menus contextuels, partage et invitations."
 category: frontend
 version: 0.1.0
-author: etalab-ia, Hermes Agent
 license: MIT
 platforms: [linux, macos]
-metadata:
-  hermes:
-    tags: [lasuite, react, ui-kit, cunningham, frontend, etat, gouv-fr, design-system]
-    related_skills: [react-dsfr, dsfr, recettes-client, conformite-rgaa]
 ---
 
 # Gouv-fr — LaSuite UI Kit (@gouvfr-lasuite)

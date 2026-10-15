@@ -4,12 +4,7 @@ description: "Architecture monorepo pnpm workspaces et Turborepo : structure, wo
 category: architecture
 version: 0.2.0
 license: MIT
-author: Hermes Agent
 platforms: [linux, macos]
-metadata:
-  hermes:
-    tags: [gouv-fr, monorepo, pnpm, turbo, workspace, shared, build-cache]
-    related_skills: [stack-technique, projet-structure, repo-cicd]
 ---
 
 # Gouv-fr — Monorepo pnpm & Turborepo

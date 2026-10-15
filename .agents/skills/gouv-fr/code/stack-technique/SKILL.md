@@ -4,12 +4,7 @@ description: "Stack technique recommandée pour les projets Fabrique Numérique 
 category: architecture
 version: 0.3.0
 license: MIT
-author: Hermes Agent
 platforms: [linux, macos]
-metadata:
-  hermes:
-    tags: [gouv-fr, stack, framework, vue, nestjs, fastify, fastapi, prisma, eslint, ruff, postgresql, typescript, pnpm, proto, uv]
-    related_skills: [projet-structure, monorepo-pnpm, deploiement, outils-developpement, conventions-cofabnum, api-rest]
 ---
 
 # Gouv-fr — Stack technique

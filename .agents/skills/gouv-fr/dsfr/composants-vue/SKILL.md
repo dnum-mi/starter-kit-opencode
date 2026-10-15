@@ -3,13 +3,8 @@ name: composants-vue
 description: "Installer et utiliser VueDsfr (composants Vue 3 DSFR)."
 category: frontend
 version: 1.0.0
-author: Hermes Agent (Nous Research)
 license: MIT
 platforms: [linux, macos]
-metadata:
-  hermes:
-    tags: [dsfr, vue, vuejs, vue-3, composants, etat, gouv-fr, ui]
-    related_skills: [dsfr, dsfr, dsfr, conformite-rgaa, react-dsfr, lasuite-ui-kit]
 ---
 
 # Gouv-fr — Composants Vue (VueDsfr)

@@ -3,13 +3,8 @@ name: workflow-dev
 description: "Workflow : plan mode, tâches, leçons, bug fixing."
 category: workflow
 version: 0.1.1
-author: etalab-ia, Hermes Agent
 license: MIT
 platforms: [linux, macos]
-metadata:
-  hermes:
-    tags: [gouv-fr, workflow, plan-mode, task-management, self-improvement, bug-fixing, code-quality]
-    related_skills: [projet-structure, code-quality]
 ---
 
 # Gouv-fr — Workflow de développement

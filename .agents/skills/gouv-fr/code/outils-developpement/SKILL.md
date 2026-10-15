@@ -4,13 +4,8 @@ description: Installation et configuration des outils dev (Git, Docker, pnpm, pr
 category: workflow
 version: 0.2.0
 license: MIT
-author: Hermes Agent
 platforms: [linux, macos]
 allowed-tools: Bash Read
-metadata:
-  hermes:
-    tags: [gouv-fr, dev-tools, git, docker, pnpm, proto, vscode, github-cli, uv, shell]
-    related_skills: [stack-technique, deploiement, conventions-cofabnum, environnement-installation, monorepo-pnpm]
 ---
 
 # Gouv-fr — Outils de développement

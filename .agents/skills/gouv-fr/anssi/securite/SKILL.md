@@ -4,12 +4,7 @@ description: Applique les règles de sécurité non négociables (secrets, SQL, 
 category: securite
 version: 0.3.0
 license: MIT
-author: Hermes Agent
 platforms: [linux, macos]
-metadata:
-  hermes:
-    tags: [gouv-fr, securite, secrets, gitleaks, tls, sql, vm, prompt-injection, surete, anti-leak]
-    related_skills: [audit-pentest, audit-llm, anssi-guides, audit-conformite]
 ---
 
 # Gouv-fr — Sécurité & sûreté des bases de code

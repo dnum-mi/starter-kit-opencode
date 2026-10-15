@@ -3,13 +3,8 @@ name: anssi-guides
 description: "Trouver et consulter le bon guide ANSSI via l'API MesServicesCyber : catalogue des guides français et des publications anglaises sans équivalent, aiguillage et citation de la source. Sécurité hors développement (réseau, pare-feu, Active Directory, Wi-Fi, virtualisation, gestion de crise, EBIOS, cryptographie post-quantique)."
 category: security
 version: 0.1.0
-author: etalab-ia, Hermes Agent
 license: MIT
 platforms: [linux, macos]
-metadata:
-  hermes:
-    tags: [anssi, securite, guides, catalogue, etat, gouv-fr, conformite, homologation]
-    related_skills: [securite, audit-pentest, audit-llm]
 ---
 
 # Gouv-fr — Guides ANSSI (catalogue et consultation)

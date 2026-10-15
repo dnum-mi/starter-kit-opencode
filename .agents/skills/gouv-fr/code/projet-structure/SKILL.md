@@ -4,12 +4,7 @@ description: Structure un projet (layout, config OpenCode) et l'initialise propr
 category: code
 version: 0.3.0
 license: MIT
-author: Hermes Agent
 platforms: [linux, macos]
-metadata:
-  hermes:
-    tags: [gouv-fr, structure, repo, init, gitignore, opencode, cli, environnement]
-    related_skills: [code-quality, repo-cicd, stack-technique, monorepo-pnpm]
 ---
 
 # Gouv-fr — Structure de projet et initialisation de dépôt

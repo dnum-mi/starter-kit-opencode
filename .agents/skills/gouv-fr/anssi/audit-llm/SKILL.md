@@ -4,12 +4,7 @@ description: Audite un service LLM ou un agent — prompt-injection / red-team (
 category: securite
 version: 0.3.0
 license: MIT
-author: Hermes Agent
 platforms: [linux, macos]
-metadata:
-  hermes:
-    tags: [gouv-fr, llm, agents, redteam, prompt-injection, owasp-llm, sso, keycloak, mcp, openwebui]
-    related_skills: [audit-pentest, securite, anssi-guides, audit-conformite]
 ---
 
 # Gouv-fr — Audit LLM & agents (red-team + identité SSO)

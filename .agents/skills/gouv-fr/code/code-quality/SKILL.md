@@ -4,12 +4,7 @@ description: Applique les standards de code au quotidien (structure, fonctions, 
 category: code
 version: 0.3.0
 license: MIT
-author: Hermes Agent
 platforms: [linux, macos]
-metadata:
-  hermes:
-    tags: [gouv-fr, qualite, revue, eslint, ruff, lint, standards, tests, code-genere]
-    related_skills: [projet-structure, stack-technique, bug-investigation, monorepo-pnpm]
 ---
 
 # Gouv-fr — Qualité de code et revue

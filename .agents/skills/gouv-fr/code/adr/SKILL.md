@@ -4,12 +4,7 @@ description: Rédige une nouvelle ADR (Architecture Decision Record). Utiliser q
 category: workflow
 version: 1.0.0
 license: MIT
-author: Hermes Agent
 platforms: [linux, macos]
-metadata:
-  hermes:
-    tags: [gouv-fr, adr, architecture, decision, documentation]
-    related_skills: [projet-structure, workflow-dev]
 ---
 
 

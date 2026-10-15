@@ -3,13 +3,8 @@ name: audit-conformite
 description: "Audit de conformité d'une application : fuites de secrets, SQL, TLS, RGAA/DSFR, RGPD, git et tests."
 category: qualite
 version: 0.1.0
-author: Hermes Agent
 license: MIT
 platforms: [linux, macos]
-metadata:
-  hermes:
-    tags: [gouv-fr, audit, conformance]
-    related_skills: [securite, conformite-rgaa, projet-structure]
 ---
 
 # Gouv-fr — Audit de conformité d'une application

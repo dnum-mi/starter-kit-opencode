@@ -4,12 +4,7 @@ description: Installe et vérifie le design system de l'État (DSFR) — CSS/JS 
 category: design
 version: 0.3.0
 license: MIT
-author: Hermes Agent
 platforms: [linux, macos]
-metadata:
-  hermes:
-    tags: [gouv-fr, dsfr, design-system, pictogrammes, graphiques, email, marianne, accessibilite]
-    related_skills: [composants-vue, react-dsfr, conformite-rgaa, lasuite-ui-kit]
 ---
 
 # Gouv-fr — Design System de l'État (DSFR)

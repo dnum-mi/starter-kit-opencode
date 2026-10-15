@@ -4,12 +4,7 @@ description: Pose une CI/CD « Cloud Pi Native » sur un projet GitHub existant 
 category: devops
 version: 1.0.0
 license: MIT
-author: Hermes Agent
 platforms: [linux, macos]
-metadata:
-  hermes:
-    tags: [gouv-fr, ci, cd, cloud-pi-native, fabnum-cicd, github]
-    related_skills: [cicd-fabnum, ci-cd, deploiement]
 ---
 
 

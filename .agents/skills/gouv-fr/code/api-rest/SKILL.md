@@ -3,13 +3,8 @@ name: api-rest
 description: Conventions API RESTful, OpenAPI, Swagger et tests d'API pour Fabrique Numérique.
 category: backend
 version: 0.1.0
-author: Hermes Agent
 license: MIT
 platforms: [linux, macos]
-metadata:
-  hermes:
-    tags: [gouv-fr, api, rest, openapi, swagger, http, routes, logging]
-    related_skills: [projet-structure, stack-technique, datagouv-apis]
 ---
 
 # Gouv-fr — API RESTful

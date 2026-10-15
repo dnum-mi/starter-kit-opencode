@@ -4,12 +4,7 @@ description: Déploie une application — Dockerfiles de prod durcis (multi-stag
 category: devsecops
 version: 0.3.0
 license: MIT
-author: Hermes Agent
 platforms: [linux, macos]
-metadata:
-  hermes:
-    tags: [gouv-fr, docker, kubernetes, openshift, cloud-pi-native, argocd, harbor, kaniko, trivy, deploy]
-    related_skills: [deploiement-cpin, helm-chart-cpin, ci-cd, securite]
 ---
 
 # Gouv-fr — Déploiement (Docker/K8s et Cloud Pi Native)

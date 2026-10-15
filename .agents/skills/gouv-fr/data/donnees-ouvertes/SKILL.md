@@ -3,13 +3,8 @@ name: donnees-ouvertes
 description: "Données ouvertes publiques du SIG (schémas, JSONL)."
 category: data
 version: 0.1.1
-author: Hermes Agent (Nous Research)
 license: MIT
 platforms: [linux, macos]
-metadata:
-  hermes:
-    tags: [data, open-data, sig, json, communication, ref, schema]
-    related_skills: [securite, conformite-rgaa, datagouv-apis]
 ---
 
 # Gouv-fr — Données ouvertes du SIG

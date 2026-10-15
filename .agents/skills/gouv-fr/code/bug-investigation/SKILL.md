@@ -4,12 +4,7 @@ description: Force 2-3 hypothèses de cause + plan B avant tout fix de bug. Util
 category: workflow
 version: 1.0.0
 license: MIT
-author: Hermes Agent
 platforms: [linux, macos]
-metadata:
-  hermes:
-    tags: [gouv-fr, bug, debug, investigation, hypotheses]
-    related_skills: [workflow-dev, code-quality]
 ---
 
 

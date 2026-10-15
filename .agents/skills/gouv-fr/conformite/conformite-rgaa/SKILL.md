@@ -4,12 +4,7 @@ description: Vérifie la conformité d'un service de l'État — RGAA (accessibi
 category: conformite
 version: 0.3.0
 license: MIT
-author: Hermes Agent
 platforms: [linux, macos]
-metadata:
-  hermes:
-    tags: [gouv-fr, rgaa, accessibilite, dsfr, rgpd, cookies, tarteaucitron, conformite]
-    related_skills: [dsfr, audit-conformite, securite]
 ---
 
 # Gouv-fr — Conformité (RGAA, DSFR, RGPD, cookies)
