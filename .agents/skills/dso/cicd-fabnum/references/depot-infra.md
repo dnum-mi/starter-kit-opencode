@@ -101,7 +101,7 @@ jobs:
 ### `.github/workflows/ci.yml` : porte sur chaque PR (bump compris)
 
 Copier `scripts/check-cpin-rules.py` du skill `helm-chart-cpin` dans `ci/scripts/`. Un job par environnement
-déclaré, avec **les fichiers values et l'ordre déclarés dans la console** (skill `deploiement-cpin`, phase 2) :
+déclaré, avec **les mêmes fichiers values et le même ordre que ceux du chart** (`values.yaml` en premier ; skill `deploiement-cpin`, phase 2) :
 
 ```yaml
 name: CI
@@ -199,6 +199,9 @@ merger la PR de bump. Un token couvrant un seul des deux dépôts fait échouer 
 | **Metadata** | Read (requis) | lecture GitHub de base |
 
 **Account permissions** : aucune.
+
+Le **même** token sert aussi à la console pour cloner un dépôt privé (informations d'accès du dépôt,
+phase 1 de `deploiement-cpin`) : un seul jeton à créer, à révoquer et à renouveler.
 
 Ensuite :
 1. Sauvegarder la valeur dans le secret **`GH_PAT` sur les deux dépôts**

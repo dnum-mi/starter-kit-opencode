@@ -22,7 +22,8 @@ function readMarkdown(file) {
   const match = fs.readFileSync(file, 'utf8').match(FRONTMATTER)
   if (!match)
     throw new Error(`starter-kit : frontmatter absent dans ${file}`)
-  return { meta: Bun.YAML.parse(match[1]) ?? {}, body: match[2].trim() }
+  // {{KIT_ROOT}} : chemin réel du kit (cache du plugin chez l'utilisateur, jamais un dépôt local)
+  return { meta: Bun.YAML.parse(match[1]) ?? {}, body: match[2].trim().replaceAll('{{KIT_ROOT}}', ROOT) }
 }
 
 function markdownFiles(dir) {

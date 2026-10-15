@@ -1,0 +1,12 @@
+{
+  "name": "argocd-token",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "capture": "node capture-token.mjs"
+  },
+  "dependencies": {
+    "playwright": "^1.48.0"
+  }
+}

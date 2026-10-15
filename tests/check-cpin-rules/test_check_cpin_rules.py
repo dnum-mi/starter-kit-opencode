@@ -1,4 +1,4 @@
-"""Tests de check-cpin-rules.py : chaque cas KO rejoue une friction réelle du déploiement de dso-demo.
+"""Tests de check-cpin-rules.py : chaque cas KO rejoue une friction réelle d'un premier déploiement.
 
 Lancer : make test-cpin-rules
 """
