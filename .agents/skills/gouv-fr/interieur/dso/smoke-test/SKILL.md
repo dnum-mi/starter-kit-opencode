@@ -26,24 +26,12 @@ Cible : l'environnement passé en argument (défaut `integration` si vide).
 Demander confirmation des URLs si non détectables depuis le repo courant
 (`deploy/kubernetes/environments/<env>/`).
 
-### 2. Forger un device_token synthétique
-Suivre la recette `reference_synthetic_device_token` (HMAC `INTERNAL_API_TOKEN`,
-claims `qr_token` / `device_id` / `retention_until`). NE PAS sonder Keycloak.
-
-```bash
-python3 -c "
-import hmac, hashlib, base64, json, time, os
-secret = os.environ['INTERNAL_API_TOKEN']
-claims = {
-  'qr_token': 'smoke-test',
-  'device_id': 'smoke-' + str(int(time.time())),
-  'retention_until': int(time.time()) + 3600,
-}
-body = base64.urlsafe_b64encode(json.dumps(claims).encode()).rstrip(b'=').decode()
-sig = hmac.new(secret.encode(), body.encode(), hashlib.sha256).hexdigest()
-print(f'{body}.{sig}')
-"
-```
+### 2. Obtenir un device_token synthétique (étape humaine)
+L'agent ne lit, ne génère ni n'affiche aucun secret (cf. `instructions.md` du groupe).
+Demander à l'utilisateur de forger le jeton lui-même — recette `reference_synthetic_device_token`
+(HMAC `INTERNAL_API_TOKEN`, claims `qr_token` / `device_id` / `retention_until`) — puis de
+l'exporter dans son shell sous `SMOKE_TOKEN`, sans le coller dans la conversation.
+NE PAS sonder Keycloak.
 
 ### 3. Trois appels critiques
 
@@ -55,7 +43,7 @@ print(f'{body}.{sig}')
 
 ```bash
 BASE="https://api.<env>.fake-domain.name"
-TOKEN="<device_token forgé>"
+TOKEN="$SMOKE_TOKEN"   # fourni par l'utilisateur
 
 echo "=== 1. List meetings ==="
 curl -sS -w "\nHTTP %{http_code}\n" -H "Authorization: Bearer $TOKEN" "$BASE/api/meetings"

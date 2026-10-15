@@ -244,6 +244,16 @@ En arrivant ici, ces 37 skills ont été **compactés en 26** (fusions par thèm
 complémentaires (`ci-cd` et `cicd-fabnum` et `repo-cicd`) sont conservés séparément et se citent entre eux.
 Résultat : **34 skills**, sans doublon de nom.
 
+### Migration (rupture assumée)
+
+Les groupes plats `dev` et `dso` n'existent plus ; un `groups: ["dev"]` ou `["dso"]` existant est rejeté au
+démarrage avec la liste des catalogues valides. Remplacer :
+
+| Ancien groupe | Nouveau groupe |
+|---|---|
+| `dev` | `gouv-fr/interieur/code` |
+| `dso` | `gouv-fr/interieur/dso` |
+
 ## Références
 
 ### Standard Agent Skills

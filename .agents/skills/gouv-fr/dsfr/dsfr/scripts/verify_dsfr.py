@@ -92,7 +92,7 @@ def main():
     base = path.parent
     missing_assets = []
     for url in collector.assets:
-        if url.startswith(("http://", "https://", "data:", "#", "mailto:")):
+        if url.startswith(("http://", "https://", "//", "data:", "#", "mailto:", "tel:")):
             continue
         clean = url.split("?")[0].split("#")[0]
         if clean and not (base / clean).exists() and not os.path.exists(clean):

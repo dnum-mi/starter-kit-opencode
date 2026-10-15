@@ -21,8 +21,8 @@ gouv-fr-dat         →   contenu Markdown fidèle au modèle (DAT_«service»_v
 
 - **`python-docx`** (`pip install python-docx`). Si l'environnement courant ne l'a pas, l'installer
   dans un venv jetable.
-- Le **modèle** `MODELE_DAT_MirAI.docx`. Par défaut la skill le lit dans la skill sœur
-  (`..gouv-fr-dat/dat/MODELE_DAT_MirAI.docx`) ; surchargeable via `--model`.
+- Le **modèle** `MODELE_DAT_MirAI.docx`. Par défaut la skill le lit dans son propre dossier
+  (`dat/MODELE_DAT_MirAI.docx`, à côté de `render_docx.py`) ; surchargeable via `--model`.
 - *(Optionnel, pour les diagrammes mermaid)* **`mermaid-cli`** (`npx -y @mermaid-js/mermaid-cli`,
   ou `mmdc` sur le PATH) **+ un Chrome/Chromium local** (auto-détecté ; sinon `--chrome`). Rendu
   **100 % local, aucun service externe**. Absent ⇒ repli automatique en texte à chasse fixe.
