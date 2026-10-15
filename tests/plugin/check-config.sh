@@ -26,7 +26,8 @@ opencode debug config | jq -e --arg root "$ROOT" '
   and ([.agent["cpin-plan", "cpin-build", "cpin-review"].mode] | all(. == "subagent"))
   and (.agent["cpin-review"].temperature == 0.5)
   and (.command["deployer-cpin"].agent == "cpin-orchestrateur")
-' > /dev/null && echo "OK   plugin starter-kit (groupe gouv-fr/dso)"
+' > /dev/null
+echo "OK   plugin starter-kit (groupe gouv-fr/dso)"
 
 cd "$WORK/code"
 opencode debug config | jq -e --arg root "$ROOT" '
@@ -36,7 +37,8 @@ opencode debug config | jq -e --arg root "$ROOT" '
   and (.agent["cpin-orchestrateur"] == null)
   and (.command.livrer.agent == "build")
   and (.command["deployer-cpin"] == null)
-' > /dev/null && echo "OK   plugin starter-kit (groupe gouv-fr/code)"
+' > /dev/null
+echo "OK   plugin starter-kit (groupe gouv-fr/code)"
 
 # Groupe imbriqué sous gouv-fr/, sans agent ni commande : instructions + catalogue seuls.
 cd "$WORK/anssi"
@@ -45,4 +47,5 @@ opencode debug config | jq -e --arg root "$ROOT" '
   and (.skills.paths | index($root + "/.agents/skills/gouv-fr/anssi"))
   and (.agent["cpin-orchestrateur"] == null)
   and (.agent["dev-review"] == null)
-' > /dev/null && echo "OK   plugin starter-kit (groupe imbriqué gouv-fr/anssi)"
+' > /dev/null
+echo "OK   plugin starter-kit (groupe imbriqué gouv-fr/anssi)"

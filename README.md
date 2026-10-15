@@ -246,6 +246,19 @@ projet précis (document d'homologation, smoke-test d'un pipeline interne, garde
 
 Résultat : **31 skills**, sans doublon de nom, répartis en 7 groupes.
 
+### Migration (rupture assumée)
+
+Les groupes plats `dev` et `dso` n'existent plus ; un `groups: ["dev"]` ou `["dso"]` existant est rejeté au
+démarrage avec la liste des catalogues valides. Remplacer :
+
+| Ancien groupe | Nouveau groupe |
+|---|---|
+| `dev` | `gouv-fr/code` |
+| `dso` | `gouv-fr/dso` |
+
+Trois skills ont par ailleurs été retirés du kit, faute de portée générique : `dat` (document
+d'homologation), `smoke-test` et `service-names`.
+
 ## Références
 
 ### Standard Agent Skills

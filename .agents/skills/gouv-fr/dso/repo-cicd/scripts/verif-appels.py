@@ -9,6 +9,7 @@ Pour chaque job `uses: dnum-mi/fabnum-cicd/.github/workflows/<f>@<tag>` :
 Sortie : « OK » ou « ÉCARTS » (code 1), une ligne par écart. N'exécute rien du clone.
 """
 import sys, yaml, pathlib, re
+RANK = {"none": 0, "read": 1, "write": 2}
 fab = pathlib.Path(sys.argv[1]); ok = True
 for wf in sys.argv[2:]:
     y = yaml.safe_load(open(wf))
@@ -27,11 +28,11 @@ for wf in sys.argv[2:]:
         need = {}
         for cj in c["jobs"].values():
             for p, lvl in (cj.get("permissions") or {}).items():
-                if lvl == "write" or p not in need: need[p] = lvl
+                if p not in need or RANK.get(lvl, 0) > RANK.get(need[p], 0): need[p] = lvl
         have = jd.get("permissions") or {}
         for p, lvl in need.items():
             h = have.get(p)
-            if h is None or (lvl == "write" and h != "write"):
+            if RANK.get(h or "none", 0) < RANK.get(lvl, 0):
                 print(f"✗ {wf}:{job} permission {p}:{lvl} manquante (a {h})"); ok=False
         extra = set(have) - set(need)
         if extra: print(f"⚠ {wf}:{job} permissions en trop {extra}")
