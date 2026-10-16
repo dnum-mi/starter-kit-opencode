@@ -100,6 +100,21 @@ validées en §3 :
 4. Les **membres**.
 5. Relever le **nom du projet Harbor** (`PROJECT_PATH`) affiché par la console.
 
+**Poste.** Avant de proposer un mode, lancer `bash <kit>/scripts/doctor.sh` (lecture seule, aucun jeton
+affiché). Pour chaque outil **optionnel** absent, donner à l'humain le choix : **l'installer** (commande
+affichée par `doctor`, lancée par lui ou avec son accord) ou **continuer en mode dégradé**. Noter le choix dans
+la FICHE et ne plus le redemander. Effet d'un manque :
+
+| Absent | Mode dégradé |
+|--------|--------------|
+| Node | comme « sans les scripts » ci-dessous : mode manuel |
+| `gh`, ou `gh` non authentifié | l'humain pose les secrets dans l'UI GitHub et confirme les noms ; porte moins solide |
+| scope `workflow` de `gh` | l'humain pousse lui-même `.github/workflows/` |
+| `helm` ou `uv` | **aucun** : la porte de la phase 3 lance `check-cpin-rules.py`. Les faire installer avant la phase 3 ; les phases 0 à 2 peuvent avancer en attendant |
+| Playwright + Firefox | debug par l'UI (§6, ramification B) |
+
+Si un outil **obligatoire** manque (OpenCode, git), `doctor` sort en 1 : le signaler et s'arrêter.
+
 **Sans les scripts du kit** (installation par URL ou par copie du skill) : proposer le mode manuel **au lieu de
 s'arrêter**, et sauter tout ce qui en dépend.
 
