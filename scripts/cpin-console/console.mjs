@@ -8,6 +8,7 @@
 //   node console.mjs catalog                      stages, clusters, zones disponibles
 //   node console.mjs plan  --plan '<json>'        valide le plan, n'écrit rien (aussi : apply sans --apply)
 //   node console.mjs apply --plan '<json>' --apply   crée projet, environnements, dépôts, membres
+//                                                 un stage « prod » exige --allow-prod (accord explicite de l'humain)
 //   node console.mjs show --project <nom>          relit projet, environnements, dépôts ; n'écrit rien
 //   node console.mjs secrets-list --project <nom>    NOMS des secrets du projet (jamais les valeurs)
 //   node console.mjs secrets-push --project <nom> --repo <org/dépôt> [--repo …] --secret NOM=service.clé --var NOM=service.clé
@@ -117,7 +118,25 @@ const RULES = {
   dépôt: [/^[a-z0-9][a-z0-9-]{0,18}[a-z0-9]$/, '2 à 20 caractères, [a-z0-9-], ni début ni fin par « - »'],
 }
 
-function validatePlan(plan) {
+const PROD_WARNING = '⚠️  prod : un incident remonte des alertes au support CPiN. À réserver à un déploiement '
+  + 'fonctionnel, utilisé régulièrement par des utilisateurs réels.'
+
+// Quota du palier (prod ou hprod) exigé seulement si un environnement l'utilise.
+function checkTiers(plan, allowProd) {
+  const stages = (plan.environments ?? []).map(env => env.stage)
+  const used = { prod: stages.includes('prod'), hprod: stages.some(stage => stage !== 'prod') }
+  const errors = []
+  if (used.prod && !allowProd)
+    errors.push(`stage « prod » : relancer avec --allow-prod après accord explicite de l'humain. ${PROD_WARNING}`)
+  for (const tier of ['prod', 'hprod']) {
+    if (!used[tier]) continue
+    for (const key of ['cpu', 'gpu', 'memory'])
+      if (typeof plan.project?.[tier]?.[key] !== 'number') errors.push(`project.${tier}.${key} requis (nombre)`)
+  }
+  return errors
+}
+
+function validatePlan(plan, allowProd) {
   const errors = []
   const check = (kind, value) => {
     const [re, hint] = RULES[kind]
@@ -125,15 +144,7 @@ function validatePlan(plan) {
   }
   check('projet', plan.project?.name)
   if ((plan.project?.description ?? '').length > 280) errors.push('description > 280 caractères')
-  // Prod : pas encore pris en charge. Le palier prod part à 0 (withTiers) et un stage « prod » est refusé.
-  // À réactiver le jour où la prod est visée :
-  // const used = { prod: stages.includes('prod'), hprod: stages.some(stage => stage !== 'prod') }
-  // puis exiger project.prod.{cpu,gpu,memory} quand used.prod (et hprod seulement quand used.hprod).
-  for (const key of ['cpu', 'gpu', 'memory'])
-    if (typeof plan.project?.hprod?.[key] !== 'number') errors.push(`project.hprod.${key} requis (nombre)`)
-  if (plan.project?.prod) errors.push('project.prod : la prod n\'est pas encore prise en charge')
-  if ((plan.environments ?? []).some(env => env.stage === 'prod'))
-    errors.push('stage « prod » : la prod n\'est pas encore prise en charge')
+  errors.push(...checkTiers(plan, allowProd))
   if (!plan.environments?.length) errors.push('au moins un environnement requis')
   for (const env of plan.environments ?? []) {
     check('environnement', env.name)
@@ -247,12 +258,13 @@ const commands = {
 
   async plan(args) {
     const plan = parseJson(args.plan)
-    const errors = validatePlan(plan)
+    const errors = validatePlan(plan, args['allow-prod'] === true)
     if (errors.length) fail(`plan invalide :\n- ${errors.join('\n- ')}`)
     plan.project = withTiers(plan.project)
     const { environments, errors: refErrors } = await resolveIds(plan, await requireToken())
     if (refErrors.length) fail(`plan invalide :\n- ${refErrors.join('\n- ')}`)
     describe(plan, environments)
+    if (environments.some(env => env.stage === 'prod')) console.log(`\n${PROD_WARNING}`)
     console.log(args.apply ? '' : '\nSimulation : rien n\'a été créé (relancer avec --apply après accord de l\'humain).')
     return { plan, environments }
   },
