@@ -1,7 +1,7 @@
 import { firefox } from 'playwright'
-import { saveSecret, redact } from './lib.mjs'
+import { saveSecret, redact, instanceUrl } from './lib.mjs'
 
-const ARGOCD_URL = process.env.ARGOCD_URL ?? 'https://argocd.sdid.cpin.numerique-interieur.com'
+const ARGOCD_URL = instanceUrl('ARGOCD_URL')
 const LOGIN_TIMEOUT_MS = 5 * 60 * 1000
 const POLL_INTERVAL_MS = 1000
 
@@ -29,6 +29,11 @@ async function waitForToken(page) {
     await page.waitForTimeout(POLL_INTERVAL_MS)
   }
   throw new Error(`Aucun token ArgoCD détecté après ${LOGIN_TIMEOUT_MS / 1000}s.`)
+}
+
+if (!ARGOCD_URL) {
+  console.error('ARGOCD_URL inconnue pour cette instance : la noter dans .cpin/instance.env (voir console.mjs instance).')
+  process.exit(1)
 }
 
 const browser = await firefox.launch({ headless: false })

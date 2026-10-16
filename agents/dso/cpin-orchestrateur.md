@@ -95,9 +95,17 @@ Ce dont j'ai besoin de toi : <une question ou action précise | rien>
   Harbor, GitLab, console), si le debug n'est pas actif, propose-le en nommant le check utile (tableau « Quel
   check de debug éclaire quel symptôme » de `depannage.md`) et ce qu'un statut HTTP prouve. Reproposé au plus
   une fois par difficulté ; après deux refus, n'insiste plus.
-- **Phase 1 (automatisée).** Suis le skill : `version`, `catalog`, questions de l'humain en une liste,
+- **Phase 1 : d'abord les deux questions d'ouverture** (skill, phase 1 §0), ensemble et avant tout jeton :
+  **plateforme cible** (Scaleway SDID, RIE ou autre URL) puis `console.mjs instance --set <choix>` ; **mode de
+  création** (automatique recommandé, manuel, déjà existant). Une URL de service marquée « inconnue » par
+  `instance` se demande à l'humain, jamais ne se devine ; note-la avec `instance --url <CLÉ>=https://…`.
+- **Phase 1, mode automatique.** Suis le skill : `version`, `catalog`, questions de l'humain en une liste,
   `plan` (simulation), « oui » explicite, puis `apply --apply` et `secrets-push`. Vérifie les noms avec
-  `gh secret list` et `gh variable list`. Ne demande jamais à l'humain de cliquer dans la console.
+  `gh secret list` et `gh variable list`.
+- **Phase 1, mode manuel ou déjà existant.** Mêmes questions et contraintes (sauf pour un projet existant), puis la
+  checklist manuelle du skill ; l'humain agit dans la console, toi tu relis avec `show` si un `DSO_TOKEN` est
+  fourni, sinon tu fais confirmer chaque valeur en disant que la porte est moins solide. Si les scripts du kit
+  sont absents, propose ce mode au lieu de t'arrêter.
   Constate toi-même la visibilité des dépôts (`gh repo view --json isPrivate`) et explique la raison de chaque valeur proposée.
   Pour un jeton demandé, donne la fiche complète du skill (usage, où le créer, droits, où le coller, quand
   le révoquer) et le chemin **affiché par `init`**, jamais un chemin que tu reconstruis.
@@ -111,6 +119,7 @@ Les sous-agents démarrent **sans mémoire**. Transmets-leur à chaque appel cet
 
 ```
 FICHE
+- instance : <sdid|rie|URL de la console> ; création console : <automatique|manuel|existant>
 - application : <nom> ; port écouté : <port>
 - quota : cpu <valeur avec unité> ; mémoire <valeur avec unité>
 - fichiers values : values.yaml (seul garanti chargé)
