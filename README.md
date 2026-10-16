@@ -40,12 +40,38 @@ Le dépôt est découpé en un **socle** commun et des **groupes** à installer 
 
 ## Prérequis
 
-| Pour | Il faut |
-|------|---------|
-| Le plugin | OpenCode **≥ 1.18** (testé en 1.18.33), `git`, accès à github.com au démarrage d'OpenCode |
-| Le modèle | un modèle qui sait appeler des outils. Testé avec DeepSeek V4 Flash (Albert) : agents et prompts sont écrits pour qu'un modèle modeste les suive à la lettre |
-| `/livrer` (dev) | Node et le gestionnaire de paquets du projet (npm, pnpm), ou `uv` pour Python. Des scripts `build`/`typecheck`/`lint`/`test` **dans le projet** : la review ne lance que ceux qui existent |
-| `/deployer-cpin` (dso) | `helm`, `uv` (lance `check-cpin-rules.py`), `gh` authentifié sur le dépôt. Côté humain : un accès à la **console CPiN** (projet, dépôts, environnement, quota, tokens) |
+**Obligatoire** : sans eux, le kit ne se charge pas.
+
+| Il faut | Pourquoi |
+|---------|----------|
+| OpenCode **≥ 1.18** (testé en 1.18.35) | le plugin s'appuie sur le runtime Bun embarqué par OpenCode (`Bun.YAML`) |
+| `git` et un accès à github.com au démarrage d'OpenCode | OpenCode télécharge le plugin (`git+https://…`) |
+| un modèle qui sait appeler des outils | testé avec DeepSeek V4 Flash (Albert) : agents et prompts sont écrits pour qu'un modèle modeste les suive à la lettre |
+
+**Optionnel** : sans eux, le kit marche en **mode dégradé**. L'agent vous propose d'installer l'outil
+manquant ou de continuer sans lui.
+
+| Outil | Sert à | Sans lui |
+|-------|--------|----------|
+| Node **≥ 20.11** | scripts `cpin-console` et `cpin-debug` (console, Vault, debug) | mode **manuel** du runbook `deploiement-cpin` : l'humain fait les étapes dans la console |
+| `gh` authentifié | vérifier et poser les secrets et variables GitHub | l'humain les pose dans l'UI GitHub et confirme les noms |
+| scope `workflow` du jeton `gh` | pousser des fichiers `.github/workflows/` | l'humain pousse ces fichiers lui-même (`gh auth refresh -s workflow` pour l'ajouter) |
+| `helm`, `uv` | lancer `check-cpin-rules.py` en local (porte de la phase 3) | la vérification passe seulement par la CI de la PR |
+| Playwright + Firefox (~100 Mo) | debug automatisé ArgoCD, Harbor, GitLab (login SSO) | debug par l'UI ; **non installés par le plugin** : `make install-debug` |
+
+Pour `/livrer` (dev), il faut en plus les outils **du projet** (Node et npm/pnpm, ou `uv`) et ses scripts
+`build`/`typecheck`/`lint`/`test` : la review ne lance que ceux qui existent. Pour `/deployer-cpin` (dso), il faut
+un accès à la **console CPiN** ; les jetons et secrets sont détaillés dans le runbook `deploiement-cpin`.
+
+Vérifier le poste et installer le debug, depuis le dossier du kit (`<kit>` : le dossier
+`starter-kit-opencode@…` de `~/.cache/opencode/packages/` avec le plugin, sinon votre clone) :
+
+```bash
+make -C <kit> doctor          # obligatoire absent : code 1 ; optionnel absent : avertissement + mode dégradé
+make -C <kit> install-debug   # Playwright + Firefox, dans le kit
+```
+
+`doctor` n'installe rien et n'affiche aucun jeton. Pour chaque outil absent, il donne la commande d'installation.
 
 ## Installer
 
@@ -191,6 +217,7 @@ passer par GitHub ni par le cache. Relancer OpenCode suffit pour tester une modi
 | `make skills-index` / `make skills-index-check` | régénère / vérifie les `index.json` des groupes |
 | `make test-plugin` | le plugin installe ce qu'il faut pour chaque groupe, et rien des autres (sans appel au modèle) |
 | `make test-cpin-rules` | `check-cpin-rules.py` détecte chaque friction réelle d'un premier déploiement |
+| `make doctor` | les prérequis du poste (voir « Prérequis ») |
 
 Les règles de rangement (où mettre une instruction, comment nommer les agents) sont dans la section « Groupes » de
 `AGENTS.md`.

@@ -97,6 +97,13 @@ Exemple :
 
 Each subproject has its own `AGENTS.md` with project-specific config. This file takes precedence for cross-project conventions.
 
+## Prérequis du kit
+
+- Obligatoire : OpenCode ≥ 1.18 et `git`. Le reste est optionnel : sans lui, le kit passe en mode dégradé.
+- Vérifier le poste avec `make -C <kit> doctor` (lecture seule) ; tableau complet dans le
+  [README](https://github.com/dnum-mi/starter-kit-opencode#prérequis).
+- Ne jamais installer un outil sans l'accord de l'humain : proposer l'installation **ou** le mode dégradé.
+
 ## Groupes (instructions + skills, à installer séparément)
 
 Ce fichier est le **socle commun**. Chaque groupe de `.agents/skills/<groupe>/` apporte ses instructions

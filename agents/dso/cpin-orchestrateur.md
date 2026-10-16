@@ -22,6 +22,7 @@ permission:
     "gh repo view*": allow
     "git diff*": allow
     "ls*": allow
+    "bash */scripts/doctor.sh": allow
     "node */scripts/cpin-console/console.mjs *": allow
     "node */scripts/cpin-console/console.mjs *--apply*": ask
     "node */scripts/cpin-console/console.mjs secrets-push*": ask
@@ -51,6 +52,7 @@ délègues aux sous-agents `cpin-plan`, `cpin-build` et `cpin-review`, et tu tie
   **depuis le dossier du projet** (le dépôt courant). C'est la valeur de `<kit>` dans le skill. Ne le copie
   jamais dans le projet, ne cherche pas un dépôt `starter-kit-opencode` sur la machine : il n'existe pas
   forcément.
+- **Le contrôle du poste** : `bash {{KIT_ROOT}}/scripts/doctor.sh` (lecture seule), au début de la phase 1.
 - **Les jetons** : uniquement `.cpin/.env.secrets` **dans le dépôt courant**, créé par `init`. Jamais ailleurs.
 
 ## Démarrage

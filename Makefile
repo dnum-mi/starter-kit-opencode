@@ -1,15 +1,22 @@
-# Visualisation locale de la doc OKF (docs/okf) avec OpenWiki.
-# Prérequis : Node.js 22+ et un accès Internet (le viewer charge ses libs depuis un CDN).
+# Prérequis du poste (doctor, install-debug), index des skills, tests, et visualisation de la doc OKF.
+# okf-viz : Node.js 22+ et un accès Internet (le viewer OpenWiki charge ses libs depuis un CDN).
 
 OKF_DIR ?= docs/okf
 OKF_PORT ?= 4321
 OPENWIKI_VERSION ?= 0.6.0
 OPENWIKI = npx --yes openwiki@$(OPENWIKI_VERSION)
 
-.PHONY: help okf-viz okf-viz-export skills-index skills-index-check test-cpin-rules test-plugin
+.PHONY: help doctor install-debug okf-viz okf-viz-export skills-index skills-index-check test-cpin-rules test-plugin
 
 help: ## Liste les commandes
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-15s %s\n", $$1, $$2}'
+
+doctor: ## Vérifie les prérequis du poste : obligatoires (code 1) et optionnels (mode dégradé)
+	@bash scripts/doctor.sh
+
+install-debug: ## Installe Playwright et Firefox (~100 Mo) dans le kit, pour le debug automatisé CPiN
+	npm install --prefix scripts/cpin-debug
+	npx --prefix scripts/cpin-debug playwright install firefox
 
 okf-viz: ## Lance le graphe interactif de la doc (http://127.0.0.1:4321 par défaut)
 	$(OPENWIKI) visualize $(OKF_DIR) --port $(OKF_PORT)
