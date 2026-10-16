@@ -11,11 +11,11 @@ Les scripts du kit lisent l'instance choisie dans `.cpin/instance.env`
 | Service | SDID (Scaleway) | RIE | Autre instance |
 |---|---|---|---|
 | Console | `console.sdid.cpin.numerique-interieur.com` | `console.dso.interieur.rie.gouv.fr` | `console.<instance>` |
-| ArgoCD | `argocd.sdid.cpin.numerique-interieur.com` | à relever | `argocd.<zone>` |
-| Harbor | `harbor.sdid.cpin.numerique-interieur.com` | à relever | `harbor.<zone>` |
-| GitLab | `gitlab.sdid.cpin.numerique-interieur.com` | à relever | `<gitlab>` |
-| Keycloak | `keycloak.sdid.cpin.numerique-interieur.com/realms/dso` | à relever | idem |
-| Vault | `vault.sdid.cpin.numerique-interieur.com` (à confirmer par instance) | à relever | `vault.<zone>` |
+| ArgoCD | `argocd.sdid.cpin.numerique-interieur.com` | `gitops.dso.interieur.rie.gouv.fr` | `argocd.<zone>` |
+| Harbor | `harbor.sdid.cpin.numerique-interieur.com` | `registry.dso.interieur.rie.gouv.fr` | `harbor.<zone>` |
+| GitLab | `gitlab.sdid.cpin.numerique-interieur.com` | `gitlab.dso.interieur.rie.gouv.fr` | `<gitlab>` |
+| Keycloak | `keycloak.sdid.cpin.numerique-interieur.com/realms/dso` | `sso.dso.interieur.rie.gouv.fr/realms/dso` | idem |
+| Vault | `vault.sdid.cpin.numerique-interieur.com` (à confirmer par instance) | `vault.dso.interieur.rie.gouv.fr` | `vault.<zone>` |
 
 ## Accès API
 
