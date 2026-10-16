@@ -246,6 +246,9 @@ Rappeler au passage qu'on peut ajouter un environnement plus tard (la création 
 3. `node <kit>/scripts/cpin-console/console.mjs apply --plan '<json>' --apply` crée projet, environnements,
    dépôts et membres (une commande déjà exécutée est rejouable : l'existant est réutilisé). Le script
    relit ensuite la console : c'est cette **relecture** (noms, quotas réels) qui alimente la fiche.
+   Un projet existant est réutilisé **sans toucher à ses quotas** : si son quota est inférieur à celui du plan
+   (cas typique : ajout de la prod à un projet dont le palier prod est à 0), le script s'arrête avant
+   d'écrire. L'humain augmente le quota du projet dans la console, puis on relance `apply`.
 4. Relever le **nom du projet Harbor** réel (`PROJECT_PATH`) : il alimente `--expected-image` des
    phases 3/CI. Ne jamais le copier du nom du dépôt.
 

@@ -121,16 +121,24 @@ const RULES = {
 const PROD_WARNING = '⚠️  prod : un incident remonte des alertes au support CPiN. À réserver à un déploiement '
   + 'fonctionnel, utilisé régulièrement par des utilisateurs réels.'
 
+const TIERS = ['prod', 'hprod']
+const QUOTA_KEYS = ['cpu', 'gpu', 'memory']
+const PROJECT_FIELD = { cpu: 'Cpu', gpu: 'Gpu', memory: 'Memory' }
+
+function usedTiers(plan) {
+  const stages = (plan.environments ?? []).map(env => env.stage)
+  return { prod: stages.includes('prod'), hprod: stages.some(stage => stage !== 'prod') }
+}
+
 // Quota du palier (prod ou hprod) exigé seulement si un environnement l'utilise.
 function checkTiers(plan, allowProd) {
-  const stages = (plan.environments ?? []).map(env => env.stage)
-  const used = { prod: stages.includes('prod'), hprod: stages.some(stage => stage !== 'prod') }
+  const used = usedTiers(plan)
   const errors = []
   if (used.prod && !allowProd)
     errors.push(`stage « prod » : relancer avec --allow-prod après accord explicite de l'humain. ${PROD_WARNING}`)
-  for (const tier of ['prod', 'hprod']) {
+  for (const tier of TIERS) {
     if (!used[tier]) continue
-    for (const key of ['cpu', 'gpu', 'memory'])
+    for (const key of QUOTA_KEYS)
       if (typeof plan.project?.[tier]?.[key] !== 'number') errors.push(`project.${tier}.${key} requis (nombre)`)
   }
   return errors
@@ -175,6 +183,19 @@ async function resolveIds(plan, token) {
     return { ...env, stageId: stage?.id, clusterId: cluster?.id }
   })
   return { environments, errors }
+}
+
+// Un projet existant est réutilisé tel quel : ses quotas ne sont pas modifiés par apply (ex. palier prod resté
+// à 0 quand on ajoute la prod à un projet dev). On s'arrête avant d'écrire plutôt que de créer un env sans quota.
+function checkExistingQuotas(project, plan) {
+  if (project.limitless) return
+  const used = usedTiers(plan)
+  const short = TIERS.filter(tier => used[tier]).flatMap(tier => QUOTA_KEYS
+    .filter(key => !(Number(project[`${tier}${PROJECT_FIELD[key]}`]) >= plan.project[tier][key]))
+    .map(key => `${tier}.${key} : ${project[`${tier}${PROJECT_FIELD[key]}`] ?? '?'} < ${plan.project[tier][key]}`))
+  if (short.length)
+    fail(`projet ${project.name} existant, quota insuffisant (non modifié par ce script) :\n- ${short.join('\n- ')}\n`
+      + 'Augmenter le quota du projet dans la console CPiN, puis relancer apply.')
 }
 
 const ZERO = { cpu: 0, gpu: 0, memory: 0 }
@@ -276,7 +297,10 @@ const commands = {
     const secrets = await loadSecrets()
 
     let [project] = await api('GET', '/projects', { token, query: { name: plan.project.name } })
-    if (project) console.log(`= projet ${project.name} existe déjà (${project.id}), réutilisé`)
+    if (project) {
+      checkExistingQuotas(project, plan)
+      console.log(`= projet ${project.name} existe déjà (${project.id}), réutilisé`)
+    }
     else {
       const p = plan.project
       project = await api('POST', '/projects', {
