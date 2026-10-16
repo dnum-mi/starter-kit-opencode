@@ -21,10 +21,14 @@ export const INSTANCES = {
     GITLAB_URL: 'https://gitlab.sdid.cpin.numerique-interieur.com',
     VAULT_URL: 'https://vault.sdid.cpin.numerique-interieur.com',
   },
-  // seule la console est connue : les autres URL se relèvent sur l'instance et se notent dans le fichier
+  // fournies par l'équipe, joignables seulement depuis le réseau RIE ; ArgoCD s'y appelle « gitops »
   rie: {
     label: 'RIE',
     CONSOLE_URL: 'https://console.dso.interieur.rie.gouv.fr',
+    ARGOCD_URL: 'https://gitops.dso.interieur.rie.gouv.fr',
+    HARBOR_URL: 'https://registry.dso.interieur.rie.gouv.fr',
+    GITLAB_URL: 'https://gitlab.dso.interieur.rie.gouv.fr',
+    VAULT_URL: 'https://vault.dso.interieur.rie.gouv.fr',
   },
 }
 

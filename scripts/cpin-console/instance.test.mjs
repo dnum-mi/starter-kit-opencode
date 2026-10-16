@@ -10,11 +10,18 @@ test('sans fichier : SDID, comportement historique', () => {
   assert.equal(urls.VAULT_URL, 'https://vault.sdid.cpin.numerique-interieur.com')
 })
 
-test('RIE : la console est connue, les autres services ne sont pas devinés', () => {
+test('RIE : URL connues, ArgoCD sur gitops et Harbor sur registry', () => {
   const { urls } = currentInstance({ env: {}, file: { INSTANCE: 'rie' } })
   assert.equal(urls.CONSOLE_URL, 'https://console.dso.interieur.rie.gouv.fr')
-  assert.equal(urls.ARGOCD_URL, undefined)
-  assert.equal(urls.HARBOR_URL, undefined)
+  assert.equal(urls.ARGOCD_URL, 'https://gitops.dso.interieur.rie.gouv.fr')
+  assert.equal(urls.HARBOR_URL, 'https://registry.dso.interieur.rie.gouv.fr')
+  assert.equal(urls.GITLAB_URL, 'https://gitlab.dso.interieur.rie.gouv.fr')
+  assert.equal(urls.VAULT_URL, 'https://vault.dso.interieur.rie.gouv.fr')
+})
+
+test('autre instance : seule la console est connue, le reste n\'est pas deviné', () => {
+  const file = { INSTANCE: 'autre', CONSOLE_URL: 'https://console.exemple.fr' }
+  assert.equal(currentInstance({ env: {}, file }).urls.ARGOCD_URL, undefined)
 })
 
 test('priorité : variable d\'environnement > fichier > instance', () => {

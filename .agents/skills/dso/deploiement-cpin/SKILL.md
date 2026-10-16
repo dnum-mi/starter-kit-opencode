@@ -75,10 +75,10 @@ en faut un.
 **Plateforme cible.** `node <kit>/scripts/cpin-console/console.mjs instance --set <sdid|rie|https://console.…>`
 l'écrit dans `.cpin/instance.env` (non secret, ignoré par git). Tous les scripts (`console.mjs`, `vault.mjs`,
 `cpin-debug`) le lisent ; sans fichier, la cible reste SDID. `instance` sans `--set` affiche l'instance et
-l'URL de chaque service. Seule la console du RIE est connue du kit : une URL marquée « inconnue » (ArgoCD,
-Harbor, GitLab, Vault) se **relève** sur l'instance et se note avec
-`console.mjs instance --url ARGOCD_URL=https://…`, jamais déduite d'une autre instance. L'humain dit ce qu'il voit dans la console ou
-l'UI ; une URL n'est pas un secret.
+l'URL de chaque service. Le kit connaît les URL de SDID et du RIE (sur le RIE, ArgoCD s'appelle `gitops.` et
+Harbor `registry.`). Pour une autre instance, une URL marquée « inconnue » se **relève** sur l'instance et se
+note avec `console.mjs instance --url ARGOCD_URL=https://…`, jamais déduite d'une autre instance. L'humain dit
+ce qu'il voit dans la console ou l'UI ; une URL n'est pas un secret.
 
 **Mode de création.** Expliquer les trois choix, recommander l'automatique et dire pourquoi : contraintes
 validées par la simulation **avant** toute écriture, création rejouable, relecture qui alimente la suite
