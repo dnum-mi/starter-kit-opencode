@@ -89,9 +89,10 @@ validées par la simulation **avant** toute écriture, création rejouable, rele
 |------|-----------------------|
 | **Automatique** | §1 à §6 tels quels |
 | **Manuel** | §1 (sans `DSO_TOKEN` si l'humain le refuse), §3 (mêmes questions, mêmes contraintes), puis la **checklist manuelle** ci-dessous à la place de §4 ; §5 manuel ; §6 |
-| **Déjà existant** | §1, puis seulement le nom du projet et ses dépôts ; pas de §3 ni de création ; relecture par `console.mjs show --project <nom>` ; §5 ; §6 |
+| **Déjà existant** | §1, puis seulement le nom du projet et ses dépôts ; **ni §3, ni checklist, ni création** ; relecture par `console.mjs show --project <nom>` ou confirmation de l'humain ; §5 ; §6 |
 
-**Checklist manuelle** (remplace §4), donnée à l'humain en une fois, avec les valeurs validées en §3 :
+**Checklist manuelle** (mode **manuel** seulement, remplace §4), donnée à l'humain en une fois, avec les valeurs
+validées en §3 :
 
 1. Console > créer le **projet** (nom, description), avec le **quota hors-prod**.
 2. Pour chaque **environnement** : nom, stage, cluster, cpu, gpu, mémoire.
@@ -99,7 +100,18 @@ validées par la simulation **avant** toute écriture, création rejouable, rele
 4. Les **membres**.
 5. Relever le **nom du projet Harbor** (`PROJECT_PATH`) affiché par la console.
 
-Si un script échoue faute de prérequis (scripts absents), proposer ce mode **au lieu de s'arrêter**.
+**Sans les scripts du kit** (installation par URL ou par copie du skill) : proposer le mode manuel **au lieu de
+s'arrêter**, et sauter tout ce qui en dépend.
+
+| Étape | Avec les scripts | Sans les scripts |
+|-------|------------------|------------------|
+| Plateforme cible | `console.mjs instance --set` | notée dans la **FICHE** |
+| Jetons (§1) | `init` et `.cpin/.env.secrets` | aucun stockage local : pas de `DSO_TOKEN`, pas de `init` |
+| Instance (§2) | `instance`, `version`, `catalog` | l'humain lit la version et les stages/clusters dans la console |
+| Création (§4) | `plan` / `apply` | checklist manuelle (ou rien, si le projet existe déjà) |
+| Secrets GitHub (§5) | `secrets-push`, `pat-push` | l'humain les pose avec `gh secret set` sans `--body` |
+| Relecture | `show` | confirmation de l'humain, valeur par valeur |
+| Debug automatisé (§6) | proposé | indisponible : debug via l'UI |
 
 **Porte en mode manuel ou existant.** Proposer un `DSO_TOKEN` **pour la seule relecture** :
 `console.mjs show --project <nom>` relit projet, environnements et dépôts sans rien écrire. Sans jeton, faire
@@ -261,7 +273,7 @@ reproposer, **une seule fois par difficulté** ; après deux refus, ne plus insi
 Les scripts sont dans `<kit>/scripts/cpin-debug/` et se lancent **depuis le dossier du projet**, comme
 `console.mjs` : ils lisent `.cpin/.env.secrets` du dossier courant.
 
-**Porte** : l'instance cible est notée (`console.mjs instance`) ; `gh secret list` et `gh variable list` montrent, sur chaque dépôt (`-R <org>/<dépôt>`),
+**Porte** : l'instance cible est notée (`console.mjs instance`, ou dans la FICHE sans les scripts) ; `gh secret list` et `gh variable list` montrent, sur chaque dépôt (`-R <org>/<dépôt>`),
 `GITLAB_TRIGGER_TOKEN`, `GITLAB_URL`, `GITLAB_MIRROR_ID`, `GITLAB_PROJECT_NAME` (et `GH_PAT`, ou les secrets
 de la GitHub App si elle est utilisée) ; la relecture de la console (`apply`, ou `show` en mode manuel ou existant)
 montre projet, environnements et dépôts attendus, ou, sans jeton, l'humain les a confirmés un par un ; l'humain a

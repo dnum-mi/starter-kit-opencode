@@ -85,6 +85,6 @@ export function readInstanceText() {
 }
 
 export async function saveInstance(content) {
-  await ensureExcluded()
+  await ensureExcluded(INSTANCE_FILE)
   await writeFile(INSTANCE_FILE, content, 'utf8')
 }

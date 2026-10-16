@@ -21,10 +21,10 @@ Les scripts du kit lisent l'instance choisie dans `.cpin/instance.env`
 
 | Service | Endpoint | Auth |
 |---|---|---|
-| ArgoCD | `GET /api/v1/applications` | à relever | `Authorization: Bearer <token OIDC>` |
-| Harbor | `GET /api/v2.0/projects` | à relever | `Authorization: Bearer <token OIDC>` |
-| GitLab | `GET /api/v4/user` | à relever | `PRIVATE-TOKEN: <PAT>` |
+| ArgoCD | `GET /api/v1/applications` | `Authorization: Bearer <token OIDC>` |
+| Harbor | `GET /api/v2.0/projects` | `Authorization: Bearer <token OIDC>` |
+| GitLab | `GET /api/v4/user` | `PRIVATE-TOKEN: <PAT>` |
 | Console | `GET /api/v1/me` | `x-dso-token: <jeton API>` |
-| Vault | `GET /v1/auth/token/lookup-self` | à relever | `X-Vault-Token: <token copié dans l'UI>` |
+| Vault | `GET /v1/auth/token/lookup-self` | `X-Vault-Token: <token copié dans l'UI>` |
 
 Scripts de debug : `scripts/cpin-debug/` (login Playwright optionnel + un check par service).

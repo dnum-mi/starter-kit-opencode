@@ -32,13 +32,14 @@ function projectRelative(file) {
 
 // Git : un .gitignore à côté du fichier, créé ou complété sans écraser les règles existantes.
 // Docker : un .dockerignore à la racine du projet, même sans Dockerfile racine (docker build -f a/Dockerfile .).
-export async function ensureExcluded() {
-  const dir = dirname(SECRETS_FILE)
+// `file` : le fichier à protéger (par défaut le fichier de secrets ; aussi .cpin/instance.env).
+export async function ensureExcluded(file = SECRETS_FILE) {
+  const dir = dirname(file)
   await mkdir(dir, { recursive: true })
   const dedicated = basename(dir) === '.cpin'
-  await ensureLines(resolve(dir, '.gitignore'), [dedicated ? '*' : basename(SECRETS_FILE)])
+  await ensureLines(resolve(dir, '.gitignore'), [dedicated ? '*' : basename(file)])
 
-  const rel = projectRelative(SECRETS_FILE)
+  const rel = projectRelative(file)
   const dockerLines = ['.cpin/']
   if (rel && !rel.startsWith('.cpin/')) dockerLines.push(rel)
   const added = await ensureLines(resolve(process.cwd(), '.dockerignore'), dockerLines)
