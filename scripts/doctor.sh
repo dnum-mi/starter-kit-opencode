@@ -9,8 +9,6 @@ KIT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OPENCODE_MIN="1.18.0"
 NODE_MIN="20.11.0"
 DEBUG_DIR="$KIT_ROOT/scripts/cpin-debug"
-BROWSERS_DIR="${PLAYWRIGHT_BROWSERS_PATH:-$HOME/.cache/ms-playwright}"
-[[ "$OSTYPE" == darwin* && -z "${PLAYWRIGHT_BROWSERS_PATH:-}" ]] && BROWSERS_DIR="$HOME/Library/Caches/ms-playwright"
 
 FAILURES=0
 pass() { printf '\033[0;32m✓\033[0m %s\n' "$1"; }
@@ -58,10 +56,20 @@ check_gh() {
     hint "Sans lui : secrets GitHub posés et vérifiés à la main dans l'UI." "Installer : https://cli.github.com/"
     return
   fi
+  if ! gh auth status >/dev/null 2>&1; then
+    warn "gh $(version_of gh) : non authentifié"; hint "gh auth login"; return
+  fi
+  check_gh_scopes
+}
+
+# Un PAT fine-grained n'expose pas de scopes OAuth : on ne peut alors que demander de vérifier ses droits.
+check_gh_scopes() {
   local scopes
   scopes="$(gh auth status 2>/dev/null | grep -i 'token scopes' | head -1)"
   if [[ -z "$scopes" ]]; then
-    warn "gh $(version_of gh) : non authentifié"; hint "gh auth login"; return
+    warn "gh $(version_of gh) authentifié, droits du jeton non lisibles (PAT fine-grained ?)"
+    hint "Vérifier qu'il peut écrire les workflows du dépôt, sinon ils sont poussés à la main."
+    return
   fi
   if [[ "$scopes" == *workflow* ]]; then pass "gh $(version_of gh), authentifié, scope workflow"; return; fi
   warn "gh $(version_of gh) authentifié, sans le scope workflow"
@@ -77,13 +85,13 @@ check_chart_tools() {
     warn "uv : absent"; hint "Installer : curl -LsSf https://astral.sh/uv/install.sh | sh"; missing=1
   fi
   ((missing)) || return 0
-  hint "Sans eux : check-cpin-rules.py ne tourne pas en local, la porte de la phase 3 passe à la CI."
+  hint "Sans eux : pas de porte en phase 3 de /deployer-cpin (check-cpin-rules.py). Les installer avant."
 }
 
+# Firefox attendu par le Playwright du kit (même révision), pas n'importe quelle entrée du cache.
 check_playwright() {
-  local firefox
-  firefox="$(compgen -G "$BROWSERS_DIR/firefox-*" | head -1)"
-  if [[ -d "$DEBUG_DIR/node_modules/playwright" && -n "$firefox" ]]; then pass "Playwright + Firefox"; return; fi
+  local probe='require("fs").accessSync(require("playwright").firefox.executablePath())'
+  if (cd "$DEBUG_DIR" && node -e "$probe") >/dev/null 2>&1; then pass "Playwright + Firefox"; return; fi
   warn "Playwright + Firefox : non installés dans le kit"
   hint "Sans eux : debug par l'UI d'ArgoCD." "Installer (~100 Mo) : make -C $KIT_ROOT install-debug"
 }

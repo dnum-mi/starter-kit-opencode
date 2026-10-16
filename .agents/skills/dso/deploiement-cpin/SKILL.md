@@ -110,7 +110,7 @@ la FICHE et ne plus le redemander. Effet d'un manque :
 | Node | comme « sans les scripts » ci-dessous : mode manuel |
 | `gh`, ou `gh` non authentifié | l'humain pose les secrets dans l'UI GitHub et confirme les noms ; porte moins solide |
 | scope `workflow` de `gh` | l'humain pousse lui-même `.github/workflows/` |
-| `helm` ou `uv` | `check-cpin-rules.py` ne tourne pas en local : la porte de la phase 3 se juge sur la CI de la PR |
+| `helm` ou `uv` | **aucun** : la porte de la phase 3 lance `check-cpin-rules.py`. Les faire installer avant la phase 3 ; les phases 0 à 2 peuvent avancer en attendant |
 | Playwright + Firefox | debug par l'UI (§6, ramification B) |
 
 Si un outil **obligatoire** manque (OpenCode, git), `doctor` sort en 1 : le signaler et s'arrêter.

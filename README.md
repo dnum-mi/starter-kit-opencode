@@ -56,7 +56,7 @@ manquant ou de continuer sans lui.
 | Node **≥ 20.11** | scripts `cpin-console` et `cpin-debug` (console, Vault, debug) | mode **manuel** du runbook `deploiement-cpin` : l'humain fait les étapes dans la console |
 | `gh` authentifié | vérifier et poser les secrets et variables GitHub | l'humain les pose dans l'UI GitHub et confirme les noms |
 | scope `workflow` du jeton `gh` | pousser des fichiers `.github/workflows/` | l'humain pousse ces fichiers lui-même (`gh auth refresh -s workflow` pour l'ajouter) |
-| `helm`, `uv` | lancer `check-cpin-rules.py` en local (porte de la phase 3) | la vérification passe seulement par la CI de la PR |
+| `helm`, `uv` | lancer `check-cpin-rules.py`, la porte de la phase 3 de `/deployer-cpin` | pas de mode dégradé : **à installer avant la phase 3** (le reste du kit marche sans) |
 | Playwright + Firefox (~100 Mo) | debug automatisé ArgoCD, Harbor, GitLab (login SSO) | debug par l'UI ; **non installés par le plugin** : `make install-debug` |
 
 Pour `/livrer` (dev), il faut en plus les outils **du projet** (Node et npm/pnpm, ou `uv`) et ses scripts
