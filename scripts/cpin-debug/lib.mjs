@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises'
 import { SECRETS_FILE, writeSecretsFile } from '../cpin-console/secrets-file.mjs'
 
 export { SECRETS_FILE }
+export { instanceUrl } from '../cpin-console/instance.mjs'
 
 // Même fichier que scripts/cpin-console (voir secrets-file.mjs). Lancer ces scripts depuis le dossier du
 // projet, jamais depuis le dossier du kit (cache du plugin, vidable).
@@ -36,7 +37,7 @@ export function redact(value) {
 
 export async function checkService(name, url, path, token, { header = 'Authorization', prefix = 'Bearer ' } = {}) {
   if (!url) {
-    console.log(`${name} : URL non configurée`)
+    console.log(`${name} : URL inconnue pour cette instance (voir console.mjs instance)`)
     return
   }
   if (!token) {

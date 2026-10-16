@@ -56,10 +56,67 @@ tant qu'elle n'est pas franchie. Principe : **vérifier au PR, pas au déploieme
 
 **Porte** : l'humain valide l'organisation des dépôts ; le port applicatif est connu.
 
-## Phase 1 : console CPiN et GitHub, automatisés par API
+## Phase 1 : console CPiN et GitHub
 
-L'agent crée lui-même ce qui est dans la console (script `scripts/cpin-console/console.mjs`, API
-`console.<instance>/swagger-ui`). **L'humain répond aux questions et confirme : il ne clique pas dans la console.**
+Par défaut, l'agent crée lui-même ce qui est dans la console (script `scripts/cpin-console/console.mjs`, API
+`console.<instance>/swagger-ui`) : l'humain répond aux questions et confirme. Deux questions d'ouverture
+décident de la suite.
+
+### 0. Questions d'ouverture, avant tout jeton
+
+Les poser **ensemble**, avant de demander le moindre jeton : elles décident quel `DSO_TOKEN` créer, et s'il
+en faut un.
+
+| Question | Choix | Ce que ça change |
+|----------|-------|------------------|
+| **Plateforme cible ?** | **Scaleway (SDID)** · **RIE** · autre (URL `https://console.<instance>`) | console, jetons et URL des services de cette instance. Le RIE n'est joignable que depuis son réseau |
+| **Création dans la console ?** | **Automatique (recommandé)** · **Manuel** · **Déjà existant** | qui crée projet, environnements et dépôts, et comment la porte se vérifie |
+
+**Plateforme cible.** `node <kit>/scripts/cpin-console/console.mjs instance --set <sdid|rie|https://console.…>`
+l'écrit dans `.cpin/instance.env` (non secret, ignoré par git). Tous les scripts (`console.mjs`, `vault.mjs`,
+`cpin-debug`) le lisent ; sans fichier, la cible reste SDID. `instance` sans `--set` affiche l'instance et
+l'URL de chaque service. Seule la console du RIE est connue du kit : une URL marquée « inconnue » (ArgoCD,
+Harbor, GitLab, Vault) se **relève** sur l'instance et se note avec
+`console.mjs instance --url ARGOCD_URL=https://…`, jamais déduite d'une autre instance. L'humain dit ce qu'il voit dans la console ou
+l'UI ; une URL n'est pas un secret.
+
+**Mode de création.** Expliquer les trois choix, recommander l'automatique et dire pourquoi : contraintes
+validées par la simulation **avant** toute écriture, création rejouable, relecture qui alimente la suite
+(`PROJECT_PATH` Harbor). Le manuel se justifie si les scripts sont absents, si l'humain ne veut pas confier
+`DSO_TOKEN` (il porte **tous ses droits** sur la console), ou pour découvrir la console.
+
+| Mode | Étapes de cette phase |
+|------|-----------------------|
+| **Automatique** | §1 à §6 tels quels |
+| **Manuel** | §1 (sans `DSO_TOKEN` si l'humain le refuse), §3 (mêmes questions, mêmes contraintes), puis la **checklist manuelle** ci-dessous à la place de §4 ; §5 manuel ; §6 |
+| **Déjà existant** | §1, puis seulement le nom du projet et ses dépôts ; **ni §3, ni checklist, ni création** ; relecture par `console.mjs show --project <nom>` ou confirmation de l'humain ; §5 ; §6 |
+
+**Checklist manuelle** (mode **manuel** seulement, remplace §4), donnée à l'humain en une fois, avec les valeurs
+validées en §3 :
+
+1. Console > créer le **projet** (nom, description), avec le **quota hors-prod**.
+2. Pour chaque **environnement** : nom, stage, cluster, cpu, gpu, mémoire.
+3. Pour chaque **dépôt** : nom interne, URL `.git`, public ou privé (privé : `GH_USER` + `GH_PAT`), applicatif ou infra.
+4. Les **membres**.
+5. Relever le **nom du projet Harbor** (`PROJECT_PATH`) affiché par la console.
+
+**Sans les scripts du kit** (installation par URL ou par copie du skill) : proposer le mode manuel **au lieu de
+s'arrêter**, et sauter tout ce qui en dépend.
+
+| Étape | Avec les scripts | Sans les scripts |
+|-------|------------------|------------------|
+| Plateforme cible | `console.mjs instance --set` | notée dans la **FICHE** |
+| Jetons (§1) | `init` et `.cpin/.env.secrets` | aucun stockage local : pas de `DSO_TOKEN`, pas de `init` |
+| Instance (§2) | `instance`, `version`, `catalog` | l'humain lit la version et les stages/clusters dans la console |
+| Création (§4) | `plan` / `apply` | checklist manuelle (ou rien, si le projet existe déjà) |
+| Secrets GitHub (§5) | `secrets-push`, `pat-push` | l'humain les pose avec `gh secret set` sans `--body` |
+| Relecture | `show` | confirmation de l'humain, valeur par valeur |
+| Debug automatisé (§6) | proposé | indisponible : debug via l'UI |
+
+**Porte en mode manuel ou existant.** Proposer un `DSO_TOKEN` **pour la seule relecture** :
+`console.mjs show --project <nom>` relit projet, environnements et dépôts sans rien écrire. Sans jeton, faire
+confirmer par l'humain chaque valeur (nom du projet Harbor, environnements, quotas, dépôts) et **dire que la
+porte est alors moins solide** : une faute de frappe ne se verra qu'au déploiement.
 
 ### 1. Prérequis humains (les seuls)
 
@@ -72,8 +129,8 @@ copier dans le projet : la copie ne suivrait pas les mises à jour.
 **Prérequis** : ces scripts (`scripts/cpin-console`, `scripts/cpin-debug`) ne sont fournis que par
 l'installation **plugin** (README §1) ou un clone complet du kit. Les installations par URL ou par copie du
 seul skill ne les contiennent pas. Avant `init`, vérifier que `<kit>/scripts/cpin-console/console.mjs`
-existe ; sinon **s'arrêter** et dire à l'humain d'installer le plugin (ou de cloner le kit et d'indiquer son
-chemin), au lieu d'improviser une procédure manuelle.
+existe ; sinon proposer à l'humain soit d'installer le plugin (ou de cloner le kit et d'indiquer son chemin),
+soit le **mode manuel** (§0), plutôt que d'improviser une autre procédure.
 
 - Le **jeton API de la console** : l'agent lance `node <kit>/scripts/cpin-console/console.mjs init`, qui **crée**
   `.cpin/.env.secrets` **dans le dossier du projet** (0600, valeurs vides, dossier auto-ignoré par git) et affiche son chemin réel. L'humain y colle
@@ -128,8 +185,9 @@ L'humain doit pouvoir corriger un choix en comprenant d'où il vient ; une valeu
 
 ### 2. Relever l'instance
 
-`node <kit>/scripts/cpin-console/console.mjs version` (route publique) puis `catalog` (stages, clusters, zones).
-Chaque comportement supposé se vérifie contre **cette version**, pas contre la doc générale.
+`node <kit>/scripts/cpin-console/console.mjs instance` (cible choisie en §0), `version` (route publique), puis
+`catalog` (stages, clusters, zones). Chaque comportement supposé se vérifie contre **cette version**, pas contre
+la doc générale. Sans `DSO_TOKEN` (mode manuel), `catalog` est remplacé par ce que l'humain lit dans la console.
 
 ### 3. Poser les questions, **en une seule liste**, puis attendre
 
@@ -182,6 +240,12 @@ Rappeler au passage qu'on peut ajouter un environnement plus tard (la création 
    `GH_PAT` sur les deux dépôts (valeur lue dans `.env.secrets`, jamais affichée).
 5. Si `scan-sonarqube` est ajouté au `ci.yml` : secrets `SONAR_TOKEN` et `SONAR_PROJECT_KEY`, saisis par l'humain.
 
+**Sans `DSO_TOKEN` (mode manuel)** : l'humain relève `GITLAB_TRIGGER_TOKEN`, `GITLAB_URL` et `GITLAB_MIRROR_ID`
+dans les secrets du projet (console), et les pose lui-même. Pour un secret, `gh secret set <NOM> -R <org>/<dépôt>`
+**sans `--body`** : `gh` demande la valeur, qui ne passe ni par la ligne de commande ni par l'agent. Pour une
+variable : `gh variable set <NOM> -R <org>/<dépôt> --body <valeur>`. Idem pour `GH_PAT` si `pat-push` n'est pas
+disponible. L'agent vérifie ensuite les **noms** avec `gh secret list` / `gh variable list`.
+
 ### 6. Debug automatisé (optionnel, **toujours proposé**)
 
 La question est posée avec les autres (§3). Ne jamais la sauter : si l'humain n'a pas répondu, la poser avant
@@ -209,9 +273,10 @@ reproposer, **une seule fois par difficulté** ; après deux refus, ne plus insi
 Les scripts sont dans `<kit>/scripts/cpin-debug/` et se lancent **depuis le dossier du projet**, comme
 `console.mjs` : ils lisent `.cpin/.env.secrets` du dossier courant.
 
-**Porte** : `gh secret list` et `gh variable list` montrent, sur chaque dépôt (`-R <org>/<dépôt>`),
+**Porte** : l'instance cible est notée (`console.mjs instance`, ou dans la FICHE sans les scripts) ; `gh secret list` et `gh variable list` montrent, sur chaque dépôt (`-R <org>/<dépôt>`),
 `GITLAB_TRIGGER_TOKEN`, `GITLAB_URL`, `GITLAB_MIRROR_ID`, `GITLAB_PROJECT_NAME` (et `GH_PAT`, ou les secrets
-de la GitHub App si elle est utilisée) ; la relecture de la console montre projet, environnements et dépôts attendus ; l'humain a
+de la GitHub App si elle est utilisée) ; la relecture de la console (`apply`, ou `show` en mode manuel ou existant)
+montre projet, environnements et dépôts attendus, ou, sans jeton, l'humain les a confirmés un par un ; l'humain a
 confirmé les secrets Vault.
 
 ## Phase 2 : valeurs vitales dans `values.yaml`

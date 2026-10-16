@@ -132,14 +132,14 @@ accessible avec Tab) suit le runbook `deploiement-cpin` :
 
 | Phases | Qui | Ce qui se passe |
 |--------|-----|-----------------|
-| 0 à 2 : éligibilité, prérequis console, valeurs vitales | **vous** | une phase à la fois : l'orchestrateur pose les questions de la phase en une seule liste et attend votre réponse avant de passer à la suivante ; il ne vérifie que les **noms** des secrets et variables GitHub (`gh secret list`) |
+| 0 à 2 : éligibilité, prérequis console, valeurs vitales | **vous** | une phase à la fois : l'orchestrateur pose les questions de la phase en une seule liste et attend votre réponse avant de passer à la suivante. La phase 1 commence par la **plateforme cible** (Scaleway SDID, RIE, autre) et le **mode de création** dans la console (automatique par l'API, manuel, projet déjà existant) ; il ne vérifie que les **noms** des secrets et variables GitHub (`gh secret list`) |
 | 3 : chart et CI | agents | `cpin-plan` → `cpin-build` → `cpin-review`, jusqu'à ce que `check-cpin-rules.py` sorte en 0 (3 essais au plus) |
 | 4 et 5 : livraison, vérification après synchro | **vous** | l'orchestrateur vous remet la marche à suivre et la table de dépannage |
 
 Ce que les agents `dso` ne font **jamais** :
 - demander, lire, écrire ou afficher la valeur d'un token ou d'un secret : c'est vous qui les saisissez, dans la console,
   dans GitHub ou dans Vault ;
-- agir sur la console CPiN, ArgoCD, Vault ou le GitLab interne ;
+- agir sur ArgoCD ou le GitLab interne, ni sur la console CPiN et Vault autrement que par les scripts du kit, après votre « oui » ;
 - commiter, pousser, ou franchir une porte humaine sur une supposition.
 
 `cpin-orchestrateur` ne modifie aucun fichier, et ne lance que `gh … list`, `git status/log/diff` et `ls`.

@@ -1,11 +1,14 @@
 #!/usr/bin/env node
 // Console CPiN par son API (swagger : <console>/swagger-ui). Sans dépendance.
 //
+//   node console.mjs instance [--set <sdid|rie|https://console.…>] [--url ARGOCD_URL=https://…]
+//                                                 plateforme cible et URL relevées (.cpin/instance.env, non secret)
 //   node console.mjs init                         crée .cpin/.env.secrets (0600, valeurs vides, auto-ignoré) s'il manque, l'exclut du .dockerignore ; dit quels noms sont renseignés
 //   node console.mjs version
 //   node console.mjs catalog                      stages, clusters, zones disponibles
 //   node console.mjs plan  --plan '<json>'        valide le plan, n'écrit rien (aussi : apply sans --apply)
 //   node console.mjs apply --plan '<json>' --apply   crée projet, environnements, dépôts, membres
+//   node console.mjs show --project <nom>          relit projet, environnements, dépôts ; n'écrit rien
 //   node console.mjs secrets-list --project <nom>    NOMS des secrets du projet (jamais les valeurs)
 //   node console.mjs secrets-push --project <nom> --repo <org/dépôt> [--repo …] --secret NOM=service.clé --var NOM=service.clé
 //   node console.mjs pat-push --repo <org/dépôt> [--repo <org/infra>]   pose le secret GH_PAT (lu dans .env.secrets) sur chaque dépôt
@@ -16,8 +19,9 @@
 import { readFile, appendFile } from 'node:fs/promises'
 import { SECRETS_FILE, ensureExcluded, writeSecretsFile } from './secrets-file.mjs'
 import { spawnSync } from 'node:child_process'
+import { currentInstance, instanceFileContent, readInstanceText, saveInstance, URL_KEYS, withUrls } from './instance.mjs'
 
-const CONSOLE_URL = process.env.CONSOLE_URL ?? 'https://console.sdid.cpin.numerique-interieur.com'
+const CONSOLE_URL = currentInstance().urls.CONSOLE_URL
 // Les jetons vivent dans le PROJET de l'humain (dossier courant), pas dans le dossier du plugin, qui est un
 // cache que OpenCode peut vider. Exclusions Git et Docker : voir secrets-file.mjs.
 // anciens noms, avant le PAT unique
@@ -70,19 +74,23 @@ function parseArgs(argv) {
     const next = argv[i + 1]
     if (next === undefined || next.startsWith('--')) { args[key] = true; continue }
     i++
-    if (key === 'secret' || key === 'var' || key === 'repo') (args.multi[key] ??= []).push(next)
+    if (['secret', 'var', 'repo', 'url'].includes(key)) (args.multi[key] ??= []).push(next)
     else args[key] = next
   }
   return args
 }
 
 async function api(method, path, { body, query, token } = {}) {
+  if (!CONSOLE_URL) fail('URL de la console inconnue pour cette instance (voir « instance »)')
   const url = new URL(`${CONSOLE_URL}/api/v1${path}`)
   for (const [k, v] of Object.entries(query ?? {})) url.searchParams.set(k, v)
   const response = await fetch(url, {
     method,
     headers: { 'content-type': 'application/json', ...(token ? { 'x-dso-token': token } : {}) },
     body: body ? JSON.stringify(body) : undefined,
+  }).catch((error) => {
+    const reason = error.cause?.code ?? error.message
+    fail(`${CONSOLE_URL} injoignable (${reason}) : réseau de l'instance accessible ?`)
   })
   const text = await response.text()
   let data = text
@@ -303,12 +311,26 @@ const commands = {
       console.log(`+ membre ${email} ajouté`)
     }
 
-    // relecture : ce que la console a réellement enregistré (unités et noms réels, ex. PROJECT_PATH Harbor)
-    const final = await api('GET', `/projects/${project.id}`, { token })
-    const envs = await api('GET', '/environments', { token, query: { projectId: project.id } })
-    console.log('\nRelu dans la console :')
-    console.log(`  projet ${final.name} · slug ${final.slug} · statut ${final.status}`)
-    for (const e of envs) console.log(`  environnement ${e.name} · cpu ${e.cpu} · gpu ${e.gpu} · mémoire ${e.memory}`)
+    await readBack(token, project)
+  },
+
+  // Relecture seule : modes « manuel » et « déjà existant », où rien n'est créé par le script.
+  async show(args) {
+    const { token, project } = await projectContext(args)
+    await readBack(token, project)
+  },
+
+  // Sans option : affiche l'instance courante. --set la choisit (et remet les URL à zéro), --url note une URL
+  // relevée sur l'instance. Tout va dans .cpin/instance.env (non secret).
+  async instance(args) {
+    const valid = ({ content, error }) => (error ? fail(error) : content)
+    let content = readInstanceText()
+    if (args.set) content = valid(instanceFileContent(args.set))
+    if (args.multi.url) content = valid(withUrls(content, args.multi.url))
+    if (args.set || args.multi.url) await saveInstance(content)
+    const { name, label, urls, source } = currentInstance()
+    console.log(`instance : ${label} (${name}) — source : ${source}`)
+    for (const key of URL_KEYS) console.log(`  ${key} : ${urls[key] ?? 'inconnue (à relever sur l\'instance)'}`)
   },
 
   async 'secrets-list'(args) {
@@ -342,6 +364,20 @@ const commands = {
     if (!GH_PAT) fail(`GH_PAT vide ou absent de ${SECRETS_FILE}`)
     for (const repo of repos) ghSet(repo, 'secret', 'GH_PAT', GH_PAT)
   },
+}
+
+// Ce que la console a réellement enregistré (unités et noms réels, ex. PROJECT_PATH Harbor).
+async function readBack(token, project) {
+  const final = await api('GET', `/projects/${project.id}`, { token })
+  const envs = await api('GET', '/environments', { token, query: { projectId: project.id } })
+  const repos = await api('GET', '/repositories', { token, query: { projectId: project.id } })
+  console.log(`\nRelu dans la console (${CONSOLE_URL}) :`)
+  console.log(`  projet ${final.name} · slug ${final.slug} · statut ${final.status}`)
+  for (const e of envs) console.log(`  environnement ${e.name} · cpu ${e.cpu} · gpu ${e.gpu} · mémoire ${e.memory}`)
+  for (const r of repos) {
+    const kind = `${r.isPrivate ? 'privé' : 'public'} · ${r.isInfra ? 'infra' : 'applicatif'}`
+    console.log(`  dépôt ${r.internalRepoName} · ${r.externalRepoUrl} · ${kind}`)
+  }
 }
 
 function ghSet(repo, kind, name, value) {

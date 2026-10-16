@@ -17,8 +17,9 @@
 import { readFile } from 'node:fs/promises'
 import { pathToFileURL } from 'node:url'
 import { loadSecrets, SECRETS_FILE } from '../cpin-debug/lib.mjs'
+import { instanceUrl } from './instance.mjs'
 
-const VAULT_URL = (process.env.VAULT_URL ?? 'https://vault.sdid.cpin.numerique-interieur.com').replace(/\/$/, '')
+const VAULT_URL = instanceUrl('VAULT_URL') ?? ''
 
 // --- garde-fou : routes autorisées ------------------------------------------------------------
 // Un mount DSO est un seul segment (<organisation>-<projet>) ; le reste du chemin ne peut pas remonter.
@@ -211,7 +212,7 @@ if (isMain) {
   const args = parseArgs(process.argv.slice(2))
   const command = args._[0]
   if (!commands[command]) fail(`commande inconnue : ${command ?? '(aucune)'} — voir l'en-tête de vault.mjs`)
-  if (!VAULT_URL.startsWith('https://')) fail('VAULT_URL doit être en https://')
+  if (!VAULT_URL.startsWith('https://')) fail('VAULT_URL inconnue pour cette instance ou pas en https:// (voir console.mjs instance)')
   TOKEN = (await loadSecrets()).VAULT_TOKEN
   if (!TOKEN) fail(`VAULT_TOKEN vide ou absent de ${SECRETS_FILE} (UI Vault > 👤 > Copy token, à coller dans ce fichier)`)
   remember(TOKEN)
