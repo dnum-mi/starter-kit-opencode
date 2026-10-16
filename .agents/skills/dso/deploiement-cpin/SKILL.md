@@ -212,31 +212,43 @@ Une question par paramètre des `POST` de l'API ; proposer une valeur par défau
 |----------|----------------------------|
 | Nom du **projet** | 2 à 20 car., `[a-z0-9]` **uniquement, pas de tiret** (« translate-rt » est refusé). Ne change plus ensuite. Il fixe le nom du projet Harbor (`PROJECT_PATH`). |
 | Description | 280 car. max |
-| **Quels environnements ?** (stages de `catalog`, **hors `prod`** : dev, staging, integration…). Poser cette question **avant toute question de quota** | un stage par environnement. La **prod n'est pas prise en charge pour l'instant** : ne pas la proposer ni poser de question à son sujet |
+| **Quels environnements ?** (stages de `catalog` : dev, staging, integration… ; `prod` seulement si l'humain la demande). Poser cette question **avant toute question de quota** | un stage par environnement. Ne pas proposer `prod` d'office ; afficher l'avertissement ci-dessous avec la question |
 | Pour chaque environnement : nom, cluster, cpu, gpu, mémoire | nom 2 à 11 car. `[a-z0-9]` ; cluster autorisé pour le stage |
-| **Quota hors-prod du projet** : cpu, gpu, mémoire (ou `limitless`) | nombres ; relever l'unité affichée par la console. Le palier prod est envoyé à 0 par le script |
+| **Quota hors-prod du projet** : cpu, gpu, mémoire (ou `limitless`) | nombres ; relever l'unité affichée par la console. Demandé seulement s'il y a un environnement hors prod |
+| **Quota prod du projet** : cpu, gpu, mémoire | seulement si un environnement `prod` est **confirmé** (voir ci-dessous) ; sinon envoyé à 0 par le script |
 | **Dépôts** : nom interne, URL `https://….git`, public ou privé, applicatif ou infra | nom 2 à 20 car. `[a-z0-9-]` ; un dépôt privé exige `GH_USER`/`GH_PAT` |
 | **Membres** à ajouter (e-mails) | optionnel |
 | **Debug automatisé ?** vérifier ArgoCD, Harbor, GitLab et la console par API au lieu de l'UI (voir §6) | oui / non. **À poser ici, dans la même liste**, pas plus tard : c'est l'humain qui décide |
 
-**Ordre des questions** : projet → environnements → quota hors-prod → dépôts → membres.
+Avertissement à afficher **tel quel** avec la question des environnements, et à répéter si l'humain demande la prod :
+
+> ⚠️ **Environnement `prod` : à éviter sauf si vous savez ce que vous faites.** Un incident en prod
+> déclenche des **alertes au support** de Cloud Pi Native. Ne le créer que lorsque le déploiement est
+> **pleinement fonctionnel** (validé en dev/staging) **et** que des **utilisateurs réels** utilisent
+> le produit régulièrement. Pour tester, itérer ou déboguer : un environnement hors prod.
+
+**Prod : accord explicite obligatoire.** Si l'humain demande `prod`, répéter l'avertissement et obtenir un
+« oui » explicite à la question « Confirmez-vous la création d'un environnement de **production** ? ». Sans ce
+oui : pas de stage `prod` dans le plan. Le script refuse un stage `prod` sans `--allow-prod`, à n'ajouter
+qu'après ce oui.
+
+**Ordre des questions** : projet → environnements → (confirmation prod) → quotas hors-prod / prod → dépôts → membres.
 Ne jamais demander un quota ou un détail d'un palier dont l'humain n'a pas confirmé l'existence.
 Rappeler au passage qu'on peut ajouter un environnement plus tard (la création est rejouable).
-
-<!-- Prod, pas encore pris en compte. À réactiver plus tard :
-     - proposer le stage `prod` et demander s'il y en a une, avant tout quota prod ;
-     - quota prod (cpu, gpu, mémoire) demandé seulement si un environnement `prod` est confirmé ;
-     - côté script : reprendre le bloc commenté de validatePlan dans scripts/cpin-console/console.mjs. -->
 
 ### 4. Simuler, faire confirmer, appliquer
 
 1. Construire le plan JSON à partir des réponses, puis simuler :
    `node <kit>/scripts/cpin-console/console.mjs plan --plan '<json>'`. La simulation valide les contraintes
-   ci-dessus et les couples stage/cluster, **sans rien écrire**.
+   ci-dessus et les couples stage/cluster, **sans rien écrire**. Avec un stage `prod` confirmé, ajouter
+   `--allow-prod` (ici et à l'étape 3).
 2. Montrer la sortie à l'humain et obtenir un **« oui » explicite**.
 3. `node <kit>/scripts/cpin-console/console.mjs apply --plan '<json>' --apply` crée projet, environnements,
    dépôts et membres (une commande déjà exécutée est rejouable : l'existant est réutilisé). Le script
    relit ensuite la console : c'est cette **relecture** (noms, quotas réels) qui alimente la fiche.
+   Un projet existant est réutilisé **sans toucher à ses quotas** : si son quota est inférieur à celui du plan
+   (cas typique : ajout de la prod à un projet dont le palier prod est à 0), le script s'arrête avant
+   d'écrire. L'humain augmente le quota du projet dans la console, puis on relance `apply`.
 4. Relever le **nom du projet Harbor** réel (`PROJECT_PATH`) : il alimente `--expected-image` des
    phases 3/CI. Ne jamais le copier du nom du dépôt.
 
