@@ -2,7 +2,7 @@
  * Plugin OpenCode du starter-kit CoFabNum.
  *
  * Installe le socle AGENTS.md puis, pour chaque groupe choisi, ses instructions, ses skills,
- * ses agents (agents/<groupe>/*.md) et ses commandes (commands/<groupe>/*.md) :
+ * ses agents (opencode/agents/<groupe>/*.md) et ses commandes (opencode/commands/<groupe>/*.md) :
  *
  *   "plugin": [["starter-kit-opencode@git+https://github.com/dnum-mi/starter-kit-opencode.git",
  *               { "groups": ["dso"] }]]
@@ -51,8 +51,8 @@ function installGroup(config, group) {
     throw new Error(`starter-kit : groupe inconnu '${group}' (attendu : ${fs.readdirSync(GROUPS_DIR).join(', ')})`)
   addUnique(config.instructions, path.join(skills, 'instructions.md'))
   addUnique(config.skills.paths, skills)
-  register(config.agent, path.join(ROOT, 'agents', group), 'prompt')
-  register(config.command, path.join(ROOT, 'commands', group), 'template')
+  register(config.agent, path.join(ROOT, 'opencode/agents', group), 'prompt')
+  register(config.command, path.join(ROOT, 'opencode/commands', group), 'template')
 }
 
 export const StarterKitPlugin = async (_input, options = {}) => ({

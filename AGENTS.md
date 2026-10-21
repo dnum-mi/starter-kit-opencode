@@ -108,24 +108,29 @@ Each subproject has its own `AGENTS.md` with project-specific config. This file 
 
 Ce fichier est le **socle commun**. Chaque groupe de `.agents/skills/<groupe>/` apporte ses instructions
 (`instructions.md` : invariants et routage vers ses skills), son catalogue de skills (`index.json`) et,
-le cas échéant, ses agents (`agents/<groupe>/`) et ses commandes (`commands/<groupe>/`). Un groupe non
-installé n'est jamais chargé.
+le cas échéant, ses agents (`opencode/agents/<groupe>/`) et ses commandes (`opencode/commands/<groupe>/`).
+Un groupe non installé n'est jamais chargé.
 
 | Groupe | Pour qui | Agents et commandes |
 |--------|----------|---------------------|
 | `dev` | développer une application (front, back, monorepo, poste dev) | `dev-verif-plan`, `dev-review` (sous-agents) ; `/livrer` |
 | `dso` | CI/CD fabnum-cicd, Helm, déploiement Cloud Pi Native | `cpin-orchestrateur` (primaire), `cpin-plan`, `cpin-build`, `cpin-review` ; `/deployer-cpin` |
 
-Installation (plugin, URL ou copie des skills), prérequis et ce que font les agents : voir le
-[README](https://github.com/dnum-mi/starter-kit-opencode#readme). Ne pas combiner plugin et URL : le contenu
-serait chargé deux fois.
+Installation (plugin OpenCode, URL, plugin Claude Code ou copie des skills), prérequis et ce que font les
+agents : voir le [README](https://github.com/dnum-mi/starter-kit-opencode#readme). Ne pas combiner deux façons
+dans le même client : le contenu serait chargé deux fois.
 
 Règles pour les mainteneurs :
 
 - Le regroupement est propre à ce repo : le standard Agent Skills ne le définit pas. OpenCode charge chaque URL comme un catalogue indépendant.
 - Noms de skills **uniques entre groupes** : OpenCode les télécharge tous dans `~/.cache/opencode/skills/`.
 - Une instruction propre à un groupe va dans son `instructions.md`, **jamais ici** ; un groupe ne renvoie vers un autre qu'en le nommant (« voir le groupe `dso` »), sans supposer qu'il est installé.
-- Un agent ou une commande d'un groupe : `agents/<groupe>/<nom>.md` ou `commands/<groupe>/<nom>.md`, au format markdown natif d'OpenCode (frontmatter + prompt), préfixé par le groupe ou son domaine (`cpin-`) pour ne pas écraser `build`/`plan`. Vérifier : `make test-plugin`.
+- Un agent ou une commande d'un groupe : `opencode/agents/<groupe>/<nom>.md` ou `opencode/commands/<groupe>/<nom>.md`, au format markdown natif d'OpenCode (frontmatter + prompt), préfixé par le groupe ou son domaine (`cpin-`) pour ne pas écraser `build`/`plan`. Vérifier : `make test-plugin`.
+- Jamais de dossier `agents/`, `commands/` ou `hooks/` à la racine : le plugin Claude Code (`source: "./"`) les
+  chargerait. Un nouveau groupe s'ajoute aussi dans `.claude-plugin/marketplace.json`.
+  Vérifier : `claude plugin validate .`.
+- `AGENTS.md` et chaque `instructions.md` restent sous 10 000 caractères : Claude Code tronque au-delà le texte
+  injecté au démarrage.
 - Après avoir ajouté ou retiré un fichier de skill : `node scripts/skills-index.mjs` (génère), `node scripts/skills-index.mjs --check` (vérifie).
 
 ## Gotchas
