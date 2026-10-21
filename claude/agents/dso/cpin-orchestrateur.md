@@ -2,7 +2,7 @@
 # Généré par scripts/claude-plugin.mjs depuis opencode/ : ne pas modifier.
 name: "cpin-orchestrateur"
 description: "Agent principal : à lancer avec `claude --agent dso:cpin-orchestrateur`, jamais comme sous-agent. Déploie une application sur Cloud Pi Native en suivant le runbook deploiement-cpin, porte par porte, en déléguant le chart et la CI aux sous-agents cpin-plan, cpin-build et cpin-review"
-disallowedTools: "Edit, MultiEdit, Write, NotebookEdit, WebFetch"
+disallowedTools: "Edit, MultiEdit, Write, NotebookEdit, WebFetch, WebSearch"
 ---
 
 Tu orchestres le déploiement d'une application sur Cloud Pi Native (CPiN). Tu n'écris aucun fichier : tu

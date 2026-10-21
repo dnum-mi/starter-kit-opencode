@@ -17,6 +17,18 @@ const HARMLESS_REDIRECTS = /\d*>>?\s*(?:&\d|\/dev\/null)/g
 // Sous-commande ($(…), `…`, <(…)) ou redirection vers/depuis un fichier : la liste blanche n'y voit rien.
 const OPAQUE_SHELL = /\$\(|`|[<>]/
 const SEVERITY = { allow: 0, ask: 1, deny: 2 }
+const BLANKS = /\s+/g
+const MCP_TOOL = /^mcp__/
+
+// Ce que la règle de chaque permission juge, à partir de l'entrée de l'outil.
+const SUBJECTS = {
+  bash: input => input.command.split(COMMAND_SEPARATORS).map(part => part.replace(BLANKS, ' ').trim()).filter(Boolean),
+  skill: input => [unprefixed(input.skill)],
+  task: input => [unprefixed(input.subagent_type)],
+  webfetch: input => [input.url ?? input.query ?? ''],
+  read: (input, cwd) => [resolve(cwd, input.file_path ?? input.path ?? '.')],
+  edit: (input, cwd) => [resolve(cwd, input.file_path ?? input.notebook_path ?? '')],
+}
 
 function unprefixed(name = '') {
   return name.split(':').pop()
@@ -34,22 +46,13 @@ function decide(rules, subject) {
   return match?.[1] ?? 'ask'
 }
 
-function subjects(tool, input, cwd) {
-  if (tool === 'Bash')
-    return input.command.split(COMMAND_SEPARATORS).map(part => part.trim()).filter(Boolean)
-  if (tool === 'Skill')
-    return [unprefixed(input.skill)]
-  if (tool === 'Agent' || tool === 'Task')
-    return [unprefixed(input.subagent_type)]
-  if (tool === 'WebFetch')
-    return [input.url ?? '']
-  return [resolve(cwd, input.file_path ?? input.notebook_path ?? input.path ?? '.')]
-}
-
-function verdict(event, rules) {
+function verdict(event, permission, rules) {
   const input = event.tool_input ?? {}
-  const decisions = subjects(event.tool_name, input, event.cwd ?? process.cwd()).map(s => decide(rules, s))
-  if (event.tool_name === 'Bash' && OPAQUE_SHELL.test(input.command.replace(HARMLESS_REDIRECTS, '')))
+  const subjects = SUBJECTS[permission]
+  if (!subjects)
+    throw new Error(`permission « ${permission} » sans extracteur de sujet`)
+  const decisions = subjects(input, event.cwd ?? process.cwd()).map(subject => decide(rules, subject))
+  if (permission === 'bash' && OPAQUE_SHELL.test(input.command.replace(HARMLESS_REDIRECTS, '')))
     decisions.push('ask')
   return decisions.reduce((worst, d) => (SEVERITY[d] > SEVERITY[worst] ? d : worst), 'allow')
 }
@@ -67,12 +70,22 @@ function main(event) {
   // Un agent principal lancé comme sous-agent ne pourrait pas tenir ses portes avec l'humain.
   if (policy.primary.includes(agent) && event.agent_id)
     return respond('deny', `starter-kit : ${agent} est un agent principal, à lancer avec claude --agent`)
+  if (!policy.agents[agent] || policy.safe.includes(event.tool_name))
+    return
   const permission = policy.tools[event.tool_name]
-  const rules = policy.agents[agent]?.[permission]
+  if (!permission)
+    return respondUnknown(agent, event.tool_name)
+  const rules = policy.agents[agent][permission]
   if (!rules)
     return
-  const decision = verdict(event, rules)
+  const decision = verdict(event, permission, rules)
   respond(decision, `starter-kit : règle « ${permission} » de l'agent ${agent} → ${decision}`)
+}
+
+// Outil hors de la table : MCP refusé (aucune règle OpenCode ne le couvre), le reste soumis à l'humain.
+function respondUnknown(agent, tool) {
+  const decision = MCP_TOOL.test(tool) ? 'deny' : 'ask'
+  respond(decision, `starter-kit : outil ${tool} hors des règles de l'agent ${agent} → ${decision}`)
 }
 
 try {

@@ -3,7 +3,7 @@
 name: "cpin-review"
 description: "Vérifie, sans rien modifier, la porte de la phase 3 d'un déploiement CPiN (rendu helm template + check-cpin-rules + CI) et rend un verdict PORTE OK ou KO"
 maxTurns: 20
-disallowedTools: "Edit, MultiEdit, Write, NotebookEdit, WebFetch, Agent, Task"
+disallowedTools: "Edit, MultiEdit, Write, NotebookEdit, WebFetch, WebSearch, Agent, Task"
 ---
 
 Tu vérifies la porte de la phase 3 d'un déploiement Cloud Pi Native. Tu ne modifies rien et tu ne proposes pas

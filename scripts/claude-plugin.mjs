@@ -14,18 +14,22 @@ const PERMISSIONS = join(TARGET_DIR, 'permissions.json')
 const FRONTMATTER = /^---\n([\s\S]*?)\n---\n?([\s\S]*)$/
 const YAML_LINE = /^( *)("[^"]*"|[^:"]+):(?: (.*))?$/
 const NUMBER = /^-?\d+(?:\.\d+)?$/
+const BOOLEANS = { true: true, false: false }
 // Une règle par ligne dans permissions.json : ["motif", "action"].
 const RULE_ON_ONE_LINE = /\[\n\s+("[^"\n]*"),\n\s+("[^"\n]*")\n\s+\]/g
 const INDENT = 2
 const KINDS = ['agents', 'commands']
+const [AGENTS, COMMANDS] = KINDS
 const HOOK_SCRIPT = 'claude/permissions.mjs'
 const KIT_ROOT = /\{\{KIT_ROOT\}\}/g
 const CLAUDE_ROOT = '${CLAUDE_PLUGIN_ROOT}'
 const GENERATED = `# Généré par scripts/claude-plugin.mjs depuis ${SOURCE_DIR}/ : ne pas modifier.`
-// Outil Claude Code → permission OpenCode qui le gouverne. Seule table : matcher du hook, règles du hook et
-// disallowedTools (permission refusée en bloc) en découlent.
+// Outil Claude Code → permission OpenCode qui le gouverne. Seule table : règles du hook et disallowedTools
+// (permission refusée en bloc) en découlent. Le hook voit passer tous les outils (matcher `*`).
 const TOOL_PERMISSION = {
   Bash: 'bash',
+  Monitor: 'bash',
+  PowerShell: 'bash',
   Read: 'read',
   Grep: 'read',
   Glob: 'read',
@@ -34,14 +38,21 @@ const TOOL_PERMISSION = {
   Write: 'edit',
   NotebookEdit: 'edit',
   WebFetch: 'webfetch',
+  WebSearch: 'webfetch',
   Skill: 'skill',
   Agent: 'task',
   Task: 'task',
 }
+// Outils sans effet hors de la session (suivi, recherche d'outils, reprise d'un sous-agent) : laissés libres.
+// Tout autre outil absent de TOOL_PERMISSION demande l'accord, et un outil MCP est refusé aux agents du kit.
+const SAFE_TOOLS = ['TodoWrite', 'TaskCreate', 'TaskUpdate', 'TaskList', 'TaskGet', 'ToolSearch', 'SendMessage']
+const HOOK_MATCHER = '*'
 
 function scalar(text) {
   if (text.startsWith('"'))
     return JSON.parse(text)
+  if (text in BOOLEANS)
+    return BOOLEANS[text]
   return NUMBER.test(text) ? Number(text) : text
 }
 
@@ -98,7 +109,7 @@ function agentFile(group, name, { meta, body }) {
 
 // Une commande dont l'agent est un agent principal du kit embarque son prompt : elle tourne dans la session.
 function commandFile(name, { meta, body }, agents) {
-  if (meta.subtask === 'true')
+  if (meta.subtask === true)
     throw new Error(`claude-plugin : commande ${name} : subtask non géré`)
   const agent = agents[meta.agent]
   const prompt = agent?.meta.mode === 'primary' ? `${agent.body}\n\n## Demande\n\n${body}` : body
@@ -112,15 +123,15 @@ function permissionRules(permission = {}) {
 }
 
 function groupOutputs(group) {
-  const agentDir = join(SOURCE_DIR, KINDS[0], group)
+  const agentDir = join(SOURCE_DIR, AGENTS, group)
   const agents = Object.fromEntries(markdownFiles(agentDir)
     .map(file => [file.replace(/\.md$/, ''), readMarkdown(join(agentDir, file))]))
-  const commandDir = join(SOURCE_DIR, KINDS[1], group)
+  const commandDir = join(SOURCE_DIR, COMMANDS, group)
   const files = {}
   for (const [name, agent] of Object.entries(agents))
-    files[join(TARGET_DIR, KINDS[0], group, `${name}.md`)] = agentFile(group, name, agent)
+    files[join(TARGET_DIR, AGENTS, group, `${name}.md`)] = agentFile(group, name, agent)
   for (const file of markdownFiles(commandDir))
-    files[join(TARGET_DIR, KINDS[1], group, file)] = commandFile(file, readMarkdown(join(commandDir, file)), agents)
+    files[join(TARGET_DIR, COMMANDS, group, file)] = commandFile(file, readMarkdown(join(commandDir, file)), agents)
   const permissions = Object.fromEntries(Object.entries(agents)
     .map(([name, agent]) => [name, permissionRules(agent.meta.permission)]))
   const primary = Object.keys(agents).filter(name => agents[name].meta.mode === 'primary')
@@ -132,11 +143,11 @@ function sourceGroups() {
   return [...new Set(dirs.flatMap(dir => readdirSync(dir)))].sort()
 }
 
-// Le hook des permissions doit voir passer chaque outil de TOOL_PERMISSION.
+// Le hook des permissions doit voir passer tous les outils, pour refuser ou faire valider ceux qu'il ne connaît pas.
 function withHookMatcher(hooks = {}) {
   const preToolUse = hooks.PreToolUse?.map(group =>
     group.hooks.some(hook => hook.command?.includes(HOOK_SCRIPT))
-      ? { ...group, matcher: Object.keys(TOOL_PERMISSION).join('|') }
+      ? { ...group, matcher: HOOK_MATCHER }
       : group)
   return preToolUse ? { ...hooks, PreToolUse: preToolUse } : hooks
 }
@@ -144,9 +155,10 @@ function withHookMatcher(hooks = {}) {
 function withPluginEntries(marketplace, files) {
   const plugins = marketplace.plugins.map((plugin) => {
     const { agents: _agents, commands: _commands, ...entry } = plugin
-    const agents = Object.keys(files).filter(f => f.startsWith(join(TARGET_DIR, KINDS[0], plugin.name, '/')))
-    const commands = join(TARGET_DIR, KINDS[1], plugin.name)
-    const hasCommands = Object.keys(files).some(f => f.startsWith(`${commands}/`))
+    const inside = dir => Object.keys(files).filter(file => file.startsWith(`${dir}/`))
+    const agents = inside(join(TARGET_DIR, AGENTS, plugin.name))
+    const commands = join(TARGET_DIR, COMMANDS, plugin.name)
+    const hasCommands = inside(commands).length > 0
     return {
       ...entry,
       ...(entry.hooks && { hooks: withHookMatcher(entry.hooks) }),
@@ -163,7 +175,7 @@ function json(value) {
 
 function buildOutputs() {
   const files = {}
-  const policy = { tools: TOOL_PERMISSION, primary: [], agents: {} }
+  const policy = { tools: TOOL_PERMISSION, safe: SAFE_TOOLS, primary: [], agents: {} }
   for (const group of sourceGroups()) {
     const outputs = groupOutputs(group)
     Object.assign(files, outputs.files)

@@ -249,9 +249,13 @@ Une valeur déclarée dans votre `opencode.json` l'emporte sur celle du plugin :
 - Claude Code : un agent de plugin ignore `permissionMode` et `hooks`, d'où le hook du `socle`. Il ne filtre que les
   agents du kit : `/dso:deployer-cpin` lancé dans une session normale reste sous les permissions habituelles de
   Claude Code (préférer `claude --agent dso:cpin-orchestrateur`). `temperature` n'a pas d'équivalent.
-- Le hook juge une commande bash sur son texte, comme OpenCode : une commande autorisée qui lit un fichier qu'elle
-  reçoit en argument (`git diff --no-index … .env.secrets`) passe, et un `Grep` sur un dossier n'est pas filtré
-  fichier par fichier. Une redirection ou une sous-commande (`>`, `<(…)`, `$(…)`) demande toujours l'accord.
+- Le hook juge une commande bash sur son texte, comme OpenCode. Une redirection ou une sous-commande (`>`, `<(…)`,
+  `$(…)`) demande toujours l'accord, mais une commande autorisée garde tout ce que sa règle permet : `git diff
+  --no-index … .env.secrets`, `helm template … -f .env.secrets`, `pnpm exec …` sous `pnpm *`. Un `Grep` sur un
+  dossier n'est pas filtré fichier par fichier. Ces failles viennent des règles, à resserrer :
+  [#57](https://github.com/dnum-mi/starter-kit-opencode/issues/57).
+- Pour un agent du kit, un outil absent des règles OpenCode (`Monitor` et `WebSearch` exceptés, rattachés à `bash`
+  et `webfetch`) demande l'accord de l'humain ; un outil MCP est refusé.
 - `dso` : plusieurs points restent à confirmer avec la Service Team CPiN : droits minimum du token GitHub,
   domaine Harbor accepté par Kyverno en prod, déploiement d'un changement de chart sans nouvelle image. Ils
   sont listés dans `deploiement-cpin` (« Limites connues ») ; les agents ne tranchent pas à votre place.

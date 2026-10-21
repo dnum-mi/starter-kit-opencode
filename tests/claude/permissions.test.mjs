@@ -5,6 +5,8 @@ import { spawnSync } from 'node:child_process'
 import { test } from 'node:test'
 
 const HOOK = new URL('../../claude/permissions.mjs', import.meta.url).pathname
+const GENERATOR = new URL('../../scripts/claude-plugin.mjs', import.meta.url).pathname
+const KIT_ROOT = new URL('../..', import.meta.url).pathname
 
 function runHook(input) {
   return spawnSync('node', [HOOK], { input, encoding: 'utf8' })
@@ -35,6 +37,16 @@ test('bash : chaque morceau d\'une commande composée est vérifié', () => {
   assert.equal(decision('dev-review', 'Bash', { command: 'ls $(cat .env)' }), 'ask')
   assert.equal(decision('dev-review', 'Bash', { command: 'ls & pnpm add left-pad' }), 'deny')
   assert.equal(decision('dev-review', 'Bash', { command: 'pnpm run lint 2>&1 | ls' }), 'allow')
+  assert.equal(decision('dev-review', 'Bash', { command: 'pnpm  add\tleft-pad' }), 'deny')
+})
+
+test('autres outils : Monitor et WebSearch suivent leur règle, MCP refusé, inconnu soumis à l\'humain', () => {
+  assert.equal(decision('cpin-plan', 'Monitor', { command: 'cat .cpin/.env.secrets' }), 'deny')
+  assert.equal(decision('cpin-plan', 'PowerShell', { command: 'Get-Content .env' }), 'deny')
+  assert.equal(decision('cpin-plan', 'WebSearch', { query: 'helm' }), 'deny')
+  assert.equal(decision('cpin-plan', 'mcp__github__get_file', { path: '.env' }), 'deny')
+  assert.equal(decision('cpin-plan', 'OutilInconnu', {}), 'ask')
+  assert.equal(decision('cpin-orchestrateur', 'TodoWrite', { todos: [] }), 'aucune')
 })
 
 test('bash : redirection vers ou depuis un fichier → demande d\'accord', () => {
@@ -77,7 +89,7 @@ test('entrée illisible : outil bloqué (code 2), jamais laissé passer', () => 
 })
 
 test('la version Claude Code est à jour de opencode/', () => {
-  const run = spawnSync('node', ['scripts/claude-plugin.mjs', '--check'], { encoding: 'utf8' })
+  const run = spawnSync('node', [GENERATOR, '--check'], { cwd: KIT_ROOT, encoding: 'utf8' })
   assert.equal(run.status, 0, run.stderr)
 })
 

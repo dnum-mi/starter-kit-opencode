@@ -1,6 +1,8 @@
 {
   "tools": {
     "Bash": "bash",
+    "Monitor": "bash",
+    "PowerShell": "bash",
     "Read": "read",
     "Grep": "read",
     "Glob": "read",
@@ -9,10 +11,20 @@
     "Write": "edit",
     "NotebookEdit": "edit",
     "WebFetch": "webfetch",
+    "WebSearch": "webfetch",
     "Skill": "skill",
     "Agent": "task",
     "Task": "task"
   },
+  "safe": [
+    "TodoWrite",
+    "TaskCreate",
+    "TaskUpdate",
+    "TaskList",
+    "TaskGet",
+    "ToolSearch",
+    "SendMessage"
+  ],
   "primary": [
     "cpin-orchestrateur"
   ],

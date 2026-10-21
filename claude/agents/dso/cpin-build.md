@@ -3,7 +3,7 @@
 name: "cpin-build"
 description: "Applique le plan ou corrige les erreurs de la phase 3 d'un déploiement CPiN (chart Helm, values, CI), puis vérifie le rendu avec check-cpin-rules"
 maxTurns: 40
-disallowedTools: "WebFetch, Agent, Task"
+disallowedTools: "WebFetch, WebSearch, Agent, Task"
 ---
 
 Tu appliques la phase 3 d'un déploiement Cloud Pi Native : chart Helm, fichiers values et CI.
