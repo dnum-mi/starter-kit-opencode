@@ -12,10 +12,10 @@ tant qu'elle n'est pas franchie. Principe : **vérifier au PR, pas au déploieme
 
 ## Règles pour l'agent
 
-- **Suivi visible, dès le départ, quel que soit l'agent** : avant toute autre action, `todowrite` avec six
-  todos `Phase 0 — Éligibilité`, `Phase 1 — Console et jetons`, `Phase 2 — Valeurs vitales`,
-  `Phase 3 — Chart et CI`, `Phase 4 — Livrer`, `Phase 5 — Vérifier` (c'est le panneau de droite
-  d'OpenCode). Une seule `in_progress` ; passer à `completed` quand la porte est franchie, **avant** d'écrire
+- **Suivi visible, dès le départ, quel que soit l'agent** : avant toute autre action, l'outil de liste de
+  tâches (`todowrite` dans OpenCode) avec six todos `Phase 0 — Éligibilité`, `Phase 1 — Console et jetons`,
+  `Phase 2 — Valeurs vitales`, `Phase 3 — Chart et CI`, `Phase 4 — Livrer`, `Phase 5 — Vérifier` (c'est ce
+  que l'humain suit). Une seule `in_progress` ; passer à `completed` quand la porte est franchie, **avant** d'écrire
   la suite. Chaque message commence par `▶ Phase N/5 — <nom> · étape : <étape>`, puis : ce que je fais,
   pourquoi, ce que ça change (rien / ce qui est écrit et où), ce dont j'ai besoin de l'humain.
 - **Ne jamais demander, lire, écrire ni afficher la valeur d'un token ou d'un secret.** L'humain les
@@ -113,7 +113,7 @@ la FICHE et ne plus le redemander. Effet d'un manque :
 | `helm` ou `uv` | **aucun** : la porte de la phase 3 lance `check-cpin-rules.py`. Les faire installer avant la phase 3 ; les phases 0 à 2 peuvent avancer en attendant |
 | Playwright + Firefox | debug par l'UI (§6, ramification B) |
 
-Si un outil **obligatoire** manque (OpenCode, git), `doctor` sort en 1 : le signaler et s'arrêter.
+Si un outil **obligatoire** manque (OpenCode ou Claude Code, git), `doctor` sort en 1 : le signaler et s'arrêter.
 
 **Sans les scripts du kit** (installation par URL ou par copie du skill) : proposer le mode manuel **au lieu de
 s'arrêter**, et sauter tout ce qui en dépend.
@@ -179,9 +179,9 @@ pourrait techniquement lire tes secrets. Le kit l'empêche **dans le script**, p
 `scripts/cpin-console/vault.mjs` n'appelle qu'une **liste fermée de routes** (qui est le jeton, mes droits,
 noms des secrets, versions et dates, écriture). Il **n'existe aucune route de lecture du contenu** d'un
 secret, et le garde-fou refuse tout le reste (testé : `vault.test.mjs`). L'agent ne peut pas non plus lire
-`.cpin/.env.secrets` ni ton `.env` (refus dans `opencode.jsonc`), et ne lance que ce script. Une écriture
-affiche seulement un numéro de version. Le jeton expire : à la clôture, ne rien révoquer, il suffit de ne
-plus le recopier. Tu peux contrôler à tout moment : `vault.mjs whoami` (politiques, expiration).
+`.cpin/.env.secrets` ni ton `.env` (refus dans les permissions des agents du kit), et ne lance que ce
+script. Une écriture affiche seulement un numéro de version. Le jeton expire : à la clôture, ne rien révoquer,
+il suffit de ne plus le recopier. Tu peux contrôler à tout moment : `vault.mjs whoami` (politiques, expiration).
 
 L'agent **ne lit, n'affiche et ne demande jamais** une valeur : tu les colles toi-même dans le fichier,
 il vérifie seulement « renseigné » / « vide » avec `init`. Aucun de ces jetons ne doit finir dans Git, dans

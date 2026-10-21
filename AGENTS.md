@@ -99,7 +99,7 @@ Each subproject has its own `AGENTS.md` with project-specific config. This file 
 
 ## Prérequis du kit
 
-- Obligatoire : OpenCode ≥ 1.18 et `git`. Le reste est optionnel : sans lui, le kit passe en mode dégradé.
+- Obligatoire : OpenCode ≥ 1.18 ou Claude Code ≥ 2.1.275, et `git`. Le reste est optionnel : sans lui, le kit passe en mode dégradé.
 - Vérifier le poste avec `make -C <kit> doctor` (lecture seule) ; tableau complet dans le
   [README](https://github.com/dnum-mi/starter-kit-opencode#prérequis).
 - Ne jamais installer un outil sans l'accord de l'humain : proposer l'installation **ou** le mode dégradé.
@@ -126,6 +126,8 @@ Règles pour les mainteneurs :
 - Noms de skills **uniques entre groupes** : OpenCode les télécharge tous dans `~/.cache/opencode/skills/`.
 - Une instruction propre à un groupe va dans son `instructions.md`, **jamais ici** ; un groupe ne renvoie vers un autre qu'en le nommant (« voir le groupe `dso` »), sans supposer qu'il est installé.
 - Un agent ou une commande d'un groupe : `opencode/agents/<groupe>/<nom>.md` ou `opencode/commands/<groupe>/<nom>.md`, au format markdown natif d'OpenCode (frontmatter + prompt), préfixé par le groupe ou son domaine (`cpin-`) pour ne pas écraser `build`/`plan`. Vérifier : `make test-plugin`.
+- Claude Code : `claude/agents/` et `claude/commands/` sont **générés** depuis `opencode/` ; ne jamais les éditer.
+  Après toute modification d'un agent ou d'une commande : `node scripts/claude-plugin.mjs`, puis `make test-claude`.
 - Jamais de dossier `agents/`, `commands/` ou `hooks/` à la racine : le plugin Claude Code (`source: "./"`) les
   chargerait. Un nouveau groupe s'ajoute aussi dans `.claude-plugin/marketplace.json`.
   Vérifier : `claude plugin validate .`.

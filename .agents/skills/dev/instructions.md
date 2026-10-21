@@ -22,7 +22,7 @@ Skills dans `.agents/skills/dev/` :
 
 Before and while implementing a plan (migration, feature, refactor) that touches external libraries:
 
-> With the starter-kit plugin, `/livrer <plan>` automates this: subagent `dev-verif-plan` checks steps 1–2, subagent `dev-review` is the gate for step 3.
+> With the starter-kit plugin, `/livrer <plan>` (`/dev:livrer` in Claude Code) automates this: subagent `dev-verif-plan` checks steps 1–2, subagent `dev-review` is the gate for step 3.
 
 ### 1. Verify dependencies actually exist
 

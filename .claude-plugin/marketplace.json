@@ -10,7 +10,7 @@
     {
       "name": "socle",
       "source": "./",
-      "description": "Socle commun AGENTS.md : git, commits, TS, Python, lint, REST, Docker",
+      "description": "Socle commun AGENTS.md (git, commits, TS, Python, lint, REST, Docker) et garde-fous des agents du kit",
       "skills": [],
       "hooks": {
         "SessionStart": [
@@ -19,6 +19,17 @@
               {
                 "type": "command",
                 "command": "cat \"${CLAUDE_PLUGIN_ROOT}/AGENTS.md\""
+              }
+            ]
+          }
+        ],
+        "PreToolUse": [
+          {
+            "matcher": "Bash|Read|Edit|MultiEdit|Write|NotebookEdit|WebFetch|Skill|Agent|Task",
+            "hooks": [
+              {
+                "type": "command",
+                "command": "node \"${CLAUDE_PLUGIN_ROOT}/claude/permissions.mjs\""
               }
             ]
           }
@@ -46,7 +57,12 @@
             ]
           }
         ]
-      }
+      },
+      "agents": [
+        "./claude/agents/dev/dev-review.md",
+        "./claude/agents/dev/dev-verif-plan.md"
+      ],
+      "commands": "./claude/commands/dev"
     },
     {
       "name": "dso",
@@ -69,7 +85,14 @@
             ]
           }
         ]
-      }
+      },
+      "agents": [
+        "./claude/agents/dso/cpin-build.md",
+        "./claude/agents/dso/cpin-orchestrateur.md",
+        "./claude/agents/dso/cpin-plan.md",
+        "./claude/agents/dso/cpin-review.md"
+      ],
+      "commands": "./claude/commands/dso"
     }
   ]
 }

@@ -1,0 +1,221 @@
+{
+  "dev-review": {
+    "edit": [
+      ["*", "deny"]
+    ],
+    "webfetch": [
+      ["*", "deny"]
+    ],
+    "task": [
+      ["*", "deny"]
+    ],
+    "bash": [
+      ["*", "deny"],
+      ["ls*", "allow"],
+      ["git status*", "allow"],
+      ["git diff*", "allow"],
+      ["git log*", "allow"],
+      ["pnpm *", "allow"],
+      ["npm run *", "allow"],
+      ["npm test*", "allow"],
+      ["npx tsc*", "allow"],
+      ["npx vue-tsc*", "allow"],
+      ["npx eslint*", "allow"],
+      ["npx vitest*", "allow"],
+      ["uv run*", "allow"],
+      ["make *", "allow"],
+      ["bash *check-folders.sh*", "allow"],
+      ["pnpm add*", "deny"],
+      ["pnpm install*", "deny"],
+      ["pnpm remove*", "deny"],
+      ["pnpm update*", "deny"],
+      ["pnpm dlx*", "deny"]
+    ],
+    "skill": [
+      ["*", "deny"],
+      ["conventions-cofabnum", "allow"]
+    ]
+  },
+  "dev-verif-plan": {
+    "edit": [
+      ["*", "deny"]
+    ],
+    "webfetch": [
+      ["*", "deny"]
+    ],
+    "task": [
+      ["*", "deny"]
+    ],
+    "bash": [
+      ["*", "deny"],
+      ["ls*", "allow"],
+      ["find node_modules*", "allow"],
+      ["git log*", "allow"],
+      ["git diff*", "allow"],
+      ["npm view*", "allow"],
+      ["npm ls*", "allow"],
+      ["pnpm list*", "allow"],
+      ["pnpm why*", "allow"],
+      ["uv tree*", "allow"],
+      ["uv pip show*", "allow"]
+    ],
+    "skill": [
+      ["*", "deny"],
+      ["conventions-cofabnum", "allow"],
+      ["recettes-client", "allow"],
+      ["recettes-serveur", "allow"],
+      ["stack-technique", "allow"]
+    ]
+  },
+  "cpin-build": {
+    "read": [
+      ["*", "allow"],
+      ["**/.env.secrets", "deny"],
+      ["**/.token", "deny"],
+      ["**/.env", "deny"]
+    ],
+    "edit": [
+      ["*", "allow"],
+      ["**/.env.secrets", "deny"],
+      ["**/.token", "deny"],
+      ["**/.env", "deny"]
+    ],
+    "webfetch": [
+      ["*", "deny"]
+    ],
+    "task": [
+      ["*", "deny"]
+    ],
+    "bash": [
+      ["*", "deny"],
+      ["ls*", "allow"],
+      ["mkdir*", "allow"],
+      ["cp*", "allow"],
+      ["git status*", "allow"],
+      ["git diff*", "allow"],
+      ["helm template*", "allow"],
+      ["helm lint*", "allow"],
+      ["helm dependency*", "allow"],
+      ["uv run*", "allow"]
+    ],
+    "skill": [
+      ["*", "deny"],
+      ["helm-chart-cpin", "allow"],
+      ["cicd-fabnum", "allow"],
+      ["deploiement-cpin", "allow"]
+    ]
+  },
+  "cpin-orchestrateur": {
+    "read": [
+      ["*", "allow"],
+      ["**/.env.secrets", "deny"],
+      ["**/.token", "deny"],
+      ["**/.env", "deny"]
+    ],
+    "edit": [
+      ["*", "deny"]
+    ],
+    "todowrite": [
+      ["*", "allow"]
+    ],
+    "webfetch": [
+      ["*", "deny"]
+    ],
+    "bash": [
+      ["*", "deny"],
+      ["gh secret list*", "allow"],
+      ["gh variable list*", "allow"],
+      ["gh variable set GITLAB_PROJECT_NAME *", "ask"],
+      ["git status*", "allow"],
+      ["git log*", "allow"],
+      ["git remote get-url*", "allow"],
+      ["gh repo view*", "allow"],
+      ["git diff*", "allow"],
+      ["ls*", "allow"],
+      ["bash */scripts/doctor.sh", "allow"],
+      ["node */scripts/cpin-console/console.mjs *", "allow"],
+      ["node */scripts/cpin-console/console.mjs *--apply*", "ask"],
+      ["node */scripts/cpin-console/console.mjs secrets-push*", "ask"],
+      ["node */scripts/cpin-console/console.mjs pat-push*", "ask"],
+      ["node */scripts/cpin-console/vault.mjs *", "allow"],
+      ["node */scripts/cpin-console/vault.mjs *--apply*", "ask"],
+      ["node */scripts/cpin-debug/*.mjs", "allow"],
+      ["node */scripts/cpin-debug/login.mjs", "ask"],
+      ["npm install --prefix */scripts/cpin-debug", "ask"],
+      ["npx --prefix */scripts/cpin-debug playwright install firefox", "ask"],
+      ["grep -c *.env.secrets", "allow"]
+    ],
+    "task": [
+      ["*", "deny"],
+      ["cpin-*", "allow"]
+    ],
+    "skill": [
+      ["*", "deny"],
+      ["deploiement-cpin", "allow"],
+      ["helm-chart-cpin", "allow"],
+      ["cicd-fabnum", "allow"]
+    ]
+  },
+  "cpin-plan": {
+    "read": [
+      ["*", "allow"],
+      ["**/.env.secrets", "deny"],
+      ["**/.token", "deny"],
+      ["**/.env", "deny"]
+    ],
+    "edit": [
+      ["*", "deny"]
+    ],
+    "webfetch": [
+      ["*", "deny"]
+    ],
+    "task": [
+      ["*", "deny"]
+    ],
+    "bash": [
+      ["*", "deny"],
+      ["ls*", "allow"],
+      ["git log*", "allow"],
+      ["git diff*", "allow"],
+      ["helm template*", "allow"],
+      ["helm show values*", "allow"]
+    ],
+    "skill": [
+      ["*", "deny"],
+      ["deploiement-cpin", "allow"],
+      ["helm-chart-cpin", "allow"],
+      ["cicd-fabnum", "allow"]
+    ]
+  },
+  "cpin-review": {
+    "read": [
+      ["*", "allow"],
+      ["**/.env.secrets", "deny"],
+      ["**/.token", "deny"],
+      ["**/.env", "deny"]
+    ],
+    "edit": [
+      ["*", "deny"]
+    ],
+    "webfetch": [
+      ["*", "deny"]
+    ],
+    "task": [
+      ["*", "deny"]
+    ],
+    "bash": [
+      ["*", "deny"],
+      ["ls*", "allow"],
+      ["git diff*", "allow"],
+      ["git status*", "allow"],
+      ["helm template*", "allow"],
+      ["helm dependency*", "allow"],
+      ["uv run*", "allow"]
+    ],
+    "skill": [
+      ["*", "deny"],
+      ["helm-chart-cpin", "allow"],
+      ["cicd-fabnum", "allow"]
+    ]
+  }
+}
