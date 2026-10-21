@@ -57,13 +57,29 @@ test('bash : guillemets et échappements ne contournent pas un refus', () => {
   assert.equal(decision('dev-review', 'Bash', { command: "pnpm a''dd x" }), 'deny')
   assert.equal(decision('dev-review', 'Bash', { command: 'pnpm ad\\d x' }), 'deny')
   assert.equal(decision('dev-review', 'Bash', { command: 'pnpm ${X}add x' }), 'ask')
-  assert.equal(decision('dev-review', 'Bash', { command: 'git log --format="%h"' }), 'ask')
+  assert.equal(decision('dev-review', 'Bash', { command: 'git log --format="$(id)"' }), 'ask')
+})
+
+test('bash : commandes réelles des agents, lues comme bash les lit', () => {
+  const check = 'helm template app ./chart -f values.yaml \\\n  | uv run x/check-cpin-rules.py \\\n  --quota-cpu 2'
+  assert.equal(decision('cpin-review', 'Bash', { command: check }), 'allow')
+  assert.equal(decision('dev-review', 'Bash', { command: 'git log --format="%h;%s"' }), 'allow')
+  const console = 'node \'/x/My Kit/scripts/cpin-console/console.mjs\' instance --set sdid'
+  assert.equal(decision('cpin-orchestrateur', 'Bash', { command: console }), 'allow')
+  const plan = `node /kit/scripts/cpin-console/console.mjs plan --plan '{"env":["dev"],"$x":1}'`
+  assert.equal(decision('cpin-orchestrateur', 'Bash', { command: plan }), 'allow')
+  assert.equal(decision('dev-review', 'Bash', { command: 'git diff HEAD~1' }), 'allow')
+  assert.equal(decision('dev-verif-plan', 'Bash', { command: 'npm view zod@^3 version' }), 'allow')
+  assert.equal(decision('dev-review', 'Bash', { command: 'ls ~/secrets' }), 'ask')
 })
 
 test('bash : redirection vers ou depuis un fichier → demande d\'accord', () => {
   assert.equal(decision('cpin-plan', 'Bash', { command: 'ls > .cpin/.env.secrets' }), 'ask')
   assert.equal(decision('cpin-plan', 'Bash', { command: 'ls <(cat .cpin/.env.secrets)' }), 'ask')
   assert.equal(decision('cpin-plan', 'Bash', { command: 'ls 2>/dev/null' }), 'allow')
+  assert.equal(decision('dev-review', 'Bash', { command: 'ls >&1/../victim' }), 'ask')
+  assert.equal(decision('dev-review', 'Bash', { command: 'ls 2>&1.txt' }), 'ask')
+  assert.equal(decision('dev-review', 'Bash', { command: 'ls >/dev/null.txt' }), 'ask')
 })
 
 test('bash : demande d\'accord quand la règle OpenCode vaut ask', () => {
@@ -90,12 +106,12 @@ test('fichiers : Grep, Glob et chemins relatifs suivent la règle read', () => {
   assert.equal(decision('cpin-plan', 'Glob', { pattern: '**/.env', path: '/r' }), 'deny')
 })
 
-test('fichiers : un lien symbolique est jugé sur sa cible', () => {
+test('fichiers : un lien symbolique est jugé sur sa cible', (t) => {
   const dir = mkdtempSync(join(tmpdir(), 'kit-'))
+  t.after(() => rmSync(dir, { recursive: true }))
   writeFileSync(join(dir, '.env.secrets'), '')
   symlinkSync(join(dir, '.env.secrets'), join(dir, 'notes.txt'))
   assert.equal(decision('cpin-plan', 'Read', { file_path: join(dir, 'notes.txt') }), 'deny')
-  rmSync(dir, { recursive: true })
 })
 
 test('agent principal : refusé comme sous-agent, permis avec --agent', () => {
@@ -104,11 +120,15 @@ test('agent principal : refusé comme sous-agent, permis avec --agent', () => {
   assert.equal(decision('dso:cpin-orchestrateur', 'Bash', ls), 'allow')
 })
 
-test('entrée illisible : outil bloqué (code 2), jamais laissé passer', () => {
-  const edit = { agent_type: 'cpin-build', tool_name: 'Edit', tool_input: {} }
-  for (const input of ['pas du json', JSON.stringify(edit)]) {
+test('entrée illisible ou incomplète : outil bloqué (code 2), jamais laissé passer', () => {
+  const incomplete = [
+    { agent_type: 'cpin-build', tool_name: 'Edit', tool_input: {} },
+    { agent_type: 'cpin-plan', tool_name: 'Skill', tool_input: {} },
+    { agent_type: 'cpin-plan', tool_name: 'Bash', tool_input: {} },
+  ]
+  for (const input of ['pas du json', ...incomplete.map(event => JSON.stringify(event))]) {
     const run = runHook(input)
-    assert.equal(run.status, 2)
+    assert.equal(run.status, 2, input)
     assert.match(run.stderr, /garde-fou des agents indisponible/)
   }
 })

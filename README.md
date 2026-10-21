@@ -249,9 +249,10 @@ Une valeur déclarée dans votre `opencode.json` l'emporte sur celle du plugin :
 - Claude Code : un agent de plugin ignore `permissionMode` et `hooks`, d'où le hook du `socle`. Il ne filtre que les
   agents du kit : `/dso:deployer-cpin` lancé dans une session normale reste sous les permissions habituelles de
   Claude Code (préférer `claude --agent dso:cpin-orchestrateur`). `temperature` n'a pas d'équivalent.
-- Le hook juge une commande bash sur son texte, comme OpenCode. Il n'autorise sans demander qu'une commande faite de
-  caractères simples : guillemets, `\`, `$`, parenthèses, redirections ou jokers demandent l'accord (ex.
-  `git log --format="%h"`). Une commande autorisée garde tout ce que sa règle permet : `git diff
+- Le hook lit une commande bash comme bash (`claude/shell.mjs`) et applique la règle au texte exécuté, guillemets
+  retirés. Il ne l'autorise sans demander que si rien n'y change ce que bash exécute : hors guillemets, `$`, `\`,
+  parenthèses, redirections (sauf `2>&1`, `>/dev/null`), jokers ou `~` en tête de mot demandent l'accord ; entre
+  guillemets doubles, `$`, `` ` `` et `\` aussi. Une commande autorisée garde tout ce que sa règle permet : `git diff
   --no-index … .env.secrets`, `helm template … -f .env.secrets`, `pnpm exec …` sous `pnpm *`. Ces failles viennent
   des règles, à resserrer : [#57](https://github.com/dnum-mi/starter-kit-opencode/issues/57).
 - Un `Grep` sur un dossier, sans motif de fichiers (`glob`), n'est pas filtré fichier par fichier.

@@ -45,6 +45,8 @@ const TOOL_PERMISSION = {
 // Outils sans effet hors de la session (suivi, recherche d'outils, reprise d'un sous-agent) : laissés libres.
 // Tout autre outil absent de TOOL_PERMISSION demande l'accord (PowerShell : sa syntaxe n'est pas celle des règles
 // bash), et un outil MCP est refusé aux agents du kit.
+// Outil de lecture → champ qui porte son motif de fichiers (le `pattern` de Grep est une regex de contenu).
+const FILE_GLOBS = { Glob: 'pattern', Grep: 'glob' }
 const SAFE_TOOLS = ['TodoWrite', 'TaskCreate', 'TaskUpdate', 'TaskList', 'TaskGet', 'ToolSearch', 'SendMessage']
 const HOOK_MATCHER = '*'
 const ERROR_PREFIX = 'claude-plugin :'
@@ -80,7 +82,7 @@ function readMarkdown(file) {
   return { meta: parseYaml(match[1].split('\n').filter(Boolean)), body: match[2].trim().replace(KIT_ROOT, CLAUDE_ROOT) }
 }
 
-function markdownFiles(dir, { recursive } = { recursive: false }) {
+function markdownFiles(dir, { recursive = false } = {}) {
   if (!existsSync(dir))
     return []
   return readdirSync(dir, { recursive }).filter(file => file.endsWith('.md')).sort()
@@ -176,7 +178,7 @@ function json(value) {
 
 function buildOutputs() {
   const files = {}
-  const policy = { tools: TOOL_PERMISSION, safe: SAFE_TOOLS, primary: [], agents: {} }
+  const policy = { tools: TOOL_PERMISSION, fileGlobs: FILE_GLOBS, safe: SAFE_TOOLS, primary: [], agents: {} }
   for (const group of sourceGroups()) {
     const outputs = groupOutputs(group)
     Object.assign(files, outputs.files)

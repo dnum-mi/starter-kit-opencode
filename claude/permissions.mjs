@@ -6,23 +6,13 @@
 // Une erreur (règles illisibles, entrée invalide) bloque l'outil (code 2) : jamais de passage sans décision.
 import { existsSync, readFileSync, realpathSync } from 'node:fs'
 import { resolve } from 'node:path'
+import { commandParts } from './shell.mjs'
 
 const POLICY_FILE = new URL('permissions.json', import.meta.url)
 const BLOCKING_EXIT = 2
 const ANY_SUFFIX = ' .*'
-// Séparateurs de commandes : &&, ||, ;, |, & seul (hors redirection 2>&1) et retour à la ligne.
-const COMMAND_SEPARATORS = /&&|\|\||;|\|&?|(?<![<>])&(?!>)|\n/
-// Redirections sans effet sur un fichier : 2>&1, >/dev/null.
-const HARMLESS_REDIRECTS = /\d*>>?\s*(?:&\d\b|\/dev\/null\b)/g
-// Seule une commande faite de ces caractères est autorisée sans demander : guillemets, `\`, `$`, parenthèses,
-// redirections ou jokers changent ce que bash exécute, et la règle, qui lit le texte, ne le verrait pas.
-const PLAIN_COMMAND = /^[\w ./:=@%+,-]*$/
-const QUOTING = /["'\\]/g
 const SEVERITY = { allow: 0, ask: 1, deny: 2 }
-const BLANKS = /\s+/g
 const MCP_TOOL = /^mcp__/
-// Champ qui porte le motif de fichiers lus (le `pattern` de Grep est une regex de contenu).
-const FILE_GLOB = { Glob: 'pattern', Grep: 'glob' }
 
 function unprefixed(name = '') {
   return name.split(':').pop()
@@ -44,49 +34,50 @@ function worst(decisions) {
   return decisions.reduce((current, d) => (SEVERITY[d] > SEVERITY[current] ? d : current), 'allow')
 }
 
-// Un morceau de commande : refus jugé sur le texte brut et sans guillemets ; autorisation seulement si simple.
+// Un morceau de commande : la règle juge le texte que bash exécute ; un morceau opaque n'est jamais autorisé
+// sans demander (voir shell.mjs).
 function judgeCommandPart(rules, part) {
-  const unquoted = part.replace(QUOTING, '')
-  return worst([decide(rules, part), decide(rules, unquoted), PLAIN_COMMAND.test(part) ? 'allow' : 'ask'])
+  return worst([decide(rules, part.literal), part.opaque ? 'ask' : 'allow'])
 }
 
-function commandParts(command) {
-  return command.replace(HARMLESS_REDIRECTS, '').split(COMMAND_SEPARATORS)
-    .map(part => part.replace(BLANKS, ' ').trim()).filter(Boolean)
+// Champ obligatoire de l'entrée d'un outil : absent, l'outil est bloqué plutôt que jugé sur une chaîne vide.
+function required(value, field) {
+  if (typeof value !== 'string')
+    throw new Error(`${field} absent de l'entrée de l'outil`)
+  return value
 }
 
 // Chemin absolu, lien symbolique suivi s'il existe. Un chemin absent de l'entrée est une erreur (outil bloqué).
 function filePath(cwd, ...segments) {
-  if (segments.some(segment => typeof segment !== 'string'))
-    throw new Error('chemin absent de l\'entrée de l\'outil')
-  const path = resolve(cwd, ...segments)
+  const path = resolve(cwd, ...segments.map(segment => required(segment, 'chemin')))
   return existsSync(path) ? realpathSync(path) : path
 }
 
 // Grep et Glob lisent ce que couvre leur motif de fichiers sous le dossier, pas seulement le dossier.
-function readPaths(tool, input, cwd) {
-  if (!(tool in FILE_GLOB))
+// `fileGlobs` (permissions.json) : outil → champ qui porte ce motif (le `pattern` de Grep est une regex).
+function readPaths({ tool, input, cwd, fileGlobs }) {
+  if (!(tool in fileGlobs))
     return [filePath(cwd, input.file_path)]
   const dir = filePath(cwd, input.path ?? '.')
-  const glob = input[FILE_GLOB[tool]]
+  const glob = input[fileGlobs[tool]]
   return glob ? [dir, resolve(dir, glob)] : [dir]
 }
 
 // Ce que la règle de chaque permission juge, et comment.
 const JUDGES = {
-  bash: ({ input }, rules) => commandParts(input.command).map(part => judgeCommandPart(rules, part)),
-  skill: ({ input }, rules) => [decide(rules, unprefixed(input.skill))],
-  task: ({ input }, rules) => [decide(rules, unprefixed(input.subagent_type))],
-  webfetch: ({ input }, rules) => [decide(rules, input.url ?? input.query ?? '')],
-  read: ({ tool, input, cwd }, rules) => readPaths(tool, input, cwd).map(path => decide(rules, path)),
+  bash: ({ input }, rules) => commandParts(required(input.command, 'command')).map(p => judgeCommandPart(rules, p)),
+  skill: ({ input }, rules) => [decide(rules, unprefixed(required(input.skill, 'skill')))],
+  task: ({ input }, rules) => [decide(rules, unprefixed(required(input.subagent_type, 'subagent_type')))],
+  webfetch: ({ input }, rules) => [decide(rules, required(input.url ?? input.query, 'url'))],
+  read: (call, rules) => readPaths(call).map(path => decide(rules, path)),
   edit: ({ input, cwd }, rules) => [decide(rules, filePath(cwd, input.file_path ?? input.notebook_path))],
 }
 
-function verdict(event, permission, rules) {
+function verdict(event, permission, rules, fileGlobs) {
   const judge = JUDGES[permission]
   if (!judge)
     throw new Error(`permission « ${permission} » sans juge`)
-  const call = { tool: event.tool_name, input: event.tool_input ?? {}, cwd: event.cwd ?? process.cwd() }
+  const call = { tool: event.tool_name, input: event.tool_input ?? {}, cwd: event.cwd ?? process.cwd(), fileGlobs }
   return worst(judge(call, rules))
 }
 
@@ -111,7 +102,7 @@ function main(event) {
   const rules = policy.agents[agent][permission]
   if (!rules)
     return
-  const decision = verdict(event, permission, rules)
+  const decision = verdict(event, permission, rules, policy.fileGlobs)
   respond(decision, `starter-kit : règle « ${permission} » de l'agent ${agent} → ${decision}`)
 }
 
