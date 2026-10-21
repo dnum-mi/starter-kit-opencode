@@ -147,6 +147,9 @@ Ou en une étape, dans une session (Claude Code ≥ 2.1.275) :
 /plugin install dso --marketplace dnum-mi/starter-kit-opencode
 ```
 
+- `marketplace add` n'enregistre que le catalogue : tant qu'un `install` n'a pas eu lieu, `/plugin` liste les
+  plugins du kit (onglet *Discover*) mais aucun skill n'est chargé. Après l'installation, `/reload-plugins` puis
+  `claude plugin list` doit afficher `dev@starter-kit` (et `socle@starter-kit`) comme `enabled`.
 - `dev` et `dso` installent d'office le plugin `socle` (`AGENTS.md`). Le socle et le `instructions.md` du groupe
   sont injectés au démarrage de chaque session.
 - Tout est préfixé par le groupe : skills (`dso:deploiement-cpin`), sous-agents (`dev:dev-review`), commandes
