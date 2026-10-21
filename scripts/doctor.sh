@@ -54,6 +54,9 @@ check_node() {
   if [[ -n "$ver" ]] && version_ge "$ver" "$NODE_MIN"; then pass "node $ver"; return; fi
   warn "node ≥ $NODE_MIN : ${ver:-absent}"
   hint "Sans lui : scripts console, Vault et debug indisponibles → mode manuel du runbook deploiement-cpin."
+  if command -v claude >/dev/null; then
+    hint "Claude Code : le hook des permissions ne tourne pas → les agents du kit n'ont AUCUN garde-fou."
+  fi
   hint "Installer : https://nodejs.org (ou proto install node 24)"
 }
 

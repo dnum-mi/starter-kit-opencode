@@ -2,7 +2,6 @@
   "tools": {
     "Bash": "bash",
     "Monitor": "bash",
-    "PowerShell": "bash",
     "Read": "read",
     "Grep": "read",
     "Glob": "read",

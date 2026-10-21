@@ -52,7 +52,7 @@ Le dépôt est découpé en un **socle** commun et des **groupes** à installer 
 | OpenCode **≥ 1.18** (testé en 1.18.35) | le plugin s'appuie sur le runtime Bun embarqué (`Bun.YAML`) |
 | **ou** Claude Code **≥ 2.1.275** (testé en 2.1.306) | marketplace de plugins, dépendances entre plugins |
 | `git` et un accès à github.com | le client télécharge le plugin |
-| Node **≥ 20.11**, avec Claude Code seulement | le hook qui applique les permissions des agents du kit |
+| Node **≥ 20.11**, avec Claude Code seulement | le hook qui applique les permissions des agents du kit : sans Node, il ne tourne pas et les agents n'ont **aucun** garde-fou (`doctor` le signale) |
 | un modèle qui sait appeler des outils | testé avec DeepSeek V4 Flash (Albert) : agents et prompts sont écrits pour qu'un modèle modeste les suive à la lettre |
 
 **Optionnel** : sans eux, le kit marche en **mode dégradé**. L'agent vous propose d'installer l'outil
@@ -249,11 +249,12 @@ Une valeur déclarée dans votre `opencode.json` l'emporte sur celle du plugin :
 - Claude Code : un agent de plugin ignore `permissionMode` et `hooks`, d'où le hook du `socle`. Il ne filtre que les
   agents du kit : `/dso:deployer-cpin` lancé dans une session normale reste sous les permissions habituelles de
   Claude Code (préférer `claude --agent dso:cpin-orchestrateur`). `temperature` n'a pas d'équivalent.
-- Le hook juge une commande bash sur son texte, comme OpenCode. Une redirection ou une sous-commande (`>`, `<(…)`,
-  `$(…)`) demande toujours l'accord, mais une commande autorisée garde tout ce que sa règle permet : `git diff
-  --no-index … .env.secrets`, `helm template … -f .env.secrets`, `pnpm exec …` sous `pnpm *`. Un `Grep` sur un
-  dossier n'est pas filtré fichier par fichier. Ces failles viennent des règles, à resserrer :
-  [#57](https://github.com/dnum-mi/starter-kit-opencode/issues/57).
+- Le hook juge une commande bash sur son texte, comme OpenCode. Il n'autorise sans demander qu'une commande faite de
+  caractères simples : guillemets, `\`, `$`, parenthèses, redirections ou jokers demandent l'accord (ex.
+  `git log --format="%h"`). Une commande autorisée garde tout ce que sa règle permet : `git diff
+  --no-index … .env.secrets`, `helm template … -f .env.secrets`, `pnpm exec …` sous `pnpm *`. Ces failles viennent
+  des règles, à resserrer : [#57](https://github.com/dnum-mi/starter-kit-opencode/issues/57).
+- Un `Grep` sur un dossier, sans motif de fichiers (`glob`), n'est pas filtré fichier par fichier.
 - Pour un agent du kit, un outil absent des règles OpenCode (`Monitor` et `WebSearch` exceptés, rattachés à `bash`
   et `webfetch`) demande l'accord de l'humain ; un outil MCP est refusé.
 - `dso` : plusieurs points restent à confirmer avec la Service Team CPiN : droits minimum du token GitHub,

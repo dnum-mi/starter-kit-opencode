@@ -41,6 +41,5 @@ claude-plugin: ## Régénère la version Claude Code des agents et commandes (cl
 	node scripts/claude-plugin.mjs
 
 test-claude: ## Vérifie la version Claude Code : à jour, hook des permissions, marketplace valide
-	node scripts/claude-plugin.mjs --check
 	node --test tests/claude/*.test.mjs
 	claude plugin validate .

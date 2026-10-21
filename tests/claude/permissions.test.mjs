@@ -2,6 +2,9 @@
 // Usage : node --test tests/claude/
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
+import { mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { test } from 'node:test'
 
 const HOOK = new URL('../../claude/permissions.mjs', import.meta.url).pathname
@@ -42,11 +45,19 @@ test('bash : chaque morceau d\'une commande composée est vérifié', () => {
 
 test('autres outils : Monitor et WebSearch suivent leur règle, MCP refusé, inconnu soumis à l\'humain', () => {
   assert.equal(decision('cpin-plan', 'Monitor', { command: 'cat .cpin/.env.secrets' }), 'deny')
-  assert.equal(decision('cpin-plan', 'PowerShell', { command: 'Get-Content .env' }), 'deny')
+  assert.equal(decision('cpin-plan', 'PowerShell', { command: 'ls (Remove-Item C:\\x)' }), 'ask')
   assert.equal(decision('cpin-plan', 'WebSearch', { query: 'helm' }), 'deny')
   assert.equal(decision('cpin-plan', 'mcp__github__get_file', { path: '.env' }), 'deny')
   assert.equal(decision('cpin-plan', 'OutilInconnu', {}), 'ask')
   assert.equal(decision('cpin-orchestrateur', 'TodoWrite', { todos: [] }), 'aucune')
+})
+
+test('bash : guillemets et échappements ne contournent pas un refus', () => {
+  assert.equal(decision('dev-review', 'Bash', { command: 'pnpm "add" x' }), 'deny')
+  assert.equal(decision('dev-review', 'Bash', { command: "pnpm a''dd x" }), 'deny')
+  assert.equal(decision('dev-review', 'Bash', { command: 'pnpm ad\\d x' }), 'deny')
+  assert.equal(decision('dev-review', 'Bash', { command: 'pnpm ${X}add x' }), 'ask')
+  assert.equal(decision('dev-review', 'Bash', { command: 'git log --format="%h"' }), 'ask')
 })
 
 test('bash : redirection vers ou depuis un fichier → demande d\'accord', () => {
@@ -74,6 +85,17 @@ test('fichiers : Grep, Glob et chemins relatifs suivent la règle read', () => {
   assert.equal(decision('cpin-plan', 'Grep', { pattern: 'TOKEN', path: '/p/.cpin/.env.secrets' }), 'deny')
   assert.equal(decision('cpin-plan', 'Grep', { pattern: 'port', path: '/p/chart' }), 'allow')
   assert.equal(decision('cpin-plan', 'Read', { file_path: '.env' }, { cwd: '/p' }), 'deny')
+  assert.equal(decision('cpin-plan', 'Grep', { pattern: 'T', path: '/r', glob: '**/.env.secrets' }), 'deny')
+  assert.equal(decision('cpin-plan', 'Grep', { pattern: '.env.secrets', path: '/r' }), 'allow')
+  assert.equal(decision('cpin-plan', 'Glob', { pattern: '**/.env', path: '/r' }), 'deny')
+})
+
+test('fichiers : un lien symbolique est jugé sur sa cible', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'kit-'))
+  writeFileSync(join(dir, '.env.secrets'), '')
+  symlinkSync(join(dir, '.env.secrets'), join(dir, 'notes.txt'))
+  assert.equal(decision('cpin-plan', 'Read', { file_path: join(dir, 'notes.txt') }), 'deny')
+  rmSync(dir, { recursive: true })
 })
 
 test('agent principal : refusé comme sous-agent, permis avec --agent', () => {
@@ -83,9 +105,12 @@ test('agent principal : refusé comme sous-agent, permis avec --agent', () => {
 })
 
 test('entrée illisible : outil bloqué (code 2), jamais laissé passer', () => {
-  const run = runHook('pas du json')
-  assert.equal(run.status, 2)
-  assert.match(run.stderr, /garde-fou des agents indisponible/)
+  const edit = { agent_type: 'cpin-build', tool_name: 'Edit', tool_input: {} }
+  for (const input of ['pas du json', JSON.stringify(edit)]) {
+    const run = runHook(input)
+    assert.equal(run.status, 2)
+    assert.match(run.stderr, /garde-fou des agents indisponible/)
+  }
 })
 
 test('la version Claude Code est à jour de opencode/', () => {

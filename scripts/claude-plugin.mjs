@@ -29,7 +29,6 @@ const GENERATED = `# Généré par scripts/claude-plugin.mjs depuis ${SOURCE_DIR
 const TOOL_PERMISSION = {
   Bash: 'bash',
   Monitor: 'bash',
-  PowerShell: 'bash',
   Read: 'read',
   Grep: 'read',
   Glob: 'read',
@@ -44,9 +43,11 @@ const TOOL_PERMISSION = {
   Task: 'task',
 }
 // Outils sans effet hors de la session (suivi, recherche d'outils, reprise d'un sous-agent) : laissés libres.
-// Tout autre outil absent de TOOL_PERMISSION demande l'accord, et un outil MCP est refusé aux agents du kit.
+// Tout autre outil absent de TOOL_PERMISSION demande l'accord (PowerShell : sa syntaxe n'est pas celle des règles
+// bash), et un outil MCP est refusé aux agents du kit.
 const SAFE_TOOLS = ['TodoWrite', 'TaskCreate', 'TaskUpdate', 'TaskList', 'TaskGet', 'ToolSearch', 'SendMessage']
 const HOOK_MATCHER = '*'
+const ERROR_PREFIX = 'claude-plugin :'
 
 function scalar(text) {
   if (text.startsWith('"'))
@@ -62,7 +63,7 @@ function parseYaml(lines, depth = 0) {
   while (lines.length) {
     const match = lines[0].match(YAML_LINE)
     if (!match)
-      throw new Error(`claude-plugin : ligne YAML non gérée : ${lines[0]}`)
+      throw new Error(`${ERROR_PREFIX} ligne YAML non gérée : ${lines[0]}`)
     if (match[1].length < depth * INDENT)
       return result
     lines.shift()
@@ -75,11 +76,11 @@ function parseYaml(lines, depth = 0) {
 function readMarkdown(file) {
   const match = readFileSync(file, 'utf8').match(FRONTMATTER)
   if (!match)
-    throw new Error(`claude-plugin : frontmatter absent dans ${file}`)
+    throw new Error(`${ERROR_PREFIX} frontmatter absent dans ${file}`)
   return { meta: parseYaml(match[1].split('\n').filter(Boolean)), body: match[2].trim().replace(KIT_ROOT, CLAUDE_ROOT) }
 }
 
-function markdownFiles(dir, recursive = false) {
+function markdownFiles(dir, { recursive } = { recursive: false }) {
   if (!existsSync(dir))
     return []
   return readdirSync(dir, { recursive }).filter(file => file.endsWith('.md')).sort()
@@ -110,7 +111,7 @@ function agentFile(group, name, { meta, body }) {
 // Une commande dont l'agent est un agent principal du kit embarque son prompt : elle tourne dans la session.
 function commandFile(name, { meta, body }, agents) {
   if (meta.subtask === true)
-    throw new Error(`claude-plugin : commande ${name} : subtask non géré`)
+    throw new Error(`${ERROR_PREFIX} commande ${name} : subtask non géré`)
   const agent = agents[meta.agent]
   const prompt = agent?.meta.mode === 'primary' ? `${agent.body}\n\n## Demande\n\n${body}` : body
   return `${frontmatter({ description: meta.description })}\n${prompt}\n`
@@ -153,9 +154,9 @@ function withHookMatcher(hooks = {}) {
 }
 
 function withPluginEntries(marketplace, files) {
+  const inside = dir => Object.keys(files).filter(file => file.startsWith(`${dir}/`))
   const plugins = marketplace.plugins.map((plugin) => {
     const { agents: _agents, commands: _commands, ...entry } = plugin
-    const inside = dir => Object.keys(files).filter(file => file.startsWith(`${dir}/`))
     const agents = inside(join(TARGET_DIR, AGENTS, plugin.name))
     const commands = join(TARGET_DIR, COMMANDS, plugin.name)
     const hasCommands = inside(commands).length > 0
@@ -192,7 +193,7 @@ function check(files) {
   const stale = Object.entries(files)
     .filter(([file, content]) => !existsSync(file) || readFileSync(file, 'utf8') !== content)
   const orphans = KINDS.map(kind => join(TARGET_DIR, kind))
-    .flatMap(dir => markdownFiles(dir, true).map(file => join(dir, file)))
+    .flatMap(dir => markdownFiles(dir, { recursive: true }).map(file => join(dir, file)))
     .filter(file => !(file in files))
   for (const file of [...stale.map(([file]) => file), ...orphans])
     console.error(`à régénérer : ${file}`)
