@@ -11,7 +11,10 @@ import { commandParts } from './shell.mjs'
 const POLICY_FILE = new URL('permissions.json', import.meta.url)
 const BLOCKING_EXIT = 2
 const ANY_SUFFIX = ' .*'
-const SEVERITY = { allow: 0, ask: 1, deny: 2 }
+const ALLOW = 'allow'
+const ASK = 'ask'
+const DENY = 'deny'
+const SEVERITY = { [ALLOW]: 0, [ASK]: 1, [DENY]: 2 }
 const MCP_TOOL = /^mcp__/
 
 function unprefixed(name = '') {
@@ -27,17 +30,17 @@ function wildcard(pattern) {
 
 function decide(rules, subject) {
   const match = rules.findLast(([pattern]) => wildcard(pattern).test(subject))
-  return match?.[1] ?? 'ask'
+  return match?.[1] ?? ASK
 }
 
 function worst(decisions) {
-  return decisions.reduce((current, d) => (SEVERITY[d] > SEVERITY[current] ? d : current), 'allow')
+  return decisions.reduce((current, d) => (SEVERITY[d] > SEVERITY[current] ? d : current), ALLOW)
 }
 
 // Un morceau de commande : la règle juge le texte que bash exécute ; un morceau opaque n'est jamais autorisé
 // sans demander (voir shell.mjs).
 function judgeCommandPart(rules, part) {
-  return worst([decide(rules, part.literal), part.opaque ? 'ask' : 'allow'])
+  return worst([decide(rules, part.literal), part.opaque ? ASK : ALLOW])
 }
 
 // Champ obligatoire de l'entrée d'un outil : absent, l'outil est bloqué plutôt que jugé sur une chaîne vide.
@@ -93,7 +96,7 @@ function main(event) {
   const agent = unprefixed(event.agent_type)
   // Un agent principal lancé comme sous-agent ne pourrait pas tenir ses portes avec l'humain.
   if (policy.primary.includes(agent) && event.agent_id)
-    return respond('deny', `starter-kit : ${agent} est un agent principal, à lancer avec claude --agent`)
+    return respond(DENY, `starter-kit : ${agent} est un agent principal, à lancer avec claude --agent`)
   if (!policy.agents[agent] || policy.safe.includes(event.tool_name))
     return
   const permission = policy.tools[event.tool_name]
@@ -108,7 +111,7 @@ function main(event) {
 
 // Outil hors de la table : MCP refusé (aucune règle OpenCode ne le couvre), le reste soumis à l'humain.
 function respondUnknown(agent, tool) {
-  const decision = MCP_TOOL.test(tool) ? 'deny' : 'ask'
+  const decision = MCP_TOOL.test(tool) ? DENY : ASK
   respond(decision, `starter-kit : outil ${tool} hors des règles de l'agent ${agent} → ${decision}`)
 }
 

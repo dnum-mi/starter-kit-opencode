@@ -49,6 +49,16 @@ function readEscape(command, i, part) {
   return i + 1
 }
 
+// Un caractère hors guillemets, ni séparateur ni `\` : ouvre un guillemet ou s'ajoute au morceau.
+function readPlain(state, command, i, part) {
+  const char = command[i]
+  if (char === '"' || char === '\'')
+    state.quote = char
+  else
+    part.literal += char
+  part.opaque ||= !state.quote && !isPlain(command, i)
+}
+
 // Lit le caractère i et rend la position du dernier caractère consommé.
 function scanChar(state, command, i) {
   const part = state.parts.at(-1)
@@ -64,11 +74,7 @@ function scanChar(state, command, i) {
   }
   if (char === '\\')
     return readEscape(command, i, part)
-  if (char === '"' || char === '\'')
-    state.quote = char
-  else
-    part.literal += char
-  part.opaque ||= !state.quote && !isPlain(command, i)
+  readPlain(state, command, i, part)
   return i
 }
 

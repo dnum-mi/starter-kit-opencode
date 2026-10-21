@@ -45,9 +45,9 @@ const TOOL_PERMISSION = {
 // Outils sans effet hors de la session (suivi, recherche d'outils, reprise d'un sous-agent) : laissés libres.
 // Tout autre outil absent de TOOL_PERMISSION demande l'accord (PowerShell : sa syntaxe n'est pas celle des règles
 // bash), et un outil MCP est refusé aux agents du kit.
+const SAFE_TOOLS = ['TodoWrite', 'TaskCreate', 'TaskUpdate', 'TaskList', 'TaskGet', 'ToolSearch', 'SendMessage']
 // Outil de lecture → champ qui porte son motif de fichiers (le `pattern` de Grep est une regex de contenu).
 const FILE_GLOBS = { Glob: 'pattern', Grep: 'glob' }
-const SAFE_TOOLS = ['TodoWrite', 'TaskCreate', 'TaskUpdate', 'TaskList', 'TaskGet', 'ToolSearch', 'SendMessage']
 const HOOK_MATCHER = '*'
 const ERROR_PREFIX = 'claude-plugin :'
 
