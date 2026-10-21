@@ -20,7 +20,7 @@ Le dépôt est découpé en un **socle** commun et des **groupes** à installer 
 | Groupe `dev` | `.agents/skills/dev/` | développer une application : front Vue/Nuxt + DSFR, back NestJS/Fastify/FastAPI, monorepo, poste dev |
 | | `opencode/agents/dev/`, `opencode/commands/dev/` | `/livrer` : implémenter un plan, vérifié avant et après |
 | Groupe `dso` | `.agents/skills/dso/` | CI/CD fabnum-cicd, chart Helm, déploiement Cloud Pi Native |
-| | `opencode/agents/dso/`, `opencode/commands/dso/` | `/deployer-cpin` : déployer en suivant le runbook, avec des portes |
+| | `opencode/agents/dso/`, `opencode/commands/dso/` | `/deployer-cpin` : déployer selon le runbook, avec des portes |
 | Plugin | `plugin/starter-kit.js` | installe le socle et les groupes choisis dans OpenCode |
 | Marketplace | `.claude-plugin/marketplace.json` | installe le socle et les groupes choisis dans Claude Code |
 | | `claude/` | agents et commandes générés pour Claude Code, hook qui applique leurs permissions |
@@ -49,7 +49,8 @@ Le dépôt est découpé en un **socle** commun et des **groupes** à installer 
 
 | Il faut | Pourquoi |
 |---------|----------|
-| OpenCode **≥ 1.18** (testé en 1.18.35) **ou** Claude Code **≥ 2.1.275** (testé en 2.1.306) | OpenCode : le plugin s'appuie sur le runtime Bun embarqué (`Bun.YAML`) |
+| OpenCode **≥ 1.18** (testé en 1.18.35) | le plugin s'appuie sur le runtime Bun embarqué (`Bun.YAML`) |
+| **ou** Claude Code **≥ 2.1.275** (testé en 2.1.306) | marketplace de plugins, dépendances entre plugins |
 | `git` et un accès à github.com | le client télécharge le plugin |
 | Node **≥ 20.11**, avec Claude Code seulement | le hook qui applique les permissions des agents du kit |
 | un modèle qui sait appeler des outils | testé avec DeepSeek V4 Flash (Albert) : agents et prompts sont écrits pour qu'un modèle modeste les suive à la lettre |
@@ -248,6 +249,9 @@ Une valeur déclarée dans votre `opencode.json` l'emporte sur celle du plugin :
 - Claude Code : un agent de plugin ignore `permissionMode` et `hooks`, d'où le hook du `socle`. Il ne filtre que les
   agents du kit : `/dso:deployer-cpin` lancé dans une session normale reste sous les permissions habituelles de
   Claude Code (préférer `claude --agent dso:cpin-orchestrateur`). `temperature` n'a pas d'équivalent.
+- Le hook juge une commande bash sur son texte, comme OpenCode : une commande autorisée qui lit un fichier qu'elle
+  reçoit en argument (`git diff --no-index … .env.secrets`) passe, et un `Grep` sur un dossier n'est pas filtré
+  fichier par fichier. Une redirection ou une sous-commande (`>`, `<(…)`, `$(…)`) demande toujours l'accord.
 - `dso` : plusieurs points restent à confirmer avec la Service Team CPiN : droits minimum du token GitHub,
   domaine Harbor accepté par Kyverno en prod, déploiement d'un changement de chart sans nouvelle image. Ils
   sont listés dans `deploiement-cpin` (« Limites connues ») ; les agents ne tranchent pas à votre place.

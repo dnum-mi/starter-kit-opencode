@@ -6,9 +6,13 @@ import { test } from 'node:test'
 
 const HOOK = new URL('../../claude/permissions.mjs', import.meta.url).pathname
 
-function decision(agent, tool, input) {
-  const event = { hook_event_name: 'PreToolUse', agent_type: agent, tool_name: tool, tool_input: input }
-  const run = spawnSync('node', [HOOK], { input: JSON.stringify(event), encoding: 'utf8' })
+function runHook(input) {
+  return spawnSync('node', [HOOK], { input, encoding: 'utf8' })
+}
+
+function decision(agent, tool, input, extra = {}) {
+  const event = { hook_event_name: 'PreToolUse', agent_type: agent, tool_name: tool, tool_input: input, ...extra }
+  const run = runHook(JSON.stringify(event))
   assert.equal(run.status, 0, run.stderr)
   return run.stdout ? JSON.parse(run.stdout).hookSpecificOutput.permissionDecision : 'aucune'
 }
@@ -29,6 +33,14 @@ test('bash : chaque morceau d\'une commande composée est vérifié', () => {
   assert.equal(decision('dev-review', 'Bash', { command: 'git diff && rm -rf src' }), 'deny')
   assert.equal(decision('dev-review', 'Bash', { command: 'git status; git log -1' }), 'allow')
   assert.equal(decision('dev-review', 'Bash', { command: 'ls $(cat .env)' }), 'ask')
+  assert.equal(decision('dev-review', 'Bash', { command: 'ls & pnpm add left-pad' }), 'deny')
+  assert.equal(decision('dev-review', 'Bash', { command: 'pnpm run lint 2>&1 | ls' }), 'allow')
+})
+
+test('bash : redirection vers ou depuis un fichier → demande d\'accord', () => {
+  assert.equal(decision('cpin-plan', 'Bash', { command: 'ls > .cpin/.env.secrets' }), 'ask')
+  assert.equal(decision('cpin-plan', 'Bash', { command: 'ls <(cat .cpin/.env.secrets)' }), 'ask')
+  assert.equal(decision('cpin-plan', 'Bash', { command: 'ls 2>/dev/null' }), 'allow')
 })
 
 test('bash : demande d\'accord quand la règle OpenCode vaut ask', () => {
@@ -44,6 +56,29 @@ test('fichiers : secrets illisibles, écriture refusée aux agents en lecture se
   assert.equal(decision('cpin-build', 'Write', { file_path: '/p/.env' }), 'deny')
   assert.equal(decision('cpin-build', 'Edit', { file_path: '/p/chart/values.yaml' }), 'allow')
   assert.equal(decision('cpin-plan', 'Edit', { file_path: '/p/chart/values.yaml' }), 'deny')
+})
+
+test('fichiers : Grep, Glob et chemins relatifs suivent la règle read', () => {
+  assert.equal(decision('cpin-plan', 'Grep', { pattern: 'TOKEN', path: '/p/.cpin/.env.secrets' }), 'deny')
+  assert.equal(decision('cpin-plan', 'Grep', { pattern: 'port', path: '/p/chart' }), 'allow')
+  assert.equal(decision('cpin-plan', 'Read', { file_path: '.env' }, { cwd: '/p' }), 'deny')
+})
+
+test('agent principal : refusé comme sous-agent, permis avec --agent', () => {
+  const ls = { command: 'ls' }
+  assert.equal(decision('dso:cpin-orchestrateur', 'Bash', ls, { agent_id: 'a1' }), 'deny')
+  assert.equal(decision('dso:cpin-orchestrateur', 'Bash', ls), 'allow')
+})
+
+test('entrée illisible : outil bloqué (code 2), jamais laissé passer', () => {
+  const run = runHook('pas du json')
+  assert.equal(run.status, 2)
+  assert.match(run.stderr, /garde-fou des agents indisponible/)
+})
+
+test('la version Claude Code est à jour de opencode/', () => {
+  const run = spawnSync('node', ['scripts/claude-plugin.mjs', '--check'], { encoding: 'utf8' })
+  assert.equal(run.status, 0, run.stderr)
 })
 
 test('skills et sous-agents : seuls ceux de la règle', () => {

@@ -3,7 +3,7 @@
 name: "cpin-plan"
 description: "Planifie, sans rien modifier, les fichiers à créer ou corriger pour la phase 3 d'un déploiement CPiN (chart Helm, values, CI) à partir d'une FICHE"
 maxTurns: 25
-disallowedTools: "Write, Edit, NotebookEdit, WebFetch, Agent"
+disallowedTools: "Edit, MultiEdit, Write, NotebookEdit, WebFetch, Agent, Task"
 ---
 
 Tu prépares le plan de la phase 3 d'un déploiement Cloud Pi Native. Tu ne modifies rien.

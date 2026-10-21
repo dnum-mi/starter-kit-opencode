@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Génère la version Claude Code des agents et commandes OpenCode (source unique : opencode/).
 // Écrit claude/agents/<groupe>/, claude/commands/<groupe>/, claude/permissions.json (lu par le hook
-// claude/permissions.mjs) et les clés agents/commands des plugins de .claude-plugin/marketplace.json.
+// claude/permissions.mjs) et, dans .claude-plugin/marketplace.json, les clés agents/commands des plugins et le
+// matcher du hook des permissions. Le reste du marketplace s'écrit à la main.
 // Usage : node scripts/claude-plugin.mjs [--check]
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
@@ -16,11 +17,27 @@ const NUMBER = /^-?\d+(?:\.\d+)?$/
 // Une règle par ligne dans permissions.json : ["motif", "action"].
 const RULE_ON_ONE_LINE = /\[\n\s+("[^"\n]*"),\n\s+("[^"\n]*")\n\s+\]/g
 const INDENT = 2
+const KINDS = ['agents', 'commands']
+const HOOK_SCRIPT = 'claude/permissions.mjs'
 const KIT_ROOT = /\{\{KIT_ROOT\}\}/g
 const CLAUDE_ROOT = '${CLAUDE_PLUGIN_ROOT}'
 const GENERATED = `# Généré par scripts/claude-plugin.mjs depuis ${SOURCE_DIR}/ : ne pas modifier.`
-// Permission OpenCode refusée en bloc → outils Claude Code retirés de l'agent.
-const DENIED_TOOLS = { edit: ['Write', 'Edit', 'NotebookEdit'], webfetch: ['WebFetch'], task: ['Agent'] }
+// Outil Claude Code → permission OpenCode qui le gouverne. Seule table : matcher du hook, règles du hook et
+// disallowedTools (permission refusée en bloc) en découlent.
+const TOOL_PERMISSION = {
+  Bash: 'bash',
+  Read: 'read',
+  Grep: 'read',
+  Glob: 'read',
+  Edit: 'edit',
+  MultiEdit: 'edit',
+  Write: 'edit',
+  NotebookEdit: 'edit',
+  WebFetch: 'webfetch',
+  Skill: 'skill',
+  Agent: 'task',
+  Task: 'task',
+}
 
 function scalar(text) {
   if (text.startsWith('"'))
@@ -51,10 +68,10 @@ function readMarkdown(file) {
   return { meta: parseYaml(match[1].split('\n').filter(Boolean)), body: match[2].trim().replace(KIT_ROOT, CLAUDE_ROOT) }
 }
 
-function markdownFiles(dir) {
+function markdownFiles(dir, recursive = false) {
   if (!existsSync(dir))
     return []
-  return readdirSync(dir).filter(file => file.endsWith('.md')).sort()
+  return readdirSync(dir, { recursive }).filter(file => file.endsWith('.md')).sort()
 }
 
 function frontmatter(fields) {
@@ -65,7 +82,7 @@ function frontmatter(fields) {
 }
 
 function deniedTools(permission = {}) {
-  const tools = Object.entries(DENIED_TOOLS).filter(([key]) => permission[key] === 'deny').flatMap(([, list]) => list)
+  const tools = Object.keys(TOOL_PERMISSION).filter(tool => permission[TOOL_PERMISSION[tool]] === 'deny')
   return tools.length ? tools.join(', ') : undefined
 }
 
@@ -95,33 +112,44 @@ function permissionRules(permission = {}) {
 }
 
 function groupOutputs(group) {
-  const agentDir = join(SOURCE_DIR, 'agents', group)
+  const agentDir = join(SOURCE_DIR, KINDS[0], group)
   const agents = Object.fromEntries(markdownFiles(agentDir)
     .map(file => [file.replace(/\.md$/, ''), readMarkdown(join(agentDir, file))]))
-  const commandDir = join(SOURCE_DIR, 'commands', group)
+  const commandDir = join(SOURCE_DIR, KINDS[1], group)
   const files = {}
   for (const [name, agent] of Object.entries(agents))
-    files[join(TARGET_DIR, 'agents', group, `${name}.md`)] = agentFile(group, name, agent)
+    files[join(TARGET_DIR, KINDS[0], group, `${name}.md`)] = agentFile(group, name, agent)
   for (const file of markdownFiles(commandDir))
-    files[join(TARGET_DIR, 'commands', group, file)] = commandFile(file, readMarkdown(join(commandDir, file)), agents)
+    files[join(TARGET_DIR, KINDS[1], group, file)] = commandFile(file, readMarkdown(join(commandDir, file)), agents)
   const permissions = Object.fromEntries(Object.entries(agents)
     .map(([name, agent]) => [name, permissionRules(agent.meta.permission)]))
-  return { files, permissions }
+  const primary = Object.keys(agents).filter(name => agents[name].meta.mode === 'primary')
+  return { files, permissions, primary }
 }
 
 function sourceGroups() {
-  const dirs = ['agents', 'commands'].map(kind => join(SOURCE_DIR, kind)).filter(existsSync)
+  const dirs = KINDS.map(kind => join(SOURCE_DIR, kind)).filter(existsSync)
   return [...new Set(dirs.flatMap(dir => readdirSync(dir)))].sort()
+}
+
+// Le hook des permissions doit voir passer chaque outil de TOOL_PERMISSION.
+function withHookMatcher(hooks = {}) {
+  const preToolUse = hooks.PreToolUse?.map(group =>
+    group.hooks.some(hook => hook.command?.includes(HOOK_SCRIPT))
+      ? { ...group, matcher: Object.keys(TOOL_PERMISSION).join('|') }
+      : group)
+  return preToolUse ? { ...hooks, PreToolUse: preToolUse } : hooks
 }
 
 function withPluginEntries(marketplace, files) {
   const plugins = marketplace.plugins.map((plugin) => {
     const { agents: _agents, commands: _commands, ...entry } = plugin
-    const agents = Object.keys(files).filter(f => f.startsWith(join(TARGET_DIR, 'agents', plugin.name, '/')))
-    const commands = join(TARGET_DIR, 'commands', plugin.name)
+    const agents = Object.keys(files).filter(f => f.startsWith(join(TARGET_DIR, KINDS[0], plugin.name, '/')))
+    const commands = join(TARGET_DIR, KINDS[1], plugin.name)
     const hasCommands = Object.keys(files).some(f => f.startsWith(`${commands}/`))
     return {
       ...entry,
+      ...(entry.hooks && { hooks: withHookMatcher(entry.hooks) }),
       ...(agents.length && { agents: agents.map(file => `./${file}`) }),
       ...(hasCommands && { commands: `./${commands}` }),
     }
@@ -129,31 +157,30 @@ function withPluginEntries(marketplace, files) {
   return { ...marketplace, plugins }
 }
 
+function json(value) {
+  return `${JSON.stringify(value, null, INDENT)}\n`
+}
+
 function buildOutputs() {
   const files = {}
-  const permissions = {}
+  const policy = { tools: TOOL_PERMISSION, primary: [], agents: {} }
   for (const group of sourceGroups()) {
     const outputs = groupOutputs(group)
     Object.assign(files, outputs.files)
-    Object.assign(permissions, outputs.permissions)
+    Object.assign(policy.agents, outputs.permissions)
+    policy.primary.push(...outputs.primary)
   }
-  files[PERMISSIONS] = `${JSON.stringify(permissions, null, 2).replace(RULE_ON_ONE_LINE, '[$1, $2]')}\n`
+  files[PERMISSIONS] = json(policy).replace(RULE_ON_ONE_LINE, '[$1, $2]')
   const marketplace = JSON.parse(readFileSync(MARKETPLACE, 'utf8'))
-  files[MARKETPLACE] = `${JSON.stringify(withPluginEntries(marketplace, files), null, 2)}\n`
+  files[MARKETPLACE] = json(withPluginEntries(marketplace, files))
   return files
-}
-
-function generatedFiles(dir) {
-  if (!existsSync(dir))
-    return []
-  return readdirSync(dir, { recursive: true }).map(file => join(dir, file)).filter(file => file.endsWith('.md'))
 }
 
 function check(files) {
   const stale = Object.entries(files)
     .filter(([file, content]) => !existsSync(file) || readFileSync(file, 'utf8') !== content)
-  const orphans = ['agents', 'commands']
-    .flatMap(kind => generatedFiles(join(TARGET_DIR, kind)))
+  const orphans = KINDS.map(kind => join(TARGET_DIR, kind))
+    .flatMap(dir => markdownFiles(dir, true).map(file => join(dir, file)))
     .filter(file => !(file in files))
   for (const file of [...stale.map(([file]) => file), ...orphans])
     console.error(`à régénérer : ${file}`)
@@ -165,7 +192,7 @@ function check(files) {
 }
 
 function write(files) {
-  for (const kind of ['agents', 'commands'])
+  for (const kind of KINDS)
     rmSync(join(TARGET_DIR, kind), { recursive: true, force: true })
   for (const [file, content] of Object.entries(files)) {
     mkdirSync(dirname(file), { recursive: true })

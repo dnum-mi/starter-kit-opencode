@@ -29,13 +29,14 @@ version_of() {
 
 # Client : OpenCode ou Claude Code, l'un des deux suffit.
 check_client() {
-  local found=0 entry tool min ver
+  local found=0 entry tool min ver seen=()
   for entry in "opencode:$OPENCODE_MIN" "claude:$CLAUDE_MIN"; do
     tool="${entry%%:*}"; min="${entry#*:}"; ver="$(version_of "$tool")"
     if [[ -n "$ver" ]] && version_ge "$ver" "$min"; then pass "$tool $ver"; found=1; fi
+    seen+=("$tool ${ver:-absent}")
   done
   ((found)) && return
-  fail "opencode ≥ $OPENCODE_MIN ou claude ≥ $CLAUDE_MIN : absent ou trop ancien"
+  fail "opencode ≥ $OPENCODE_MIN ou claude ≥ $CLAUDE_MIN : ${seen[*]}"
   hint "https://opencode.ai/docs/#install" "https://code.claude.com/docs/en/setup"
 }
 

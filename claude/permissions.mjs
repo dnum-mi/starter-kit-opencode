@@ -3,23 +3,19 @@
 // (claude/permissions.json, généré par scripts/claude-plugin.mjs). Un agent de plugin ignore permissionMode
 // et hooks : ce hook est le seul garde-fou par commande. Hors agent du kit, il ne dit rien.
 // Sémantique OpenCode : `*` couvre tout, la dernière règle qui correspond l'emporte.
+// Une erreur (règles illisibles, entrée invalide) bloque l'outil (code 2) : jamais de passage sans décision.
 import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 
-const RULES = JSON.parse(readFileSync(new URL('permissions.json', import.meta.url), 'utf8'))
-const TOOL_PERMISSION = {
-  Bash: 'bash',
-  Read: 'read',
-  Edit: 'edit',
-  MultiEdit: 'edit',
-  Write: 'edit',
-  NotebookEdit: 'edit',
-  WebFetch: 'webfetch',
-  Skill: 'skill',
-  Agent: 'task',
-  Task: 'task',
-}
-const COMMAND_SEPARATORS = /&&|\|\||;|\||\n/
-const SUBSTITUTION = /\$\(|`/
+const POLICY_FILE = new URL('permissions.json', import.meta.url)
+const BLOCKING_EXIT = 2
+const ANY_SUFFIX = ' .*'
+// Séparateurs de commandes : &&, ||, ;, |, & seul (hors redirection 2>&1) et retour à la ligne.
+const COMMAND_SEPARATORS = /&&|\|\||;|\|&?|(?<![<>])&(?!>)|\n/
+// Redirections sans effet sur un fichier : 2>&1, >/dev/null.
+const HARMLESS_REDIRECTS = /\d*>>?\s*(?:&\d|\/dev\/null)/g
+// Sous-commande ($(…), `…`, <(…)) ou redirection vers/depuis un fichier : la liste blanche n'y voit rien.
+const OPAQUE_SHELL = /\$\(|`|[<>]/
 const SEVERITY = { allow: 0, ask: 1, deny: 2 }
 
 function unprefixed(name = '') {
@@ -29,7 +25,8 @@ function unprefixed(name = '') {
 function wildcard(pattern) {
   const source = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replaceAll('*', '.*').replaceAll('?', '.')
   // Comme OpenCode : "ls *" couvre aussi "ls" seul.
-  return new RegExp(`^${source.endsWith(' .*') ? `${source.slice(0, -3)}( .*)?` : source}$`, 's')
+  const body = source.endsWith(ANY_SUFFIX) ? `${source.slice(0, -ANY_SUFFIX.length)}( .*)?` : source
+  return new RegExp(`^${body}$`, 's')
 }
 
 function decide(rules, subject) {
@@ -37,36 +34,51 @@ function decide(rules, subject) {
   return match?.[1] ?? 'ask'
 }
 
-function subjects(tool, input) {
+function subjects(tool, input, cwd) {
   if (tool === 'Bash')
     return input.command.split(COMMAND_SEPARATORS).map(part => part.trim()).filter(Boolean)
   if (tool === 'Skill')
     return [unprefixed(input.skill)]
   if (tool === 'Agent' || tool === 'Task')
     return [unprefixed(input.subagent_type)]
-  return [input.file_path ?? input.notebook_path ?? input.url ?? '']
+  if (tool === 'WebFetch')
+    return [input.url ?? '']
+  return [resolve(cwd, input.file_path ?? input.notebook_path ?? input.path ?? '.')]
 }
 
-function verdict(tool, input, rules) {
-  const decisions = subjects(tool, input).map(subject => decide(rules, subject))
-  if (tool === 'Bash' && SUBSTITUTION.test(input.command))
+function verdict(event, rules) {
+  const input = event.tool_input ?? {}
+  const decisions = subjects(event.tool_name, input, event.cwd ?? process.cwd()).map(s => decide(rules, s))
+  if (event.tool_name === 'Bash' && OPAQUE_SHELL.test(input.command.replace(HARMLESS_REDIRECTS, '')))
     decisions.push('ask')
   return decisions.reduce((worst, d) => (SEVERITY[d] > SEVERITY[worst] ? d : worst), 'allow')
 }
 
-function main(event) {
-  const agent = unprefixed(event.agent_type)
-  const permission = TOOL_PERMISSION[event.tool_name]
-  const rules = RULES[agent]?.[permission]
-  if (!rules)
-    return
-  const decision = verdict(event.tool_name, event.tool_input ?? {}, rules)
-  const output = {
-    hookEventName: 'PreToolUse',
-    permissionDecision: decision,
-    permissionDecisionReason: `starter-kit : règle « ${permission} » de l'agent ${agent} → ${decision}`,
-  }
+function respond(decision, reason) {
+  const output = { hookEventName: 'PreToolUse', permissionDecision: decision, permissionDecisionReason: reason }
   process.stdout.write(JSON.stringify({ hookSpecificOutput: output }))
 }
 
-main(JSON.parse(readFileSync(0, 'utf8')))
+function main(event) {
+  if (!event.agent_type)
+    return
+  const policy = JSON.parse(readFileSync(POLICY_FILE, 'utf8'))
+  const agent = unprefixed(event.agent_type)
+  // Un agent principal lancé comme sous-agent ne pourrait pas tenir ses portes avec l'humain.
+  if (policy.primary.includes(agent) && event.agent_id)
+    return respond('deny', `starter-kit : ${agent} est un agent principal, à lancer avec claude --agent`)
+  const permission = policy.tools[event.tool_name]
+  const rules = policy.agents[agent]?.[permission]
+  if (!rules)
+    return
+  const decision = verdict(event, rules)
+  respond(decision, `starter-kit : règle « ${permission} » de l'agent ${agent} → ${decision}`)
+}
+
+try {
+  main(JSON.parse(readFileSync(0, 'utf8')))
+}
+catch (error) {
+  console.error(`starter-kit : garde-fou des agents indisponible, outil bloqué : ${error.message}`)
+  process.exit(BLOCKING_EXIT)
+}
