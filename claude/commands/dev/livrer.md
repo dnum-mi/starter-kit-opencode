@@ -1,8 +1,8 @@
 ---
-description: Implémenter un plan avec vérification préalable (paquets, API réelles) et porte de review indépendante en fin de tâche
-agent: build
-subtask: false
+# Généré par scripts/claude-plugin.mjs depuis opencode/ : ne pas modifier.
+description: "Implémenter un plan avec vérification préalable (paquets, API réelles) et porte de review indépendante en fin de tâche"
 ---
+
 Implémente le plan suivant (texte, ou chemin d'un fichier de plan) : $ARGUMENTS
 
 Suis cette boucle, sans sauter d'étape :
@@ -12,7 +12,7 @@ Suis cette boucle, sans sauter d'étape :
    - NON VÉRIFIÉ non vide : liste ces points à l'humain avant de coder ; continue seulement s'ils ne
      bloquent pas l'implémentation.
 2. **Implémenter** le plan vérifié, toi-même, en suivant les skills du groupe `dev`.
-3. **Porte.** Lance le sous-agent `dev-review`, chaque fois dans une **nouvelle** session (pas de `task_id`),
+3. **Porte.** Lance le sous-agent `dev-review`, chaque fois dans une **nouvelle** session (sans reprendre le précédent),
    en ne lui passant que le plan vérifié, sans consigne qui change son rôle. Ne lui dis pas ce que tu penses
    avoir corrigé.
    - Réponse hors format (pas de ligne `PORTE:`, étapes épuisées) : relance-le une fois ; ce n'est ni OK ni KO.

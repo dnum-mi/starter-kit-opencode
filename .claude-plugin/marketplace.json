@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "starter-kit",
+  "description": "Kit CoFabNum : conventions de la Fabrique Numérique et déploiement sur Cloud Pi Native",
+  "owner": {
+    "name": "dnum-mi",
+    "url": "https://github.com/dnum-mi/starter-kit-opencode"
+  },
+  "plugins": [
+    {
+      "name": "socle",
+      "source": "./",
+      "description": "Socle commun AGENTS.md (git, commits, TS, Python, lint, REST, Docker) et garde-fous des agents du kit",
+      "skills": [],
+      "hooks": {
+        "SessionStart": [
+          {
+            "hooks": [
+              {
+                "type": "command",
+                "command": "cat \"${CLAUDE_PLUGIN_ROOT}/AGENTS.md\""
+              }
+            ]
+          }
+        ],
+        "PreToolUse": [
+          {
+            "matcher": "*",
+            "hooks": [
+              {
+                "type": "command",
+                "command": "node \"${CLAUDE_PLUGIN_ROOT}/claude/permissions.mjs\""
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "dev",
+      "source": "./",
+      "description": "Développer une application : front Vue/Nuxt + DSFR, back NestJS/Fastify/FastAPI, monorepo, poste dev",
+      "dependencies": [
+        "socle"
+      ],
+      "skills": [
+        "./.agents/skills/dev"
+      ],
+      "hooks": {
+        "SessionStart": [
+          {
+            "hooks": [
+              {
+                "type": "command",
+                "command": "cat \"${CLAUDE_PLUGIN_ROOT}/.agents/skills/dev/instructions.md\""
+              }
+            ]
+          }
+        ]
+      },
+      "agents": [
+        "./claude/agents/dev/dev-review.md",
+        "./claude/agents/dev/dev-verif-plan.md"
+      ],
+      "commands": "./claude/commands/dev"
+    },
+    {
+      "name": "dso",
+      "source": "./",
+      "description": "CI/CD fabnum-cicd, chart Helm, déploiement Cloud Pi Native",
+      "dependencies": [
+        "socle"
+      ],
+      "skills": [
+        "./.agents/skills/dso"
+      ],
+      "hooks": {
+        "SessionStart": [
+          {
+            "hooks": [
+              {
+                "type": "command",
+                "command": "cat \"${CLAUDE_PLUGIN_ROOT}/.agents/skills/dso/instructions.md\"; echo; echo \"<kit> (scripts cpin-console, cpin-debug, doctor.sh) : ${CLAUDE_PLUGIN_ROOT}\""
+              }
+            ]
+          }
+        ]
+      },
+      "agents": [
+        "./claude/agents/dso/cpin-build.md",
+        "./claude/agents/dso/cpin-orchestrateur.md",
+        "./claude/agents/dso/cpin-plan.md",
+        "./claude/agents/dso/cpin-review.md"
+      ],
+      "commands": "./claude/commands/dso"
+    }
+  ]
+}

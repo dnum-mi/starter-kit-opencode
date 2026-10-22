@@ -7,6 +7,7 @@ set -uo pipefail
 
 KIT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OPENCODE_MIN="1.18.0"
+CLAUDE_MIN="2.1.275"
 NODE_MIN="20.11.0"
 DEBUG_DIR="$KIT_ROOT/scripts/cpin-debug"
 
@@ -26,16 +27,22 @@ version_of() {
   "${cmd[@]}" 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1
 }
 
+# Client : OpenCode ou Claude Code, l'un des deux suffit.
+check_client() {
+  local found=0 entry tool min ver seen=()
+  for entry in "opencode:$OPENCODE_MIN" "claude:$CLAUDE_MIN"; do
+    tool="${entry%%:*}"; min="${entry#*:}"; ver="$(version_of "$tool")"
+    if [[ -n "$ver" ]] && version_ge "$ver" "$min"; then pass "$tool $ver"; found=1; fi
+    seen+=("$tool ${ver:-absent}")
+  done
+  ((found)) && return
+  fail "opencode ≥ $OPENCODE_MIN ou claude ≥ $CLAUDE_MIN : ${seen[*]}"
+  hint "https://opencode.ai/docs/#install" "https://code.claude.com/docs/en/setup"
+}
+
 check_required() {
   echo "--- Obligatoire ---"
-  local ver
-  ver="$(version_of opencode)"
-  if [[ -n "$ver" ]] && version_ge "$ver" "$OPENCODE_MIN"; then
-    pass "opencode $ver"
-  else
-    fail "opencode ≥ $OPENCODE_MIN : ${ver:-absent}"
-    hint "https://opencode.ai/docs/#install"
-  fi
+  check_client
   if command -v git >/dev/null; then pass "git $(version_of git)"; else
     fail "git : absent"; hint "sudo apt install git | brew install git | winget install Git.Git"
   fi
@@ -47,6 +54,9 @@ check_node() {
   if [[ -n "$ver" ]] && version_ge "$ver" "$NODE_MIN"; then pass "node $ver"; return; fi
   warn "node ≥ $NODE_MIN : ${ver:-absent}"
   hint "Sans lui : scripts console, Vault et debug indisponibles → mode manuel du runbook deploiement-cpin."
+  if command -v claude >/dev/null; then
+    hint "Claude Code : le hook des permissions ne tourne pas → les agents du kit n'ont AUCUN garde-fou."
+  fi
   hint "Installer : https://nodejs.org (ou proto install node 24)"
 }
 

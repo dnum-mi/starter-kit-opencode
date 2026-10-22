@@ -6,7 +6,8 @@ OKF_PORT ?= 4321
 OPENWIKI_VERSION ?= 0.6.0
 OPENWIKI = npx --yes openwiki@$(OPENWIKI_VERSION)
 
-.PHONY: help doctor install-debug okf-viz okf-viz-export skills-index skills-index-check test-cpin-rules test-plugin
+.PHONY: help doctor install-debug okf-viz okf-viz-export skills-index skills-index-check test-cpin-rules test-plugin \
+	claude-plugin test-claude
 
 help: ## Liste les commandes
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-15s %s\n", $$1, $$2}'
@@ -35,3 +36,10 @@ test-cpin-rules: ## Teste check-cpin-rules.py (skill helm-chart-cpin) sur les fr
 
 test-plugin: ## Vérifie que le plugin installe chaque groupe, et rien des autres
 	tests/plugin/check-config.sh
+
+claude-plugin: ## Régénère la version Claude Code des agents et commandes (claude/)
+	node scripts/claude-plugin.mjs
+
+test-claude: ## Vérifie la version Claude Code : à jour, hook des permissions, marketplace valide
+	node --test tests/claude/*.test.mjs
+	claude plugin validate .

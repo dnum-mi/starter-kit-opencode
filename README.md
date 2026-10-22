@@ -5,7 +5,10 @@ Skills, instructions et agents pour coder et déployer selon les conventions de 
 
 - Les **skills** suivent le standard [Agent Skills](https://agentskills.io/specification) : ils marchent avec
   OpenCode, Claude Code, Codex, etc.
-- Les **agents**, les **commandes** et le **plugin** sont propres à **OpenCode**.
+- Tout le kit s'installe dans **OpenCode** (plugin) et dans **Claude Code** (marketplace de plugins) : socle,
+  instructions, skills, agents, commandes et garde-fous.
+- Les agents et les commandes sont écrits une seule fois, au format OpenCode (`opencode/`) ; leur version
+  Claude Code (`claude/`) en est générée.
 
 ## Contenu
 
@@ -15,10 +18,12 @@ Le dépôt est découpé en un **socle** commun et des **groupes** à installer 
 |--------|---------|--------|
 | Socle | `AGENTS.md` | conventions communes : git, commits, TS, Python, lint, REST, Docker |
 | Groupe `dev` | `.agents/skills/dev/` | développer une application : front Vue/Nuxt + DSFR, back NestJS/Fastify/FastAPI, monorepo, poste dev |
-| | `agents/dev/`, `commands/dev/` | `/livrer` : implémenter un plan, vérifié avant et après |
+| | `opencode/agents/dev/`, `opencode/commands/dev/` | `/livrer` : implémenter un plan, vérifié avant et après |
 | Groupe `dso` | `.agents/skills/dso/` | CI/CD fabnum-cicd, chart Helm, déploiement Cloud Pi Native |
-| | `agents/dso/`, `commands/dso/` | `/deployer-cpin` : déployer en suivant le runbook, avec des portes |
+| | `opencode/agents/dso/`, `opencode/commands/dso/` | `/deployer-cpin` : déployer selon le runbook, avec des portes |
 | Plugin | `plugin/starter-kit.js` | installe le socle et les groupes choisis dans OpenCode |
+| Marketplace | `.claude-plugin/marketplace.json` | installe le socle et les groupes choisis dans Claude Code |
+| | `claude/` | agents et commandes générés pour Claude Code, hook qui applique leurs permissions |
 
 ```
 .agents/skills/
@@ -44,8 +49,10 @@ Le dépôt est découpé en un **socle** commun et des **groupes** à installer 
 
 | Il faut | Pourquoi |
 |---------|----------|
-| OpenCode **≥ 1.18** (testé en 1.18.35) | le plugin s'appuie sur le runtime Bun embarqué par OpenCode (`Bun.YAML`) |
-| `git` et un accès à github.com au démarrage d'OpenCode | OpenCode télécharge le plugin (`git+https://…`) |
+| OpenCode **≥ 1.18** (testé en 1.18.35) | le plugin s'appuie sur le runtime Bun embarqué (`Bun.YAML`) |
+| **ou** Claude Code **≥ 2.1.275** (testé en 2.1.306) | marketplace de plugins, dépendances entre plugins |
+| `git` et un accès à github.com | le client télécharge le plugin |
+| Node **≥ 20.11**, avec Claude Code seulement | le hook qui applique les permissions des agents du kit : sans Node, il ne tourne pas et les agents n'ont **aucun** garde-fou (`doctor` le signale) |
 | un modèle qui sait appeler des outils | testé avec DeepSeek V4 Flash (Albert) : agents et prompts sont écrits pour qu'un modèle modeste les suive à la lettre |
 
 **Optionnel** : sans eux, le kit marche en **mode dégradé**. L'agent vous propose d'installer l'outil
@@ -75,16 +82,16 @@ make -C <kit> install-debug   # Playwright + Firefox, dans le kit
 
 ## Installer
 
-Trois façons, qui n'apportent pas la même chose :
+Quatre façons, qui n'apportent pas la même chose :
 
-| | Plugin (recommandé) | URL dans `opencode.json` | Copie des skills |
-|---|:---:|:---:|:---:|
-| Client | OpenCode | OpenCode | tout client Agent Skills |
-| Socle `AGENTS.md` + `instructions.md` du groupe | ✅ | ✅ | ❌ |
-| Skills et leurs scripts | ✅ | ✅ | ✅ |
-| Agents et commandes (`/livrer`, `/deployer-cpin`) | ✅ | ❌ | ❌ |
+| | Plugin OpenCode (recommandé) | URL dans `opencode.json` | Plugin Claude Code | Copie des skills |
+|---|:---:|:---:|:---:|:---:|
+| Client | OpenCode | OpenCode | Claude Code | tout client Agent Skills |
+| Socle `AGENTS.md` + `instructions.md` du groupe | ✅ | ✅ | ✅ | ❌ |
+| Skills et leurs scripts | ✅ | ✅ | ✅ | ✅ |
+| Agents et commandes (`/livrer`, `/deployer-cpin`) | ✅ | ❌ | ✅ | ❌ |
 
-Ne combinez pas le plugin et les URL : le contenu serait chargé deux fois.
+Ne combinez pas deux façons dans le même client : le contenu serait chargé deux fois.
 
 ### 1. Plugin (OpenCode)
 
@@ -124,14 +131,56 @@ Remplacer `dev` par `dso`, ou ajouter les deux.
 > **pas** distribués par cette installation (instructions et skills seulement). Pour les utiliser, passer par
 > l'installation plugin (§1) ou cloner le kit.
 
-### 3. Copie (Claude Code, Codex, autres)
+### 3. Plugin (Claude Code)
+
+Le dépôt est aussi une marketplace Claude Code, `starter-kit`, qui propose un plugin par groupe :
+
+```bash
+claude plugin marketplace add dnum-mi/starter-kit-opencode
+claude plugin install dev@starter-kit     # et/ou dso@starter-kit
+```
+
+Ou en une étape, dans une session (Claude Code ≥ 2.1.275) :
+
+```
+/plugin install dev --marketplace dnum-mi/starter-kit-opencode
+/plugin install dso --marketplace dnum-mi/starter-kit-opencode
+```
+
+- `marketplace add` n'enregistre que le catalogue : tant qu'un `install` n'a pas eu lieu, `/plugin` liste les
+  plugins du kit (onglet *Discover*) mais aucun skill n'est chargé. Après l'installation, `/reload-plugins` puis
+  `claude plugin list` doit afficher `dev@starter-kit` (et `socle@starter-kit`) comme `enabled`.
+- `dev` et `dso` installent d'office le plugin `socle` (`AGENTS.md`). Le socle et le `instructions.md` du groupe
+  sont injectés au démarrage de chaque session.
+- Tout est préfixé par le groupe : skills (`dso:deploiement-cpin`), sous-agents (`dev:dev-review`), commandes
+  (`/dev:livrer`, `/dso:deployer-cpin`).
+- Le plugin `socle` installe un hook qui applique aux agents du kit leurs règles `permission` OpenCode : un
+  sous-agent ne lance que les commandes, ne lit et n'écrit que les fichiers qu'elles autorisent. Il lui faut Node.
+- L'orchestrateur CPiN est un agent **principal** : `claude --agent dso:cpin-orchestrateur` ouvre une session où
+  c'est lui qui répond, avec ses garde-fous. `/dso:deployer-cpin` dans une session normale suit le même runbook,
+  mais sous les permissions habituelles de Claude Code.
+- Le plugin suit `main`. Pour récupérer une mise à jour :
+  `claude plugin marketplace update starter-kit`, puis `claude plugin update dev@starter-kit`.
+
+Pour le proposer à toute l'équipe d'un projet, versionner dans son `.claude/settings.json` :
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "starter-kit": { "source": { "source": "github", "repo": "dnum-mi/starter-kit-opencode" } }
+  },
+  "enabledPlugins": { "dev@starter-kit": true }
+}
+```
+
+### 4. Copie (Codex, autres)
 
 ```bash
 cp -r .agents/skills/dev/* ~/.agents/skills/     # et/ou .agents/skills/dso/*
 ```
 
 Seuls les skills sont installés. Les invariants des `instructions.md` (ex. « l'agent ne manipule jamais un
-secret ») ne sont pas chargés : les recopier si besoin dans le `AGENTS.md` ou le `CLAUDE.md` du projet.
+secret ») ne sont pas chargés : les recopier si besoin dans le `AGENTS.md` du projet.
 
 ## Utiliser
 
@@ -154,7 +203,7 @@ Ce que `/livrer` ne fait pas :
 ### `/deployer-cpin [contexte]` (groupe `dso`)
 
 Pour préparer le déploiement du dépôt courant sur Cloud Pi Native. L'agent **`cpin-orchestrateur`** (aussi
-accessible avec Tab) suit le runbook `deploiement-cpin` :
+accessible avec Tab dans OpenCode, ou par `claude --agent dso:cpin-orchestrateur`) suit le runbook `deploiement-cpin` :
 
 | Phases | Qui | Ce qui se passe |
 |--------|-----|-----------------|
@@ -200,7 +249,18 @@ Une valeur déclarée dans votre `opencode.json` l'emporte sur celle du plugin :
 
 ## Limites connues
 
-- Agents, commandes et plugin fonctionnent **uniquement dans OpenCode**.
+- Claude Code : un agent de plugin ignore `permissionMode` et `hooks`, d'où le hook du `socle`. Il ne filtre que les
+  agents du kit : `/dso:deployer-cpin` lancé dans une session normale reste sous les permissions habituelles de
+  Claude Code (préférer `claude --agent dso:cpin-orchestrateur`). `temperature` n'a pas d'équivalent.
+- Le hook lit une commande bash comme bash (`claude/shell.mjs`) et applique la règle au texte exécuté, guillemets
+  retirés. Il ne l'autorise sans demander que si rien n'y change ce que bash exécute : hors guillemets, `$`, `\`,
+  parenthèses, redirections (sauf `2>&1`, `>/dev/null`), jokers ou `~` en tête de mot demandent l'accord ; entre
+  guillemets doubles, `$`, `` ` `` et `\` aussi. Une commande autorisée garde tout ce que sa règle permet : `git diff
+  --no-index … .env.secrets`, `helm template … -f .env.secrets`, `pnpm exec …` sous `pnpm *`. Ces failles viennent
+  des règles, à resserrer : [#57](https://github.com/dnum-mi/starter-kit-opencode/issues/57).
+- Un `Grep` sur un dossier, sans motif de fichiers (`glob`), n'est pas filtré fichier par fichier.
+- Pour un agent du kit, un outil absent des règles OpenCode (`Monitor` et `WebSearch` exceptés, rattachés à `bash`
+  et `webfetch`) demande l'accord de l'humain ; un outil MCP est refusé.
 - `dso` : plusieurs points restent à confirmer avec la Service Team CPiN : droits minimum du token GitHub,
   domaine Harbor accepté par Kyverno en prod, déploiement d'un changement de chart sans nouvelle image. Ils
   sont listés dans `deploiement-cpin` (« Limites connues ») ; les agents ne tranchent pas à votre place.
@@ -216,6 +276,8 @@ passer par GitHub ni par le cache. Relancer OpenCode suffit pour tester une modi
 |----------|---------|
 | `make skills-index` / `make skills-index-check` | régénère / vérifie les `index.json` des groupes |
 | `make test-plugin` | le plugin installe ce qu'il faut pour chaque groupe, et rien des autres (sans appel au modèle) |
+| `make claude-plugin` | régénère `claude/` (agents, commandes, permissions) depuis `opencode/` |
+| `make test-claude` | `claude/` est à jour, le hook décide comme les règles OpenCode, la marketplace est valide |
 | `make test-cpin-rules` | `check-cpin-rules.py` détecte chaque friction réelle d'un premier déploiement |
 | `make doctor` | les prérequis du poste (voir « Prérequis ») |
 
