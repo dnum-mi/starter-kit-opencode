@@ -1,22 +1,23 @@
 # URLs des instances
 
-Tableau des URLs des services internes par instance. Les URLs Cloud Pi sont des **exemples par instance** :
-les instances n'ont pas toutes la même version de plateforme (`/api/v1/version`). Relever la
-version réelle de l'instance avant de supposer un comportement.
+Les URLs des services internes sont **propres à chaque instance** et ne sont pas versionnées : elles se
+relèvent sur l'instance et se notent dans `.cpin/instance.env` (voir plus bas). Les instances n'ont pas
+toutes la même version de plateforme (`/api/v1/version`) : relever la version réelle avant de supposer un
+comportement.
 
 Les scripts du kit lisent les URLs dans `.cpin/instance.env`, créé par `console.mjs init` avec des
 placeholders (aucune URL n'est codée en dur). `console.mjs instance --set <sdid|rie|https://console.…>`
 choisit la cible (libellé seul) ; une URL « à relever » s'y note avec
 `console.mjs instance --url ARGOCD_URL=https://…`, jamais déduite d'une autre instance.
 
-| Service | SDID (Scaleway) | RIE | Autre instance |
-|---|---|---|---|
-| Console | `console.sdid.cpin.numerique-interieur.com` | `console.dso.interieur.rie.gouv.fr` | `console.<instance>` |
-| ArgoCD | `argocd.sdid.cpin.numerique-interieur.com` | à relever | `argocd.<zone>` |
-| Harbor | `harbor.sdid.cpin.numerique-interieur.com` | à relever | `harbor.<zone>` |
-| GitLab | `gitlab.sdid.cpin.numerique-interieur.com` | à relever | `<gitlab>` |
-| Keycloak | `keycloak.sdid.cpin.numerique-interieur.com/realms/dso` | à relever | idem |
-| Vault | `vault.sdid.cpin.numerique-interieur.com` (à confirmer par instance) | à relever | `vault.<zone>` |
+| Service | Motif (à relever sur l'instance) |
+|---|---|
+| Console | `console.<instance>` |
+| ArgoCD | `argocd.<zone>` |
+| Harbor | `harbor.<zone>` |
+| GitLab | `<gitlab>` |
+| Keycloak | `keycloak.<instance>/realms/dso` |
+| Vault | `vault.<zone>` |
 
 ## Accès API
 

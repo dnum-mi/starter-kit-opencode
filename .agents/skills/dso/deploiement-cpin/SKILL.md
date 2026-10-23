@@ -25,7 +25,7 @@ tant qu'elle n'est pas franchie. Principe : **vérifier au PR, pas au déploieme
 - La **console** est la source de vérité (projets, dépôts, environnements). Ce qui est
   modifié dans l'UI ArgoCD ou dans le GitLab interne est ignoré ou écrasé.
 - Pour **lire et configurer** la console, utiliser son API (swagger :
-  `https://console.<instance>/swagger-ui`, ex. `console.sdid.cpin.numerique-interieur.com`), via
+  `https://console.<instance>/swagger-ui`), via
   `scripts/cpin-console/`. Elle s'authentifie par un **jeton API** (en-tête `x-dso-token`) que l'humain
   crée et place dans `.env.secrets`. Toute écriture se fait après un « oui » explicite de l'humain. Krakend, cité dans la doc CPiN, est un exemple d'API gateway pour *vos* API : il ne
   donne pas accès à la console.
@@ -394,7 +394,7 @@ seulement la **présence** des variables avec `console.mjs init` (« renseigné 
 - **Route vs Ingress** : la doc ne rend jamais la Route obligatoire, et les tutoriels officiels (`cloud-pi-native/tuto-*-infra-helm`) utilisent un Ingress. L'Ingress fonctionne aussi sur l'instance SDID.
 - **Fichiers values** : sur une console 9.9.0, le dépôt n'expose aucun réglage de fichiers values (swagger : champs `internalRepoName`, `externalRepoUrl`, `isPrivate`, `isInfra`, identifiants). Le chargement de `values-<env>.yaml` n'est donc pas établi ; seul `values.yaml` est supposé chargé, d'où la phase 2.
 - **Token GitHub** : la doc demande un PAT avec le scope `repo`. Un token fine-grained en lecture seule a donné `403 Write access to repository not granted`. La Service Team suggère la lecture seule : le moindre privilège suffisant n'est pas établi. En cas de 403, passer au PAT `repo` documenté.
-- **Registres Kyverno** : la doc liste `harbor.io/`, alors que le Harbor de chaque instance a son propre domaine (ex. `harbor.sdid.cpin.numerique-interieur.com`). `check-cpin-rules.py` accepte tout registre contenant `harbor`. À confirmer avant la prod, où la règle est bloquante.
+- **Registres Kyverno** : la doc liste `harbor.io/`, alors que le Harbor de chaque instance a son propre domaine. `check-cpin-rules.py` accepte tout registre contenant `harbor`. À confirmer avant la prod, où la règle est bloquante.
 - Nom du fichier de pipeline incohérent dans les docs CPiN (`.gitlab-ci-dso.yml`/`.yaml`), catalogues Kaniko variables selon l'instance.
 - **Chemin source ArgoCD** : figé par la console sur notre instance (ex. `helm/`), il est un **exemple par
   instance**, pas un universel — et peut dépendre de la **version de la plateforme** (relever `/api/v1/version`).

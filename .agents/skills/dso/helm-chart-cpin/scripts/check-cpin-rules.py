@@ -216,7 +216,7 @@ def parse_args():
     parser.add_argument("--quota-memory", type=parse_memory, help="quota mémoire, unité explicite (ex. 205Mi, 0.2Gi)")
     parser.add_argument("--app-port", type=int, help="port réellement écouté par l'application (EXPOSE du Dockerfile)")
     parser.add_argument("--require-ingress", action="store_true", help="erreur si aucun Ingress/Route n'est rendu")
-    parser.add_argument("--expected-image", help="chemin complet attendu <registry>/<project>/<repo> (sans tag), ex. harbor.sdid.cpin.numerique-interieur.com/icebreakerdemo/ice-breaker-demo")
+    parser.add_argument("--expected-image", help="chemin complet attendu <registry>/<project>/<repo> (sans tag), ex. harbor.<instance>/monprojet/mon-app")
     return parser.parse_args()
 
 
