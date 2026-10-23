@@ -59,13 +59,13 @@ Tableau des URLs des services internes par instance. Les URLs Cloud Pi sont des 
 les instances n'ont pas toutes la même version de plateforme (ex. Scaleway 9.9.0 vs RIE ≥ 9.11). Relever la
 version réelle de l'instance avant de supposer un comportement.
 
-| Service | Scaleway (sdid) | Cloud Pi |
-|---|---|---|
-| Console | `console.sdid.cpin.numerique-interieur.com` | `console.<instance>` |
-| ArgoCD | `argocd.sdid.cpin.numerique-interieur.com` | `argocd.<zone>` |
-| Harbor | `harbor.sdid.cpin.numerique-interieur.com` | `harbor.<zone>` |
-| GitLab | `gitlab.sdid.cpin.numerique-interieur.com` | `<gitlab>` |
-| Keycloak | `keycloak.sdid.cpin.numerique-interieur.com/realms/dso` | idem |
+| Service | Motif (à relever sur l'instance) |
+|---|---|
+| Console | `console.<instance>` |
+| ArgoCD | `argocd.<zone>` |
+| Harbor | `harbor.<zone>` |
+| GitLab | `<gitlab>` |
+| Keycloak | `keycloak.<instance>/realms/dso` |
 
 ## Accès API
 
@@ -258,7 +258,7 @@ Basé sur le POC validé `scripts/argocd-token/capture-token.mjs`, mais écrit `
 import { firefox } from 'playwright'
 import { saveSecret, redact } from './lib.mjs'
 
-const ARGOCD_URL = process.env.ARGOCD_URL ?? 'https://argocd.sdid.cpin.numerique-interieur.com'
+const ARGOCD_URL = process.env.ARGOCD_URL ?? 'https://argocd.<instance>'
 const LOGIN_TIMEOUT_MS = 5 * 60 * 1000
 const POLL_INTERVAL_MS = 1000
 
@@ -329,7 +329,7 @@ Résultat attendu : aucune sortie, code de sortie 0.
 ```js
 import { loadSecrets, checkService } from './lib.mjs'
 
-const ARGOCD_URL = process.env.ARGOCD_URL ?? 'https://argocd.sdid.cpin.numerique-interieur.com'
+const ARGOCD_URL = process.env.ARGOCD_URL ?? 'https://argocd.<instance>'
 
 const secrets = await loadSecrets()
 await checkService('ArgoCD', ARGOCD_URL, '/api/v1/applications', secrets.ARGOCD_TOKEN)
@@ -340,7 +340,7 @@ await checkService('ArgoCD', ARGOCD_URL, '/api/v1/applications', secrets.ARGOCD_
 ```js
 import { loadSecrets, checkService } from './lib.mjs'
 
-const HARBOR_URL = process.env.HARBOR_URL ?? 'https://harbor.sdid.cpin.numerique-interieur.com'
+const HARBOR_URL = process.env.HARBOR_URL ?? 'https://harbor.<instance>'
 
 const secrets = await loadSecrets()
 await checkService('Harbor', HARBOR_URL, '/api/v2.0/projects', secrets.ARGOCD_TOKEN)
@@ -368,7 +368,7 @@ Résultat attendu : aucune sortie, code de sortie 0 pour les deux.
 ```js
 import { loadSecrets, checkService } from './lib.mjs'
 
-const GITLAB_URL = process.env.GITLAB_URL ?? 'https://gitlab.sdid.cpin.numerique-interieur.com'
+const GITLAB_URL = process.env.GITLAB_URL ?? 'https://gitlab.<instance>'
 
 const secrets = await loadSecrets()
 await checkService('GitLab', GITLAB_URL, '/api/v4/user', secrets.GITLAB_PAT)
@@ -381,7 +381,7 @@ La console s'authentifie par l'en-tête `x-dso-token` (pas de préfixe `Bearer`)
 ```js
 import { loadSecrets, checkService } from './lib.mjs'
 
-const CONSOLE_URL = process.env.CONSOLE_URL ?? 'https://console.sdid.cpin.numerique-interieur.com'
+const CONSOLE_URL = process.env.CONSOLE_URL ?? 'https://console.<instance>'
 
 const secrets = await loadSecrets()
 await checkService('Console', CONSOLE_URL, '/api/v1/me', secrets.DSO_TOKEN, {

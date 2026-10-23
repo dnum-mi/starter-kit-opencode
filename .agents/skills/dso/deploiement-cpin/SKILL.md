@@ -25,7 +25,7 @@ tant qu'elle n'est pas franchie. Principe : **vérifier au PR, pas au déploieme
 - La **console** est la source de vérité (projets, dépôts, environnements). Ce qui est
   modifié dans l'UI ArgoCD ou dans le GitLab interne est ignoré ou écrasé.
 - Pour **lire et configurer** la console, utiliser son API (swagger :
-  `https://console.<instance>/swagger-ui`, ex. `console.sdid.cpin.numerique-interieur.com`), via
+  `https://console.<instance>/swagger-ui`), via
   `scripts/cpin-console/`. Elle s'authentifie par un **jeton API** (en-tête `x-dso-token`) que l'humain
   crée et place dans `.env.secrets`. Toute écriture se fait après un « oui » explicite de l'humain. Krakend, cité dans la doc CPiN, est un exemple d'API gateway pour *vos* API : il ne
   donne pas accès à la console.
@@ -72,13 +72,17 @@ en faut un.
 | **Plateforme cible ?** | **Scaleway (SDID)** · **RIE** · autre (URL `https://console.<instance>`) | console, jetons et URL des services de cette instance. Le RIE n'est joignable que depuis son réseau |
 | **Création dans la console ?** | **Automatique (recommandé)** · **Manuel** · **Déjà existant** | qui crée projet, environnements et dépôts, et comment la porte se vérifie |
 
-**Plateforme cible.** `node <kit>/scripts/cpin-console/console.mjs instance --set <sdid|rie|https://console.…>`
-l'écrit dans `.cpin/instance.env` (non secret, ignoré par git). Tous les scripts (`console.mjs`, `vault.mjs`,
-`cpin-debug`) le lisent ; sans fichier, la cible reste SDID. `instance` sans `--set` affiche l'instance et
-l'URL de chaque service. Seule la console du RIE est connue du kit : une URL marquée « inconnue » (ArgoCD,
-Harbor, GitLab, Vault) se **relève** sur l'instance et se note avec
-`console.mjs instance --url ARGOCD_URL=https://…`, jamais déduite d'une autre instance. L'humain dit ce qu'il voit dans la console ou
-l'UI ; une URL n'est pas un secret.
+**Plateforme cible.** `node <kit>/scripts/cpin-console/console.mjs init` crée `.cpin/instance.env`
+(non secret, ignoré par git) avec des placeholders. L'humain ne fournit que l'URL de la **console** :
+`console.mjs instance --set <sdid|rie|https://console.…>` choisit la cible (libellé seul) et remet les URL
+à zéro. Les URL des **services** (ArgoCD, Harbor, GitLab, Vault) ne se demandent pas une par une : elles se
+déduisent d'un projet existant avec `console.mjs urls [--project <nom>]` (voir §2). Tous les scripts
+(`console.mjs`, `vault.mjs`, `cpin-debug`) lisent ce fichier ; **aucune URL n'est codée en dur**, une URL
+absente reste « inconnue » et ne se déduit jamais d'une autre instance. `instance` sans option affiche la
+cible et l'URL de chaque service. En repli seulement (pas de jeton, pas de projet, ou service absent de la
+réponse), demander les URL manquantes à l'humain au format **🔧 Action manuelle requise** (voir `AGENTS.md`) :
+remplir `.cpin/instance.env`, ou donner les URL (à noter avec `instance --url`). L'humain dit ce qu'il voit
+dans la console ou l'UI ; une URL n'est pas un secret.
 
 **Mode de création.** Expliquer les trois choix, recommander l'automatique et dire pourquoi : contraintes
 validées par la simulation **avant** toute écriture, création rejouable, relecture qui alimente la suite
@@ -204,6 +208,15 @@ L'humain doit pouvoir corriger un choix en comprenant d'où il vient ; une valeu
 `catalog` (stages, clusters, zones). Chaque comportement supposé se vérifie contre **cette version**, pas contre
 la doc générale. Sans `DSO_TOKEN` (mode manuel), `catalog` est remplacé par ce que l'humain lit dans la console.
 
+**URL des services.** Dès qu'un projet existe et que `DSO_TOKEN` est renseigné,
+`node <kit>/scripts/cpin-console/console.mjs urls [--project <nom>]` relève les URL de base (ArgoCD, Harbor,
+GitLab, Vault) depuis les services d'un projet et les écrit dans `.cpin/instance.env`. N'importe quel projet
+accessible convient : ces URL sont celles de l'**instance**, pas du projet (le chemin propre au projet est
+ignoré). Sans `--project`, le premier projet non archivé est pris. Quand lancer `urls` dépend du mode de
+création (§0) : **déjà existant** → ici même ; **automatique** → juste après §4 (`apply` a créé le projet) ;
+**manuel** → après la création du projet par l'humain. En repli (pas de jeton ou aucun projet), demander les
+URL à l'humain (voir §0).
+
 ### 3. Poser les questions, **en une seule liste**, puis attendre
 
 Une question par paramètre des `POST` de l'API ; proposer une valeur par défaut déduite du dépôt quand c'est possible.
@@ -300,7 +313,9 @@ reproposer, **une seule fois par difficulté** ; après deux refus, ne plus insi
 Les scripts sont dans `<kit>/scripts/cpin-debug/` et se lancent **depuis le dossier du projet**, comme
 `console.mjs` : ils lisent `.cpin/.env.secrets` du dossier courant.
 
-**Porte** : l'instance cible est notée (`console.mjs instance`, ou dans la FICHE sans les scripts) ; `gh secret list` et `gh variable list` montrent, sur chaque dépôt (`-R <org>/<dépôt>`),
+**Porte** : l'instance cible est notée (`console.mjs instance`, ou dans la FICHE sans les scripts) ; les URL
+des services sont renseignées (`console.mjs instance` les affiche, dérivées du projet par `urls`, ou fournies
+par l'humain en repli) ; `gh secret list` et `gh variable list` montrent, sur chaque dépôt (`-R <org>/<dépôt>`),
 `GITLAB_TRIGGER_TOKEN`, `GITLAB_URL`, `GITLAB_MIRROR_ID`, `GITLAB_PROJECT_NAME` (et `GH_PAT`, ou les secrets
 de la GitHub App si elle est utilisée) ; la relecture de la console (`apply`, ou `show` en mode manuel ou existant)
 montre projet, environnements et dépôts attendus, ou, sans jeton, l'humain les a confirmés un par un ; l'humain a
@@ -394,7 +409,7 @@ seulement la **présence** des variables avec `console.mjs init` (« renseigné 
 - **Route vs Ingress** : la doc ne rend jamais la Route obligatoire, et les tutoriels officiels (`cloud-pi-native/tuto-*-infra-helm`) utilisent un Ingress. L'Ingress fonctionne aussi sur l'instance SDID.
 - **Fichiers values** : sur une console 9.9.0, le dépôt n'expose aucun réglage de fichiers values (swagger : champs `internalRepoName`, `externalRepoUrl`, `isPrivate`, `isInfra`, identifiants). Le chargement de `values-<env>.yaml` n'est donc pas établi ; seul `values.yaml` est supposé chargé, d'où la phase 2.
 - **Token GitHub** : la doc demande un PAT avec le scope `repo`. Un token fine-grained en lecture seule a donné `403 Write access to repository not granted`. La Service Team suggère la lecture seule : le moindre privilège suffisant n'est pas établi. En cas de 403, passer au PAT `repo` documenté.
-- **Registres Kyverno** : la doc liste `harbor.io/`, alors que le Harbor de chaque instance a son propre domaine (ex. `harbor.sdid.cpin.numerique-interieur.com`). `check-cpin-rules.py` accepte tout registre contenant `harbor`. À confirmer avant la prod, où la règle est bloquante.
+- **Registres Kyverno** : la doc liste `harbor.io/`, alors que le Harbor de chaque instance a son propre domaine. `check-cpin-rules.py` accepte tout registre contenant `harbor`. À confirmer avant la prod, où la règle est bloquante.
 - Nom du fichier de pipeline incohérent dans les docs CPiN (`.gitlab-ci-dso.yml`/`.yaml`), catalogues Kaniko variables selon l'instance.
 - **Chemin source ArgoCD** : figé par la console sur notre instance (ex. `helm/`), il est un **exemple par
   instance**, pas un universel — et peut dépendre de la **version de la plateforme** (relever `/api/v1/version`).

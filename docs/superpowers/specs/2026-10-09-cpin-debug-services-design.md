@@ -32,13 +32,13 @@ intègre le login optionnel dans le runbook de déploiement.
 
 Tableau des URLs par instance, référencé dans `docs/okf/cloud-pi-native/index.md` :
 
-| Service | Scaleway (sdid) | Cloud Pi |
-|---|---|---|
-| Console | `console.sdid.cpin.numerique-interieur.com` | `console.<instance>` |
-| ArgoCD | `argocd.sdid.cpin.numerique-interieur.com` | `argocd.<zone>` |
-| Harbor | `harbor.sdid.cpin.numerique-interieur.com` | `harbor.<zone>` |
-| GitLab | `gitlab.sdid.cpin.numerique-interieur.com` | `<gitlab>` |
-| Keycloak | `keycloak.sdid.cpin.numerique-interieur.com/realms/dso` | idem |
+| Service | Motif (à relever sur l'instance) |
+|---|---|
+| Console | `console.<instance>` |
+| ArgoCD | `argocd.<zone>` |
+| Harbor | `harbor.<zone>` |
+| GitLab | `<gitlab>` |
+| Keycloak | `keycloak.<instance>/realms/dso` |
 
 Note : les URLs Cloud Pi sont des exemples par instance (les instances n'ont pas toutes la même version
 de plateforme — ex. Scaleway 9.9.0 vs RIE ≥ 9.11). Relever la version réelle de l'instance avant de

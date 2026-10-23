@@ -1,7 +1,7 @@
 // Plateforme cible (instance CPiN), partagée par console.mjs, vault.mjs et cpin-debug. Non secret.
 //
-// Ordre de résolution d'une URL de service : variable d'environnement > .cpin/instance.env > valeur
-// connue de l'instance choisie. Sans fichier : SDID (Scaleway), comportement historique.
+// Ordre de résolution d'une URL de service : variable d'environnement > .cpin/instance.env.
+// Aucune URL n'est codée en dur : sans fichier, toutes restent vides et se relèvent sur l'instance.
 // Une URL inconnue pour l'instance reste vide : elle ne se devine pas d'après une autre instance.
 import { readFileSync } from 'node:fs'
 import { writeFile } from 'node:fs/promises'
@@ -12,20 +12,15 @@ export const INSTANCE_FILE = resolve(process.env.CPIN_INSTANCE_FILE ?? resolve(p
 export const URL_KEYS = ['CONSOLE_URL', 'ARGOCD_URL', 'HARBOR_URL', 'GITLAB_URL', 'VAULT_URL']
 const DEFAULT_INSTANCE = 'sdid'
 
+// name de plugin (réponse /projects/{id}/services) → clé d'URL. Les URL de base sont celles de l'instance :
+// n'importe quel projet accessible les donne (le chemin, lui, est propre au projet et n'est pas retenu).
+export const SERVICE_URL_KEYS = { argocd: 'ARGOCD_URL', gitlab: 'GITLAB_URL', registry: 'HARBOR_URL', vault: 'VAULT_URL' }
+
+// Libellés seuls : aucune URL n'est codée en dur, elles se relèvent sur l'instance et se notent dans
+// .cpin/instance.env (voir instanceEnvTemplate).
 export const INSTANCES = {
-  sdid: {
-    label: 'Scaleway (SDID)',
-    CONSOLE_URL: 'https://console.sdid.cpin.numerique-interieur.com',
-    ARGOCD_URL: 'https://argocd.sdid.cpin.numerique-interieur.com',
-    HARBOR_URL: 'https://harbor.sdid.cpin.numerique-interieur.com',
-    GITLAB_URL: 'https://gitlab.sdid.cpin.numerique-interieur.com',
-    VAULT_URL: 'https://vault.sdid.cpin.numerique-interieur.com',
-  },
-  // seule la console est connue : les autres URL se relèvent sur l'instance et se notent dans le fichier
-  rie: {
-    label: 'RIE',
-    CONSOLE_URL: 'https://console.dso.interieur.rie.gouv.fr',
-  },
+  sdid: { label: 'Scaleway (SDID)' },
+  rie: { label: 'RIE' },
 }
 
 export function parseEnv(text) {
@@ -47,8 +42,19 @@ export function currentInstance({ env = process.env, file = readInstanceFile() }
   const name = file?.INSTANCE ?? DEFAULT_INSTANCE
   const preset = INSTANCES[name] ?? {}
   const urls = {}
-  for (const key of URL_KEYS) urls[key] = (env[key] ?? file?.[key] ?? preset[key])?.replace(/\/$/, '')
-  return { name, label: preset.label ?? name, urls, source: file ? INSTANCE_FILE : 'défaut (aucun fichier)' }
+  for (const key of URL_KEYS) urls[key] = (env[key] ?? file?.[key])?.replace(/\/$/, '')
+  return { name, label: preset.label ?? name, urls, source: file ? INSTANCE_FILE : 'aucun fichier' }
+}
+
+// Contenu initial de .cpin/instance.env : placeholders, aucune URL réelle versionnée.
+export function instanceEnvTemplate() {
+  return [
+    '# Plateforme cible CPiN (non secret). Remplir les URL relevées sur l\'instance.',
+    '# INSTANCE : sdid | rie | autre',
+    `INSTANCE=${DEFAULT_INSTANCE}`,
+    ...URL_KEYS.map(key => `${key}=`),
+    '',
+  ].join('\n')
 }
 
 export function instanceUrl(key) {
@@ -73,6 +79,19 @@ export function withUrls(content, specs) {
     values[key] = url.replace(/\/$/, '')
   }
   return { content: `${Object.entries(values).map(([k, v]) => `${k}=${v}`).join('\n')}\n` }
+}
+
+// URL de base (origine) des services d'un projet, au format « CLÉ=https://… » accepté par withUrls.
+// On ne garde que l'origine : le chemin (/forge-mi/projects/…, /harbor/projects/…) est propre au projet.
+export function urlsFromServices(services) {
+  const specs = []
+  for (const service of services ?? []) {
+    const key = SERVICE_URL_KEYS[service?.name]
+    const to = service?.urls?.[0]?.to
+    if (!key || !to) continue
+    try { specs.push(`${key}=${new URL(to).origin}`) } catch {}
+  }
+  return specs
 }
 
 export function readInstanceText() {
