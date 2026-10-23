@@ -3,7 +3,7 @@
 //
 //   node console.mjs instance [--set <sdid|rie|https://console.…>] [--url ARGOCD_URL=https://…]
 //                                                 plateforme cible et URL relevées (.cpin/instance.env, non secret)
-//   node console.mjs init                         crée .cpin/.env.secrets (0600, valeurs vides, auto-ignoré) s'il manque, l'exclut du .dockerignore ; dit quels noms sont renseignés
+//   node console.mjs init                         crée .cpin/.env.secrets (0600, valeurs vides) et .cpin/instance.env (placeholders) s'ils manquent, les exclut du .dockerignore ; dit quels noms sont renseignés
 //   node console.mjs version
 //   node console.mjs catalog                      stages, clusters, zones disponibles
 //   node console.mjs plan  --plan '<json>'        valide le plan, n'écrit rien (aussi : apply sans --apply)
@@ -17,10 +17,10 @@
 // DSO_TOKEN (jeton API console) est lu dans <dossier courant>/.cpin/.env.secrets (0600).
 // GH_USER / GH_PAT (un seul PAT GitHub fine-grained) y sont lus : GH_PAT sert à la console pour un dépôt privé
 // et est posé en secret GitHub par pat-push. Aucune valeur n'est jamais affichée.
-import { readFile, appendFile } from 'node:fs/promises'
+import { readFile, appendFile, writeFile } from 'node:fs/promises'
 import { SECRETS_FILE, ensureExcluded, writeSecretsFile } from './secrets-file.mjs'
 import { spawnSync } from 'node:child_process'
-import { currentInstance, instanceFileContent, readInstanceText, saveInstance, URL_KEYS, withUrls } from './instance.mjs'
+import { currentInstance, instanceEnvTemplate, instanceFileContent, INSTANCE_FILE, readInstanceText, saveInstance, URL_KEYS, withUrls } from './instance.mjs'
 
 const CONSOLE_URL = currentInstance().urls.CONSOLE_URL
 // Les jetons vivent dans le PROJET de l'humain (dossier courant), pas dans le dossier du plugin, qui est un
@@ -248,7 +248,18 @@ const commands = {
         console.log(`noms ajoutés : ${absent.join(', ')}`)
       }
     }
+    // .cpin/instance.env : placeholders, jamais écrasé (comme .env.secrets).
+    let instanceCreated = false
+    try {
+      await readFile(INSTANCE_FILE, 'utf8')
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw error
+      await ensureExcluded(INSTANCE_FILE)
+      await writeFile(INSTANCE_FILE, instanceEnvTemplate(), 'utf8')
+      instanceCreated = true
+    }
     console.log(`${created ? 'créé' : 'existant'} : ${SECRETS_FILE} (0600)`)
+    console.log(`${instanceCreated ? 'créé' : 'existant'} : ${INSTANCE_FILE} (placeholders, non secret)`)
     console.log(`.dockerignore : ${dockerAdded.length ? `${dockerAdded.join(', ')} ajouté` : 'déjà à jour'}`)
     for (const name of SECRET_NAMES) console.log(`  ${name} : ${current[name] ? 'renseigné' : 'vide'}${OPTIONAL.has(name) ? ' (optionnel, debug)' : ''}`)
   },

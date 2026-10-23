@@ -1,10 +1,11 @@
 import { firefox } from 'playwright'
 import { writeFile, chmod } from 'node:fs/promises'
 import { resolve } from 'node:path'
+import { instanceUrl } from '../cpin-console/instance.mjs'
 
-const ARGOCD_URL = process.env.ARGOCD_URL ?? 'https://argocd.sdid.cpin.numerique-interieur.com'
-const HARBOR_URL = process.env.HARBOR_URL ?? 'https://harbor.sdid.cpin.numerique-interieur.com'
-const GITLAB_URL = process.env.GITLAB_URL ?? 'https://gitlab.sdid.cpin.numerique-interieur.com'
+const ARGOCD_URL = instanceUrl('ARGOCD_URL')
+const HARBOR_URL = instanceUrl('HARBOR_URL')
+const GITLAB_URL = instanceUrl('GITLAB_URL')
 const TOKEN_FILE = process.env.TOKEN_FILE ?? resolve(import.meta.dirname, '.token')
 const LOGIN_TIMEOUT_MS = 5 * 60 * 1000
 const POLL_INTERVAL_MS = 1000
@@ -76,6 +77,11 @@ async function printApplications(response) {
 async function readToken() {
   const { readFile } = await import('node:fs/promises')
   return (await readFile(TOKEN_FILE, 'utf8')).trim()
+}
+
+if (!ARGOCD_URL) {
+  console.error('ARGOCD_URL inconnue : la noter dans .cpin/instance.env (voir console.mjs instance).')
+  process.exit(1)
 }
 
 const browser = await firefox.launch({ headless: false })

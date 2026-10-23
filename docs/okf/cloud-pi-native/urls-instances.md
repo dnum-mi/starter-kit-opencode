@@ -4,8 +4,9 @@ Tableau des URLs des services internes par instance. Les URLs Cloud Pi sont des 
 les instances n'ont pas toutes la même version de plateforme (`/api/v1/version`). Relever la
 version réelle de l'instance avant de supposer un comportement.
 
-Les scripts du kit lisent l'instance choisie dans `.cpin/instance.env`
-(`console.mjs instance --set <sdid|rie|https://console.…>`) ; une URL « à relever » s'y note avec
+Les scripts du kit lisent les URLs dans `.cpin/instance.env`, créé par `console.mjs init` avec des
+placeholders (aucune URL n'est codée en dur). `console.mjs instance --set <sdid|rie|https://console.…>`
+choisit la cible (libellé seul) ; une URL « à relever » s'y note avec
 `console.mjs instance --url ARGOCD_URL=https://…`, jamais déduite d'une autre instance.
 
 | Service | SDID (Scaleway) | RIE | Autre instance |
