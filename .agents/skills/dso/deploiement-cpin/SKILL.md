@@ -78,7 +78,9 @@ en faut un.
 à zéro ; `console.mjs instance --url ARGOCD_URL=https://…` note une URL relevée. Tous les scripts
 (`console.mjs`, `vault.mjs`, `cpin-debug`) lisent ce fichier ; **aucune URL n'est codée en dur**, une URL
 absente reste « inconnue » et ne se déduit jamais d'une autre instance. `instance` sans option affiche la
-cible et l'URL de chaque service. L'humain dit ce qu'il voit dans la console ou l'UI ; une URL n'est pas un secret.
+cible et l'URL de chaque service. Quand des URL manquent, les demander à l'humain au format
+**🔧 Action manuelle requise** (voir `AGENTS.md`) : remplir `.cpin/instance.env`, ou donner les URL (à noter
+avec `instance --url`). L'humain dit ce qu'il voit dans la console ou l'UI ; une URL n'est pas un secret.
 
 **Mode de création.** Expliquer les trois choix, recommander l'automatique et dire pourquoi : contraintes
 validées par la simulation **avant** toute écriture, création rejouable, relecture qui alimente la suite

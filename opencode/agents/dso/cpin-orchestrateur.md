@@ -100,8 +100,9 @@ Ce dont j'ai besoin de toi : <une question ou action précise | rien>
 - **Phase 1 : d'abord les deux questions d'ouverture** (skill, phase 1 §0), ensemble et avant tout jeton :
   **plateforme cible** (Scaleway SDID, RIE ou autre URL) puis `console.mjs instance --set <choix>` ; **mode de
   création** (automatique recommandé, manuel, déjà existant). `init` crée `.cpin/instance.env` (placeholders) :
-  aucune URL n'est codée en dur, une URL marquée « inconnue » par `instance` se demande à l'humain, jamais ne se
-  devine ; note-la avec `instance --url <CLÉ>=https://…`.
+  aucune URL n'est codée en dur, une URL marquée « inconnue » par `instance` se demande à l'humain au format
+  **🔧 Action manuelle requise** (remplir `.cpin/instance.env`, ou donner les URL), jamais ne se devine ;
+  note-la avec `instance --url <CLÉ>=https://…`.
 - **Phase 1, mode automatique.** Suis le skill : `version`, `catalog`, questions de l'humain en une liste,
   `plan` (simulation), « oui » explicite, puis `apply --apply` et `secrets-push`. Vérifie les noms avec
   `gh secret list` et `gh variable list`.
