@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Console CPiN par son API (swagger : <console>/swagger-ui). Sans dépendance.
 //
-//   node console.mjs instance [--set <sdid|rie|https://console.…>] [--url ARGOCD_URL=https://…]
+//   node console.mjs instance [--set https://console.…] [--url ARGOCD_URL=https://…]
 //                                                 plateforme cible et URL relevées (.cpin/instance.env, non secret)
 //   node console.mjs urls [--project <nom>]        relève les URL de base des services depuis un projet existant
 //                                                 (n'importe lequel : elles sont propres à l'instance) et les écrit
@@ -370,16 +370,16 @@ const commands = {
     await readBack(token, project)
   },
 
-  // Sans option : affiche l'instance courante. --set la choisit (et remet les URL à zéro), --url note une URL
-  // relevée sur l'instance. Tout va dans .cpin/instance.env (non secret).
+  // Sans option : affiche les URL de l'instance courante. --set note l'URL de la console (et remet les URL de
+  // service à zéro), --url note une URL relevée. Tout va dans .cpin/instance.env (non secret).
   async instance(args) {
     const valid = ({ content, error }) => (error ? fail(error) : content)
     let content = readInstanceText()
     if (args.set) content = valid(instanceFileContent(args.set))
     if (args.multi.url) content = valid(withUrls(content, args.multi.url))
     if (args.set || args.multi.url) await saveInstance(content)
-    const { name, label, urls, source } = currentInstance()
-    console.log(`instance : ${label} (${name}) — source : ${source}`)
+    const { urls, source } = currentInstance()
+    console.log(`instance — source : ${source}`)
     for (const key of URL_KEYS) console.log(`  ${key} : ${urls[key] ?? 'inconnue (à relever sur l\'instance)'}`)
   },
 

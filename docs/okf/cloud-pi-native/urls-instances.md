@@ -6,9 +6,9 @@ toutes la même version de plateforme (`/api/v1/version`) : relever la version r
 comportement.
 
 Les scripts du kit lisent les URLs dans `.cpin/instance.env`, créé par `console.mjs init` avec des
-placeholders (aucune URL n'est codée en dur). `console.mjs instance --set <sdid|rie|https://console.…>`
-choisit la cible (libellé seul) ; une URL « à relever » s'y note avec
-`console.mjs instance --url ARGOCD_URL=https://…`, jamais déduite d'une autre instance.
+placeholders (aucune URL n'est codée en dur). `console.mjs instance --set https://console.<instance>` note
+l'URL de la console ; les URL des services se relèvent avec `console.mjs urls` (voir le runbook), ou se
+notent avec `console.mjs instance --url ARGOCD_URL=https://…`, jamais déduites d'une autre instance.
 
 | Service | Motif (à relever sur l'instance) |
 |---|---|

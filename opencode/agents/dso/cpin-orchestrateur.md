@@ -98,7 +98,7 @@ Ce dont j'ai besoin de toi : <une question ou action précise | rien>
   check de debug éclaire quel symptôme » de `depannage.md`) et ce qu'un statut HTTP prouve. Reproposé au plus
   une fois par difficulté ; après deux refus, n'insiste plus.
 - **Phase 1 : d'abord les deux questions d'ouverture** (skill, phase 1 §0), ensemble et avant tout jeton :
-  **plateforme cible** (Scaleway SDID, RIE ou autre URL) puis `console.mjs instance --set <choix>` ; **mode de
+  **plateforme cible** (Scaleway SDID, RIE ou autre) puis `console.mjs instance --set https://console.<instance>` ; **mode de
   création** (automatique recommandé, manuel, déjà existant). `init` crée `.cpin/instance.env` (placeholders) :
   aucune URL n'est codée en dur. L'humain ne fournit que l'URL de la **console** ; les URL des services se
   déduisent d'un projet existant avec `console.mjs urls [--project <nom>]` (dès qu'un projet existe et que
