@@ -1,7 +1,7 @@
 // node --test scripts/cpin-console/instance.test.mjs
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { currentInstance, instanceEnvTemplate, instanceFileContent, parseEnv, withUrls } from './instance.mjs'
+import { currentInstance, instanceEnvTemplate, instanceFileContent, parseEnv, urlsFromServices, withUrls } from './instance.mjs'
 
 test('sans fichier : aucune URL codée en dur', () => {
   const { name, urls } = currentInstance({ env: {}, file: null })
@@ -51,4 +51,22 @@ test('--url : ajoute ou remplace une URL relevée, refuse le reste', () => {
   assert.equal(content, 'INSTANCE=rie\nARGOCD_URL=https://argocd.rie\nHARBOR_URL=https://harbor.rie\n')
   for (const bad of ['DSO_TOKEN=https://x', 'ARGOCD_URL=http://x', 'ARGOCD_URL'])
     assert.ok(withUrls('', [bad]).error, bad)
+})
+
+test('urlsFromServices : origine seule, services connus, chemin ignoré', () => {
+  const services = [
+    { name: 'argocd', urls: [{ to: 'https://argocd.sdid.exemple.fr/applications?search=projet' }] },
+    { name: 'gitlab', urls: [{ to: 'https://gitlab.sdid.exemple.fr/forge-mi/projects/projet' }] },
+    { name: 'registry', urls: [{ to: 'https://harbor.sdid.exemple.fr/harbor/projects/323' }] },
+    { name: 'vault', urls: [{ to: 'https://vault.sdid.exemple.fr/ui/vault/secrets/projet' }] },
+    { name: 'sonarqube', urls: [{ to: 'https://sonar.sdid.exemple.fr/projects' }] },
+    { name: 'nexus', urls: [] },
+  ]
+  assert.deepEqual(urlsFromServices(services), [
+    'ARGOCD_URL=https://argocd.sdid.exemple.fr',
+    'GITLAB_URL=https://gitlab.sdid.exemple.fr',
+    'HARBOR_URL=https://harbor.sdid.exemple.fr',
+    'VAULT_URL=https://vault.sdid.exemple.fr',
+  ])
+  assert.deepEqual(urlsFromServices(undefined), [])
 })

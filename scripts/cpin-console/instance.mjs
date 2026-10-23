@@ -12,6 +12,10 @@ export const INSTANCE_FILE = resolve(process.env.CPIN_INSTANCE_FILE ?? resolve(p
 export const URL_KEYS = ['CONSOLE_URL', 'ARGOCD_URL', 'HARBOR_URL', 'GITLAB_URL', 'VAULT_URL']
 const DEFAULT_INSTANCE = 'sdid'
 
+// name de plugin (réponse /projects/{id}/services) → clé d'URL. Les URL de base sont celles de l'instance :
+// n'importe quel projet accessible les donne (le chemin, lui, est propre au projet et n'est pas retenu).
+export const SERVICE_URL_KEYS = { argocd: 'ARGOCD_URL', gitlab: 'GITLAB_URL', registry: 'HARBOR_URL', vault: 'VAULT_URL' }
+
 // Libellés seuls : aucune URL n'est codée en dur, elles se relèvent sur l'instance et se notent dans
 // .cpin/instance.env (voir instanceEnvTemplate).
 export const INSTANCES = {
@@ -75,6 +79,19 @@ export function withUrls(content, specs) {
     values[key] = url.replace(/\/$/, '')
   }
   return { content: `${Object.entries(values).map(([k, v]) => `${k}=${v}`).join('\n')}\n` }
+}
+
+// URL de base (origine) des services d'un projet, au format « CLÉ=https://… » accepté par withUrls.
+// On ne garde que l'origine : le chemin (/forge-mi/projects/…, /harbor/projects/…) est propre au projet.
+export function urlsFromServices(services) {
+  const specs = []
+  for (const service of services ?? []) {
+    const key = SERVICE_URL_KEYS[service?.name]
+    const to = service?.urls?.[0]?.to
+    if (!key || !to) continue
+    try { specs.push(`${key}=${new URL(to).origin}`) } catch {}
+  }
+  return specs
 }
 
 export function readInstanceText() {

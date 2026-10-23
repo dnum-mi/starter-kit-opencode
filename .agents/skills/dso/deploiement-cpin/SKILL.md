@@ -73,14 +73,16 @@ en faut un.
 | **Création dans la console ?** | **Automatique (recommandé)** · **Manuel** · **Déjà existant** | qui crée projet, environnements et dépôts, et comment la porte se vérifie |
 
 **Plateforme cible.** `node <kit>/scripts/cpin-console/console.mjs init` crée `.cpin/instance.env`
-(non secret, ignoré par git) avec des placeholders ; l'humain y saisit les URL relevées sur l'instance.
+(non secret, ignoré par git) avec des placeholders. L'humain ne fournit que l'URL de la **console** :
 `console.mjs instance --set <sdid|rie|https://console.…>` choisit la cible (libellé seul) et remet les URL
-à zéro ; `console.mjs instance --url ARGOCD_URL=https://…` note une URL relevée. Tous les scripts
+à zéro. Les URL des **services** (ArgoCD, Harbor, GitLab, Vault) ne se demandent pas une par une : elles se
+déduisent d'un projet existant avec `console.mjs urls [--project <nom>]` (voir §2). Tous les scripts
 (`console.mjs`, `vault.mjs`, `cpin-debug`) lisent ce fichier ; **aucune URL n'est codée en dur**, une URL
 absente reste « inconnue » et ne se déduit jamais d'une autre instance. `instance` sans option affiche la
-cible et l'URL de chaque service. Quand des URL manquent, les demander à l'humain au format
-**🔧 Action manuelle requise** (voir `AGENTS.md`) : remplir `.cpin/instance.env`, ou donner les URL (à noter
-avec `instance --url`). L'humain dit ce qu'il voit dans la console ou l'UI ; une URL n'est pas un secret.
+cible et l'URL de chaque service. En repli seulement (pas de jeton, pas de projet, ou service absent de la
+réponse), demander les URL manquantes à l'humain au format **🔧 Action manuelle requise** (voir `AGENTS.md`) :
+remplir `.cpin/instance.env`, ou donner les URL (à noter avec `instance --url`). L'humain dit ce qu'il voit
+dans la console ou l'UI ; une URL n'est pas un secret.
 
 **Mode de création.** Expliquer les trois choix, recommander l'automatique et dire pourquoi : contraintes
 validées par la simulation **avant** toute écriture, création rejouable, relecture qui alimente la suite
@@ -206,6 +208,15 @@ L'humain doit pouvoir corriger un choix en comprenant d'où il vient ; une valeu
 `catalog` (stages, clusters, zones). Chaque comportement supposé se vérifie contre **cette version**, pas contre
 la doc générale. Sans `DSO_TOKEN` (mode manuel), `catalog` est remplacé par ce que l'humain lit dans la console.
 
+**URL des services.** Dès qu'un projet existe et que `DSO_TOKEN` est renseigné,
+`node <kit>/scripts/cpin-console/console.mjs urls [--project <nom>]` relève les URL de base (ArgoCD, Harbor,
+GitLab, Vault) depuis les services d'un projet et les écrit dans `.cpin/instance.env`. N'importe quel projet
+accessible convient : ces URL sont celles de l'**instance**, pas du projet (le chemin propre au projet est
+ignoré). Sans `--project`, le premier projet non archivé est pris. Quand lancer `urls` dépend du mode de
+création (§0) : **déjà existant** → ici même ; **automatique** → juste après §4 (`apply` a créé le projet) ;
+**manuel** → après la création du projet par l'humain. En repli (pas de jeton ou aucun projet), demander les
+URL à l'humain (voir §0).
+
 ### 3. Poser les questions, **en une seule liste**, puis attendre
 
 Une question par paramètre des `POST` de l'API ; proposer une valeur par défaut déduite du dépôt quand c'est possible.
@@ -302,7 +313,9 @@ reproposer, **une seule fois par difficulté** ; après deux refus, ne plus insi
 Les scripts sont dans `<kit>/scripts/cpin-debug/` et se lancent **depuis le dossier du projet**, comme
 `console.mjs` : ils lisent `.cpin/.env.secrets` du dossier courant.
 
-**Porte** : l'instance cible est notée (`console.mjs instance`, ou dans la FICHE sans les scripts) ; `gh secret list` et `gh variable list` montrent, sur chaque dépôt (`-R <org>/<dépôt>`),
+**Porte** : l'instance cible est notée (`console.mjs instance`, ou dans la FICHE sans les scripts) ; les URL
+des services sont renseignées (`console.mjs instance` les affiche, dérivées du projet par `urls`, ou fournies
+par l'humain en repli) ; `gh secret list` et `gh variable list` montrent, sur chaque dépôt (`-R <org>/<dépôt>`),
 `GITLAB_TRIGGER_TOKEN`, `GITLAB_URL`, `GITLAB_MIRROR_ID`, `GITLAB_PROJECT_NAME` (et `GH_PAT`, ou les secrets
 de la GitHub App si elle est utilisée) ; la relecture de la console (`apply`, ou `show` en mode manuel ou existant)
 montre projet, environnements et dépôts attendus, ou, sans jeton, l'humain les a confirmés un par un ; l'humain a

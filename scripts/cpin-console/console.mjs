@@ -3,6 +3,8 @@
 //
 //   node console.mjs instance [--set <sdid|rie|https://console.…>] [--url ARGOCD_URL=https://…]
 //                                                 plateforme cible et URL relevées (.cpin/instance.env, non secret)
+//   node console.mjs urls [--project <nom>]        relève les URL de base des services depuis un projet existant
+//                                                 (n'importe lequel : elles sont propres à l'instance) et les écrit
 //   node console.mjs init                         crée .cpin/.env.secrets (0600, valeurs vides) et .cpin/instance.env (placeholders) s'ils manquent, les exclut du .dockerignore ; dit quels noms sont renseignés
 //   node console.mjs version
 //   node console.mjs catalog                      stages, clusters, zones disponibles
@@ -20,7 +22,7 @@
 import { readFile, appendFile, writeFile } from 'node:fs/promises'
 import { SECRETS_FILE, ensureExcluded, writeSecretsFile } from './secrets-file.mjs'
 import { spawnSync } from 'node:child_process'
-import { currentInstance, instanceEnvTemplate, instanceFileContent, INSTANCE_FILE, readInstanceText, saveInstance, URL_KEYS, withUrls } from './instance.mjs'
+import { currentInstance, instanceEnvTemplate, instanceFileContent, INSTANCE_FILE, readInstanceText, saveInstance, URL_KEYS, urlsFromServices, withUrls } from './instance.mjs'
 
 const CONSOLE_URL = currentInstance().urls.CONSOLE_URL
 // Les jetons vivent dans le PROJET de l'humain (dossier courant), pas dans le dossier du plugin, qui est un
@@ -381,6 +383,22 @@ const commands = {
     for (const key of URL_KEYS) console.log(`  ${key} : ${urls[key] ?? 'inconnue (à relever sur l\'instance)'}`)
   },
 
+  // Relevé automatique : les URL de base des services se déduisent d'un projet existant (n'importe lequel :
+  // elles sont propres à l'instance, pas au projet). Écrit .cpin/instance.env (non secret).
+  async urls(args) {
+    const token = await requireToken()
+    const project = await pickProject(token, args.project)
+    const services = await api('GET', `/projects/${project.id}/services`, { token })
+    const specs = urlsFromServices(services)
+    if (!specs.length)
+      fail(`aucune URL de service reconnue pour le projet ${project.name} (services : ${services.map(s => s.name).join(', ') || 'aucun'})`)
+    const { content, error } = withUrls(readInstanceText(), specs)
+    if (error) fail(error)
+    await saveInstance(content)
+    console.log(`URL relevées sur le projet ${project.name} (${project.slug}) :`)
+    for (const spec of specs) console.log(`  ${spec}`)
+  },
+
   async 'secrets-list'(args) {
     const { token, project } = await projectContext(args)
     const secrets = await api('GET', `/projects/${project.id}/secrets`, { token })
@@ -446,6 +464,21 @@ async function projectContext(args) {
   const [project] = await api('GET', '/projects', { token, query: { name: args.project } })
   if (!project) fail(`projet « ${args.project} » introuvable`)
   return { token, project }
+}
+
+// Projet dont on lit les services : celui demandé, sinon le premier accessible (les URL de base sont les
+// mêmes pour tous les projets de l'instance). Un projet archivé est écarté tant qu'un autre existe.
+async function pickProject(token, name) {
+  const projects = await api('GET', '/projects', { token })
+  if (!Array.isArray(projects)) fail('réponse inattendue de la console : DSO_TOKEN invalide ou expiré ?')
+  if (name) {
+    const project = projects.find(p => p.name === name || p.slug === name)
+    if (!project) fail(`projet « ${name} » introuvable`)
+    return project
+  }
+  const project = projects.find(p => !p.slug.endsWith('_archived')) ?? projects[0]
+  if (!project) fail('aucun projet accessible : en créer un dans la console (les URL des services en sont déduites)')
+  return project
 }
 
 const args = parseArgs(process.argv.slice(2))
