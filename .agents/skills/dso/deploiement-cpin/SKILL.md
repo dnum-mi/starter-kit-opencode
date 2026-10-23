@@ -69,17 +69,17 @@ en faut un.
 
 | Question | Choix | Ce que ça change |
 |----------|-------|------------------|
-| **Plateforme cible ?** | **Scaleway (SDID)** · **RIE** · autre (URL `https://console.<instance>`) | console, jetons et URL des services de cette instance. Le RIE n'est joignable que depuis son réseau |
+| **Plateforme cible ?** | **Scaleway (SDID)** · **RIE** · autre | console, jetons et URL des services de cette instance ; l'humain donne l'URL de la console. Le RIE n'est joignable que depuis son réseau |
 | **Création dans la console ?** | **Automatique (recommandé)** · **Manuel** · **Déjà existant** | qui crée projet, environnements et dépôts, et comment la porte se vérifie |
 
 **Plateforme cible.** `node <kit>/scripts/cpin-console/console.mjs init` crée `.cpin/instance.env`
 (non secret, ignoré par git) avec des placeholders. L'humain ne fournit que l'URL de la **console** :
-`console.mjs instance --set <sdid|rie|https://console.…>` choisit la cible (libellé seul) et remet les URL
-à zéro. Les URL des **services** (ArgoCD, Harbor, GitLab, Vault) ne se demandent pas une par une : elles se
-déduisent d'un projet existant avec `console.mjs urls [--project <nom>]` (voir §2). Tous les scripts
-(`console.mjs`, `vault.mjs`, `cpin-debug`) lisent ce fichier ; **aucune URL n'est codée en dur**, une URL
-absente reste « inconnue » et ne se déduit jamais d'une autre instance. `instance` sans option affiche la
-cible et l'URL de chaque service. En repli seulement (pas de jeton, pas de projet, ou service absent de la
+`console.mjs instance --set https://console.<instance>` l'écrit et remet les URL de service à zéro. Les URL
+des **services** (ArgoCD, Harbor, GitLab, Vault) ne se demandent pas une par une : elles se déduisent d'un
+projet existant avec `console.mjs urls [--project <nom>]` (voir §2). Tous les scripts (`console.mjs`,
+`vault.mjs`, `cpin-debug`) lisent ce fichier ; **aucune URL n'est codée en dur**, une URL absente reste
+« inconnue » et ne se déduit jamais d'une autre instance. `instance` sans option affiche l'URL de chaque
+service. En repli seulement (pas de jeton, pas de projet, ou service absent de la
 réponse), demander les URL manquantes à l'humain au format **🔧 Action manuelle requise** (voir `AGENTS.md`) :
 remplir `.cpin/instance.env`, ou donner les URL (à noter avec `instance --url`). L'humain dit ce qu'il voit
 dans la console ou l'UI ; une URL n'est pas un secret.
