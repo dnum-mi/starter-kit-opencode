@@ -49,7 +49,7 @@ async function saveToken(token) {
 
 async function testService(name, url, path, headers = {}) {
   if (!url) {
-    console.log(`${name} : URL non configurée (variable d'env manquante)`)
+    console.log(`${name} : URL inconnue (à noter dans .cpin/instance.env, voir console.mjs instance)`)
     return
   }
   try {

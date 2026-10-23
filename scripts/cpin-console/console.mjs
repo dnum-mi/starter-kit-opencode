@@ -260,6 +260,7 @@ const commands = {
     }
     console.log(`${created ? 'créé' : 'existant'} : ${SECRETS_FILE} (0600)`)
     console.log(`${instanceCreated ? 'créé' : 'existant'} : ${INSTANCE_FILE} (placeholders, non secret)`)
+    if (instanceCreated) console.log('  → renseigner les URL relevées (console.mjs instance --url ARGOCD_URL=https://…)')
     console.log(`.dockerignore : ${dockerAdded.length ? `${dockerAdded.join(', ')} ajouté` : 'déjà à jour'}`)
     for (const name of SECRET_NAMES) console.log(`  ${name} : ${current[name] ? 'renseigné' : 'vide'}${OPTIONAL.has(name) ? ' (optionnel, debug)' : ''}`)
   },
