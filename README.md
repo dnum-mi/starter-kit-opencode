@@ -211,6 +211,9 @@ accessible avec Tab dans OpenCode, ou par `claude --agent dso:cpin-orchestrateur
 | 3 : chart et CI | agents | `cpin-plan` → `cpin-build` → `cpin-review`, jusqu'à ce que `check-cpin-rules.py` sorte en 0 (3 essais au plus) |
 | 4 et 5 : livraison, vérification après synchro | **vous** | l'orchestrateur vous remet la marche à suivre et la table de dépannage |
 
+Le flow complet (phases, portes, questions et ramifications) est dessiné dans
+[docs/runbook-deploiement-cpin.md](docs/runbook-deploiement-cpin.md).
+
 Ce que les agents `dso` ne font **jamais** :
 - demander, lire, écrire ou afficher la valeur d'un token ou d'un secret : c'est vous qui les saisissez, dans la console,
   dans GitHub ou dans Vault ;
